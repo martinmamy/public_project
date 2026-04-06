@@ -1,0 +1,272 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container py-4">
+
+  <!-- =======================
+       TABS NAVIGATION
+  ======================= -->
+  <ul class="nav nav-tabs mb-4" id="adsTabs">
+    <li class="nav-item">
+      <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#myAds">
+        My Ads
+      </button>
+    </li>
+    {% if request.user.is_staff %}
+    <li class="nav-item">
+      <button class="nav-link" data-bs-toggle="tab" data-bs-target="#adminAds">
+        Admin Panel
+      </button>
+    </li>
+    {% endif %}
+  </ul>
+
+  <div class="tab-content">
+
+    <!-- =====================================================
+       🔹 TAB 1: ADVERTISER DASHBOARD
+    ====================================================== -->
+    <div class="tab-pane fade show active" id="myAds">
+
+      <!-- ===================
+           KPI CARDS
+      =================== -->
+      <div class="row g-3 mb-4">
+        <div class="col-md-3">
+          <div class="card shadow-sm p-3">
+            <small class="">Total Ads</small>
+            <h4>{{ ads|length }}</h4>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="card shadow-sm p-3">
+            <small class="">Clicks</small>
+            <h4>{{ stats.total_clicks|default:0 }}</h4>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="card shadow-sm p-3">
+            <small class="">Impressions</small>
+            <h4>{{ stats.total_impressions|default:0 }}</h4>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="card shadow-sm p-3">
+            <small class="">Revenue</small>
+            <h4>$ {{ stats.total_revenue|default:0 }}</h4>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===================
+           ADS GRID HEADER WITH CREATE BUTTON
+      =================== -->
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="mb-0">My Ads</h5>
+        <a href="{% url 'create_ad' %}" class="btn btn-primary btn-sm">
+          + Create New Ad
+        </a>
+      </div>
+
+      <!-- ===================
+           ADS GRID
+      =================== -->
+      <div class="row g-4">
+        {% for ad in ads %}
+        <div class="col-lg-4 col-md-6">
+          <div class="card shadow-sm h-100 border-0">
+
+            <div class="position-relative">
+              <img src="{{ ad.image.url }}" class="w-100 rounded-top" style="height:180px; object-fit:cover;">
+              <!-- STATUS BADGE -->
+              <span class="badge position-absolute top-0 end-0 m-2
+                {% if ad.status == 'active' %} bg-success
+                {% elif ad.status == 'pending' %} bg-warning text-dark
+                {% elif ad.status == 'expired' %} bg-secondary
+                {% else %} bg-danger {% endif %}
+              ">
+                {{ ad.status|title }}
+              </span>
+            </div>
+
+            <div class="card-body d-flex flex-column">
+
+              <!-- URL -->
+              <p class="small text-truncate mb-2">🔗 {{ ad.target_url }}</p>
+
+              <!-- METRICS -->
+              <div class="d-flex justify-content-between small mb-2">
+                <span>👁 {{ ad.impressions }}</span>
+                <span>🖱 {{ ad.clicks }}</span>
+              </div>
+
+              <!-- CTR BAR -->
+              {% with ctr=0 %}
+                {% if ad.impressions > 0 %}
+                  {% widthratio ad.clicks ad.impressions 100 as ctr %}
+                {% endif %}
+                <div class="mb-2">
+                  <div class="d-flex justify-content-between small">
+                    <span>CTR</span>
+                    <span>{{ ctr }}%</span>
+                  </div>
+                  <div class="progress" style="height:6px;">
+                    <div class="progress-bar" style="width: {{ ctr }}%;"></div>
+                  </div>
+                </div>
+              {% endwith %}
+
+              <!-- PENDING PAYMENT ALERT -->
+              {% if ad.status == 'pending' %}
+              <div class="alert alert-warning py-1 px-2 small">
+                Awaiting payment or approval
+              </div>
+              {% endif %}
+
+              <!-- DATES -->
+              <div class="small  mt-auto">
+                <div>Start: {{ ad.start_at|date:"M d, Y" }}</div>
+                <div>End: {{ ad.expires_at|date:"M d, Y" }}</div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+        {% empty %}
+        <div class="col-12 text-center py-5">
+          <h5>No ads yet</h5>
+          <p class="">Create your first ad 🚀</p>
+        </div>
+        {% endfor %}
+      </div>
+
+      <!-- ===================
+           PROBLEM ADS
+      =================== -->
+      {% if problem_ads %}
+      <h5 class="mt-5">Sponsored for this problem</h5>
+      <div class="row g-3">
+        {% for ad in problem_ads %}
+        <div class="col-md-4">
+          <div class="card shadow-sm h-100">
+            <img src="{{ ad.image.url }}" class="card-img-top" style="height:150px; object-fit:cover;">
+            <div class="card-body">
+              <a href="{{ ad.target_url }}" target="_blank" onclick="trackAdClick('{{ ad.id }}')">
+                Visit Ad
+              </a>
+              {% with pctr=0 %}
+                {% if ad.impressions > 0 %}
+                  {% widthratio ad.clicks ad.impressions 100 as pctr %}
+                {% endif %}
+                <div class="mt-2 small ">CTR: {{ pctr }}%</div>
+              {% endwith %}
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+    </div>
+
+    <!-- =====================================================
+       🔥 TAB 2: ADMIN DASHBOARD
+    ====================================================== -->
+    {% if request.user.is_staff %}
+    <div class="tab-pane fade" id="adminAds">
+
+      <!-- ===================
+           ADMIN KPI
+      =================== -->
+      <div class="row g-3 mb-4">
+        <div class="col-md-3">
+          <div class="card shadow-sm p-3">
+            <small class="">Total Ads</small>
+            <h4>{{ admin_ads|length }}</h4>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="card shadow-sm p-3">
+            <small class="">Clicks</small>
+            <h4>{{ admin_stats.total_clicks|default:0 }}</h4>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="card shadow-sm p-3">
+            <small class="">Impressions</small>
+            <h4>{{ admin_stats.total_impressions|default:0 }}</h4>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="card shadow-sm p-3">
+            <small class="">Revenue</small>
+            <h4>$ {{ admin_stats.total_revenue|default:0 }}</h4>
+          </div>
+        </div>
+      </div>
+
+      <!-- ADMIN ADS TABLE -->
+      <div class="card shadow-sm">
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+              <tr>
+                <th>Ad</th>
+                <th>Advertiser</th>
+                <th>Status</th>
+                <th>Clicks</th>
+                <th>Impressions</th>
+                <th>CTR</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for ad in admin_ads %}
+              <tr>
+                <td><img src="{{ ad.image.url }}" width="60" class="rounded"></td>
+                <td>{{ ad.advertiser_name }}</td>
+                <td>
+                  <span class="badge
+                    {% if ad.status == 'active' %} bg-success
+                    {% elif ad.status == 'pending' %} bg-warning text-dark
+                    {% elif ad.status == 'expired' %} bg-secondary
+                    {% else %} bg-danger {% endif %}
+                  ">
+                    {{ ad.status|title }}
+                  </span>
+                </td>
+                <td>{{ ad.clicks }}</td>
+                <td>{{ ad.impressions }}</td>
+                <td>
+                  {% with ctr=0 %}
+                    {% if ad.impressions > 0 %}
+                      {% widthratio ad.clicks ad.impressions 100 as ctr %}
+                    {% endif %}
+                    <div class="progress" style="height:6px;">
+                      <div class="progress-bar" style="width: {{ ctr }}%;"></div>
+                    </div>
+                    <small>{{ ctr }}%</small>
+                  {% endwith %}
+                </td>
+                <td>
+                  {% if ad.status == "pending" %}
+                    <button class="btn btn-sm btn-success">Approve</button>
+                    <button class="btn btn-sm btn-danger">Reject</button>
+                  {% else %}
+                    <span class=" small">N/A</span>
+                  {% endif %}
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+    {% endif %}
+
+  </div>
+</div>
+{% endblock %}

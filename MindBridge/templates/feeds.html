@@ -1,0 +1,571 @@
+{% extends "base.html" %}
+{% block title %}Feeds | Fancylearn{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Prevent whole page scrolling */
+html, body {
+    height: 100%;
+    overflow: hidden; /* hide the global scrollbar */
+}
+
+/* Make the main container take full height */
+.container {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    padding-top: 1rem; /* optional */
+}
+
+/* Sticky tabs wrapper */
+.sticky-tabs-wrapper {
+    position: sticky;
+    top: 0;
+    z-index: 1050;
+    background-color: #fff;
+    border-bottom: 1px solid #dee2e6;
+}
+
+/* Scrollable tab content */
+.tab-content {
+    flex: 1;               /* take remaining space */
+    overflow-y: auto;      /* enable scrolling inside tab content */
+    padding-top: 1rem;     /* optional spacing */
+}
+
+/* Optional: scrollbars styling */
+.tab-content::-webkit-scrollbar {
+    width: 8px;
+}
+.tab-content::-webkit-scrollbar-thumb {
+    background-color: rgba(0,0,0,0.2);
+    border-radius: 4px;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-0">
+
+    <!-- Sticky Tabs Wrapper -->
+    <div class="sticky-tabs-wrapper">
+        <ul class="nav nav-tabs" id="feedsTab" role="tablist">
+            <li class="nav-item">
+                <button class="nav-link active" id="top-tab" data-bs-toggle="tab" data-bs-target="#top" title="Top problems">
+                    <i class="fa-solid fa-triangle-exclamation me-2"></i>Top
+                </button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link" id="trending-tab" data-bs-toggle="tab" data-bs-target="#trending" title="Trending">
+                    <i class="fa-solid fa-arrow-trend-up me-2"></i>Trending
+                </button>
+            </li>
+            {% if personalized_problems %}
+            <li class="nav-item">
+                <button class="nav-link" id="personalized-tab" data-bs-toggle="tab" data-bs-target="#personalized" title="Personalized">
+                    <i class="fa-solid fa-user me-2"></i>Personalized
+                </button>
+            </li>
+            {% endif %}
+            <li class="nav-item">
+                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tips">
+                    💰 Tips
+                </button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#bounties">
+                    🎯 Bounties
+                </button>
+            </li>
+        </ul>
+    </div>
+
+
+    <div class="tab-content mt-3">
+
+        <!-- ================= TOP PROBLEMS ================= -->
+        <div class="tab-pane fade show active" id="top">
+            <div class="row g-4">
+                <div class="col-lg-4">
+                    <div class="card shadow-sm h-100">
+                        <div class="card-body d-flex flex-column">
+                            <form id="filterTopForm" class="mb-3">
+                                <select id="monthTop" class="form-select mb-2">
+                                    <option value="">All Months</option>
+                                    {% for month_name in month_list %}
+                                    <option value="{{ forloop.counter }}" {% if month == forloop.counter %}selected{% endif %}>{{ month_name }}</option>
+                                    {% endfor %}
+                                </select>
+                                <select id="yearTop" class="form-select">
+                                    <option value="">All Years</option>
+                                    {% for y in year_list %}
+                                    <option value="{{ y }}" {% if year == y %}selected{% endif %}>{{ y }}</option>
+                                    {% endfor %}
+                                </select>
+                            </form>
+
+                            <div id="topList" class="list-group mt-2 flex-grow-1">
+                                {% if problems %}
+                                    {% for problem in problems %}
+                                    <button class="list-group-item list-group-item-action problem-link"
+                                            data-id="{{ problem.id }}"
+                                            data-title="{{ problem.title|escapejs }}"
+                                            data-author="{{ problem.author.username|escapejs }}"
+                                            data-date="{{ problem.created_at|date:'M d, Y' }}"
+                                            data-month="{{ problem.created_at|date:'n' }}"
+                                            data-year="{{ problem.created_at|date:'Y' }}"
+                                            data-views="{{ problem.views }}"
+                                            data-votes="{{ problem.votes_score }}"
+                                            data-comments="{{ problem.answers_total }}"
+                                            data-url="{% url 'problem_detail' problem.id %}"
+                                            data-content="{{ problem.description|escapejs }}">
+                                        {{ problem.title|truncatechars:40 }}
+                                    </button>
+                                    {% endfor %}
+                                {% else %}
+                                    <p class=" mt-2">No top problems available. Problems may not have been created yet.</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Detail + Charts -->
+                <div class="col-lg-8">
+                    <div class="card shadow-sm h-100 card-detail-charts">
+                        <div class="card-body" id="topDetail">
+                            <p class="">Select a problem to view details.</p>
+                        </div>
+                        <canvas id="chartTopViewsVotes"></canvas>
+                        <canvas id="chartTopViewsComments"></canvas>
+                        <canvas id="chartTopCommentsVotes"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= TRENDING ================= -->
+        <div class="tab-pane fade" id="trending">
+            <div class="row g-4">
+                <div class="col-lg-4">
+                    <div class="card shadow-sm h-100">
+                        <div class="card-body d-flex flex-column">
+                            <form id="filterTrendingForm" class="mb-3">
+                                <select id="monthTrending" class="form-select mb-2">
+                                    <option value="">All Months</option>
+                                    {% for month_name in month_list %}
+                                    <option value="{{ forloop.counter }}" {% if month == forloop.counter %}selected{% endif %}>{{ month_name }}</option>
+                                    {% endfor %}
+                                </select>
+                                <select id="yearTrending" class="form-select">
+                                    <option value="">All Years</option>
+                                    {% for y in year_list %}
+                                    <option value="{{ y }}" {% if year == y %}selected{% endif %}>{{ y }}</option>
+                                    {% endfor %}
+                                </select>
+                            </form>
+
+                            <div id="trendingList" class="list-group mt-2 flex-grow-1">
+                                {% if trending_problems %}
+                                    {% for problem in trending_problems %}
+                                    <button class="list-group-item list-group-item-action problem-link"
+                                            data-id="{{ problem.id }}"
+                                            data-title="{{ problem.title|escapejs }}"
+                                            data-author="{{ problem.author.username|escapejs }}"
+                                            data-date="{{ problem.created_at|date:'M d, Y' }}"
+                                            data-month="{{ problem.created_at|date:'n' }}"
+                                            data-year="{{ problem.created_at|date:'Y' }}"
+                                            data-views="{{ problem.views }}"
+                                            data-votes="{{ problem.votes_score }}"
+                                            data-comments="{{ problem.answers_total }}"
+                                            data-url="{% url 'problem_detail' problem.id %}"
+                                            data-content="{{ problem.description|escapejs }}">
+                                        {{ problem.title|truncatechars:40 }}
+                                    </button>
+                                    {% endfor %}
+                                {% else %}
+                                    <p class=" mt-2">No trending problems yet. Interact with problems to generate trending content.</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-8">
+                    <div class="card shadow-sm h-100 card-detail-charts">
+                        <div class="card-body" id="trendingDetail">
+                            <p class="">Select a problem to view details.</p>
+                        </div>
+                        <canvas id="chartTrendingViewsVotes"></canvas>
+                        <canvas id="chartTrendingViewsComments"></canvas>
+                        <canvas id="chartTrendingCommentsVotes"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= PERSONALIZED ================= -->
+        {% if personalized_problems %}
+        <div class="tab-pane fade" id="personalized">
+            <div class="row g-4">
+                <div class="col-lg-4">
+                    <div class="card shadow-sm h-100">
+                        <div class="card-body d-flex flex-column">
+                            <form id="filterPersonalForm" class="mb-3">
+                                <select id="monthPersonal" class="form-select mb-2">
+                                    <option value="">All Months</option>
+                                    {% for month_name in month_list %}
+                                    <option value="{{ forloop.counter }}" {% if month == forloop.counter %}selected{% endif %}>{{ month_name }}</option>
+                                    {% endfor %}
+                                </select>
+                                <select id="yearPersonal" class="form-select">
+                                    <option value="">All Years</option>
+                                    {% for y in year_list %}
+                                    <option value="{{ y }}" {% if year == y %}selected{% endif %}>{{ y }}</option>
+                                    {% endfor %}
+                                </select>
+                            </form>
+
+                            <div id="personalList" class="list-group mt-2 flex-grow-1">
+                                {% if personalized_problems %}
+                                    {% for problem in personalized_problems %}
+                                    <button class="list-group-item list-group-item-action problem-link"
+                                            data-id="{{ problem.id }}"
+                                            data-title="{{ problem.title|escapejs }}"
+                                            data-author="{{ problem.author.username|escapejs }}"
+                                            data-date="{{ problem.created_at|date:'M d, Y' }}"
+                                            data-month="{{ problem.created_at|date:'n' }}"
+                                            data-year="{{ problem.created_at|date:'Y' }}"
+                                            data-views="{{ problem.views }}"
+                                            data-votes="{{ problem.votes_score }}"
+                                            data-comments="{{ problem.answers_total }}"
+                                            data-url="{% url 'problem_detail' problem.id %}"
+                                            data-content="{{ problem.description|escapejs }}">
+                                        {{ problem.title|truncatechars:40 }}
+                                    </button>
+                                    {% endfor %}
+                                {% else %}
+                                    <p class=" mt-2">No personalized problems available. Follow users and interact with their problems to see personalized content.</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-8">
+                    <div class="card shadow-sm h-100 card-detail-charts">
+                        <div class="card-body" id="personalDetail">
+                            <p class="">Select a problem to view details.</p>
+                        </div>
+                        <canvas id="chartPersonalViewsVotes"></canvas>
+                        <canvas id="chartPersonalViewsComments"></canvas>
+                        <canvas id="chartPersonalCommentsVotes"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- ================= TIPS TAB ================= -->
+        <div class="tab-pane fade" id="tips">
+
+            <!-- Summary Cards -->
+            <div class="row g-3 mb-4">
+                <div class="col-md-4">
+                    <div class="card finance-card shadow-sm p-3">
+                        <h6 class="mb-1">Tips Earned</h6>
+                        <h3 class="text-success">{{ financial_summary.tips.earned }}</h3>
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <div class="card finance-card shadow-sm p-3">
+                        <h6 class="mb-1">Tips Spent</h6>
+                        <h3 class="text-danger">{{ financial_summary.tips.spent }}</h3>
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <div class="card finance-card shadow-sm p-3">
+                        <h6 class="mb-1">Net</h6>
+                        <h3>
+                            {{ financial_summary.tips.net }}
+                        </h3>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chart -->
+            <div class="card shadow-sm p-3">
+                <h5 class="mb-3">Tips Earnings vs Spending</h5>
+                <canvas id="tipsChart"></canvas>
+            </div>
+
+        </div>
+
+
+
+        <!-- ================= BOUNTIES TAB ================= -->
+        <div class="tab-pane fade" id="bounties">
+
+            <!-- Summary Cards -->
+            <div class="row g-3 mb-4">
+                <div class="col-md-4">
+                    <div class="card finance-card shadow-sm p-3">
+                        <h6 class="mb-1">Bounties Earned</h6>
+                        <h3 class="text-success">{{ financial_summary.bounties.earned }}</h3>
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <div class="card finance-card shadow-sm p-3">
+                        <h6 class="mb-1">Bounties Spent</h6>
+                        <h3 class="text-danger">{{ financial_summary.bounties.spent }}</h3>
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <div class="card finance-card shadow-sm p-3">
+                        <h6 class="mb-1">Net</h6>
+                        <h3>
+                            {{ financial_summary.bounties.net }}
+                        </h3>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chart -->
+            <div class="card shadow-sm p-3">
+                <h5 class="mb-3">Bounties Earnings vs Spending</h5>
+                <canvas id="bountiesChart"></canvas>
+            </div>
+
+        </div>
+
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+function setupTabFilteringAndCharts(sidebarId, detailId, monthId, yearId, chartIds) {
+    const sidebar = document.getElementById(sidebarId);
+    const detailPanel = document.getElementById(detailId);
+    const monthFilter = document.getElementById(monthId);
+    const yearFilter = document.getElementById(yearId);
+    const originalItems = Array.from(sidebar.querySelectorAll('.problem-link'));
+
+    const charts = chartIds.map(id => {
+        const ctx = document.getElementById(id).getContext('2d');
+
+        return new Chart(ctx, {
+            type: 'scatter',
+            data: { datasets: [] },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+
+                                const point = context.dataset.data[context.dataIndex];
+
+                                const xLabel = context.chart.options.scales.x.title.text;
+                                const yLabel = context.chart.options.scales.y.title.text;
+
+                                return `${point.problemTitle} — ${xLabel}: ${point.x}, ${yLabel}: ${point.y}`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: { title: { display: true, text: '' }},
+                    y: { title: { display: true, text: '' }}
+                }
+            }
+        });
+    });
+
+    function updateCharts(items) {
+
+        if (!items.length) {
+            charts.forEach(c => { c.data.datasets = []; c.update(); });
+            return;
+        }
+
+        charts[0].data.datasets = [{
+            data: items.map(b => ({
+                x: Number(b.dataset.views),
+                y: Number(b.dataset.votes),
+                problemTitle: b.dataset.title
+            })),
+            backgroundColor: 'rgba(54,162,235,0.7)'
+        }];
+
+        charts[0].options.scales.x.title.text = 'Views';
+        charts[0].options.scales.y.title.text = 'Votes';
+
+
+        charts[1].data.datasets = [{
+            data: items.map(b => ({
+                x: Number(b.dataset.views),
+                y: Number(b.dataset.comments),
+                problemTitle: b.dataset.title
+            })),
+            backgroundColor: 'rgba(255,99,132,0.7)'
+        }];
+
+        charts[1].options.scales.x.title.text = 'Views';
+        charts[1].options.scales.y.title.text = 'Comments';
+
+
+        charts[2].data.datasets = [{
+            data: items.map(b => ({
+                x: Number(b.dataset.comments),
+                y: Number(b.dataset.votes),
+                problemTitle: b.dataset.title
+            })),
+            backgroundColor: 'rgba(255,206,86,0.7)'
+        }];
+
+        charts[2].options.scales.x.title.text = 'Comments';
+        charts[2].options.scales.y.title.text = 'Votes';
+
+        charts.forEach(c => c.update());
+    }
+
+    function getCSRFToken() {
+        const token = document.querySelector('[name=csrfmiddlewaretoken]');
+        if (token) return token.value;
+
+        return document.cookie
+            .split('; ')
+            .find(c => c.startsWith('csrftoken='))
+            ?.split('=')[1];
+    }
+
+    sidebar.addEventListener('click', e => {
+
+        const btn = e.target.closest('.problem-link');
+        if (!btn) return;
+
+        fetch(`/feeds/increment/${btn.dataset.id}/`, {
+            method: 'POST',
+            headers: { 'X-CSRFToken': getCSRFToken() }
+        })
+        .then(resp => resp.json())
+        .then(data => {
+
+            btn.dataset.views = data.views;
+
+            updateCharts([btn]);
+
+            detailPanel.innerHTML = `
+                <h4><a class='text-decoration-none' href="${btn.dataset.url}">${btn.dataset.title}</a></h4>
+                <p class=" mb-1">By ${btn.dataset.author} | ${btn.dataset.date}</p>
+                <hr>
+                <div>${btn.dataset.content}</div>
+                <div class="mt-3">
+                    <span class="badge bg-primary">${btn.dataset.votes} votes</span>
+                    <span class="badge bg-secondary">${btn.dataset.comments} comments</span>
+                    <span class="badge bg-info">${btn.dataset.views} views</span>
+                </div>
+            `;
+        });
+
+    });
+
+    monthFilter.addEventListener('change', renderFiltered);
+    yearFilter.addEventListener('change', renderFiltered);
+
+    function renderFiltered() {
+
+        const selectedMonth = monthFilter.value;
+        const selectedYear = yearFilter.value;
+
+        const filtered = originalItems.filter(btn =>
+            (selectedMonth === '' || selectedMonth === btn.dataset.month) &&
+            (selectedYear === '' || selectedYear === btn.dataset.year)
+        );
+
+        sidebar.innerHTML = '';
+        filtered.forEach(btn => sidebar.appendChild(btn));
+
+        updateCharts(filtered);
+
+        detailPanel.innerHTML =
+            '<p class="">Select a problem to view details.</p>';
+    }
+
+    updateCharts(originalItems);
+}
+
+setupTabFilteringAndCharts('topList','topDetail','monthTop','yearTop',['chartTopViewsVotes','chartTopViewsComments','chartTopCommentsVotes']);
+setupTabFilteringAndCharts('trendingList','trendingDetail','monthTrending','yearTrending',['chartTrendingViewsVotes','chartTrendingViewsComments','chartTrendingCommentsVotes']);
+setupTabFilteringAndCharts('personalList','personalDetail','monthPersonal','yearPersonal',['chartPersonalViewsVotes','chartPersonalViewsComments','chartPersonalCommentsVotes']);
+</script>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+    const labels = {{ month_list|safe }};
+    const tipsData = {{ tips_chart|safe }};
+    const bountiesData = {{ bounties_chart|safe }};
+
+    let tipsChartInstance = null;
+    let bountiesChartInstance = null;
+
+    function renderTipsChart() {
+        const canvas = document.getElementById("tipsChart");
+        if(!canvas) return;
+        if(tipsChartInstance) tipsChartInstance.destroy();
+
+        tipsChartInstance = new Chart(canvas.getContext("2d"), {
+            type: "bar",
+            data: {
+                labels: labels,
+                datasets: [
+                    { label: "Earnings", data: tipsData.earnings, backgroundColor: "rgba(40,167,69,0.7)" },
+                    { label: "Spending", data: tipsData.spending, backgroundColor: "rgba(220,53,69,0.7)" }
+                ]
+            },
+            options: { responsive: true }
+        });
+    }
+
+    function renderBountiesChart() {
+        const canvas = document.getElementById("bountiesChart");
+        if(!canvas) return;
+        if(bountiesChartInstance) bountiesChartInstance.destroy();
+
+        bountiesChartInstance = new Chart(canvas.getContext("2d"), {
+            type: "bar",
+            data: {
+                labels: labels,
+                datasets: [
+                    { label: "Earnings", data: bountiesData.earnings, backgroundColor: "rgba(0,123,255,0.7)" },
+                    { label: "Spending", data: bountiesData.spending, backgroundColor: "rgba(255,193,7,0.7)" }
+                ]
+            },
+            options: { responsive: true }
+        });
+    }
+
+    // Render charts when tab is shown
+    document.querySelectorAll('[data-bs-toggle="tab"]').forEach(tab => {
+        tab.addEventListener("shown.bs.tab", function(e) {
+            const target = e.target.getAttribute("data-bs-target");
+            if(target === "#tips") renderTipsChart();
+            if(target === "#bounties") renderBountiesChart();
+        });
+    });
+
+    // Render chart if its tab is active on page load
+    const activeTab = document.querySelector('.tab-pane.active');
+    if(activeTab?.id === 'tips') renderTipsChart();
+    if(activeTab?.id === 'bounties') renderBountiesChart();
+
+});
+</script>
+
+{% endblock %}

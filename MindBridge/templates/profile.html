@@ -1,0 +1,813 @@
+{% extends "base.html" %}
+{% load static %}
+{% load mention_tags %}
+{% block title %}Profile | Fancylearn{% endblock %}
+
+<style>
+/* ==========================
+   Base Styles
+========================== */
+body {
+    font-family: 'Inter', 'Segoe UI', sans-serif;
+    background: #f5f7fa;
+    color: #333;
+}
+
+/* ==========================
+   Cards & Panels
+========================== */
+.card, .stat-card, .recent-activity-card {
+    border-radius: 16px;
+    background: #fff;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.05);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.card:hover, .stat-card:hover, .activity-item .card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+}
+
+/* ==========================
+   Profile Avatar
+========================== */
+.sticky-sidebar img {
+    border: 4px solid #fff;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+    border-radius: 50%;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.sticky-sidebar img:hover {
+    transform: scale(1.06);
+    box-shadow: 0 6px 22px rgba(0,0,0,0.12);
+}
+
+/* ==========================
+   Username & Badges
+========================== */
+.sticky-sidebar h6 {
+    font-size: 1.4rem;
+    margin-bottom: 0.3rem;
+    font-weight: 600;
+}
+
+.sticky-sidebar .badge {
+    font-size: 0.85rem;
+    padding: 0.3em 0.6em;
+    border-radius: 12px;
+    letter-spacing: 0.5px;
+    background: linear-gradient(135deg, #6c5ce7, #a29bfe);
+    color: #fff !important;
+}
+
+/* Verified Icon */
+.fas.fa-check-circle {
+    color: #00b894;
+    margin-left: 4px;
+}
+
+/* ==========================
+   Follow / Action Buttons
+========================== */
+#followBtn, .btn-outline-primary, .btn {
+    border-radius: 50px;
+    font-weight: 600;
+    padding: 0.5rem 1.5rem;
+    transition: all 0.25s ease;
+}
+
+#followBtn:hover, .btn-outline-primary:hover, .btn:hover {
+    transform: scale(1.05);
+}
+
+/* ==========================
+   Stat Cards
+========================== */
+.stat-card {
+    background: linear-gradient(145deg, #e0f7fa, #b2ebf2);
+    border: none;
+    font-weight: 600;
+    border-radius: 14px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    padding: 1.25rem 0;
+}
+
+.stat-card h6 {
+    color: #495057;
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+}
+
+.stat-card p {
+    font-size: 1.6rem;
+    margin: 0;
+    color: #00b894;
+}
+
+/* ==========================
+   About Section
+========================== */
+.card-body h5 {
+    font-size: 1.3rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    border-bottom: 1px solid #e0e0e0;
+    padding-bottom: 0.5rem;
+}
+
+.card-body p {
+    color: #495057;
+    margin-bottom: 0.5rem;
+}
+
+.card-body a {
+    color: #0984e3;
+    transition: all 0.2s ease;
+}
+
+.card-body a:hover {
+    color: #0652dd;
+    text-decoration: underline;
+}
+
+/* ==========================
+   Recent Activity Feed
+========================== */
+.recent-activity-card {
+    background: #fff;
+    border-radius: 16px;
+    padding: 1rem;
+}
+
+.recent-activity {
+    flex: 1;
+    overflow-y: auto;
+}
+
+.activity-item .card {
+    border-radius: 12px;
+    border: none;
+    background: #f0f4f8;
+    padding: 0.75rem 1rem;
+    transition: all 0.3s ease;
+}
+
+.activity-item .card:hover {
+    background: #d6eaf8;
+    transform: translateY(-3px);
+    box-shadow: 0 6px 16px rgba(0,0,0,0.06);
+}
+
+.activity-meta span {
+    font-size: 0.8rem;
+    color: #6c757d;
+}
+
+/* ==========================
+   Load More Button
+========================== */
+.load-more-btn {
+    border-radius: 50px;
+    padding: 0.5rem 1.5rem;
+    margin-top: 1rem;
+    transition: all 0.25s ease;
+    border: 1px solid #00b894;
+    color: #00b894;
+    background: #fff;
+}
+
+.load-more-btn:hover {
+    background: #00b894;
+    color: #fff;
+}
+
+/* ==========================
+   Sidebar Panel
+========================== */
+.sticky-sidebar {
+    background: #fff;
+    border-radius: 16px;
+    border: 1px solid #e0e0e0;
+    padding: 1rem;
+}
+
+/* ==========================
+   Responsive
+========================== */
+@media (max-width: 992px) {
+    .sticky-sidebar {
+        position: static;
+        width: 100%;
+        max-height: none;
+        margin-bottom: 1.5rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .stat-card p {
+        font-size: 1.35rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .sticky-sidebar img {
+        width: 100px;
+        height: 100px;
+    }
+}
+</style>
+
+
+
+{% block content %}
+<div class="container py-4">
+  <div class="row">
+
+    <!-- LEFT PROFILE PANEL -->
+    <div class="col-md-4 mb-4">
+      <div class="sticky-sidebar">
+        <div class="card shadow-sm border-0 text-center">
+          <div class="card-body">
+
+            {% if profile_user.avatar %}
+                <img src="{{ profile_user.avatar.url }}" class="rounded-circle mb-3" style="width:120px;height:120px;object-fit:cover;">
+            {% else %}
+                {% with first=profile_user.username|slice:":1"|upper %}
+                <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Crect width='120' height='120' fill='%23dee2e6'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='central' text-anchor='middle' font-family='Arial, sans-serif' font-size='60' fill='%23343a40'%3E{{ first }}%3C/text%3E%3C/svg%3E"
+                    class="rounded-circle mb-3" style="width:120px;height:120px;object-fit:cover;">
+                {% endwith %}
+            {% endif %}
+
+            <h6 class="fw-bold mb-1">
+                {{ profile_user.username }}
+                {% if profile_user.is_verified_expert %}
+                <i class="fas fa-check-circle"></i>
+                {% endif %}
+            </h6>
+
+            <p>
+                Reputation: <b>{{ profile.reputation_score|abbreviate_number }}</b>
+                {% if profile.tier == "Beginner" %}
+                    <span class="badge bg-secondary text-light">{{ profile.tier }}</span>
+                    <span class="text-warning">★</span>
+                {% elif profile.tier == "Contributor" %}
+                    <span class="badge bg-info text-light">{{ profile.tier }}</span>
+                    <span class="text-warning">★★</span>
+                {% elif profile.tier == "Advanced" %}
+                    <span class="badge bg-primary text-light">{{ profile.tier }}</span>
+                    <span class="text-warning">★★★</span>
+                {% elif profile.tier == "Expert" %}
+                    <span class="badge bg-success text-light">{{ profile.tier }}</span>
+                    <span class="text-warning">★★★★</span>
+                {% elif profile.tier == "Master Expert" %}
+                    <span class="badge bg-warning text-dark">{{ profile.tier }}</span>
+                    <span class="text-warning">★★★★★</span>
+                {% endif %}
+            </p>
+
+            <div class="d-flex justify-content-around mb-3">
+                <div>
+                    <p class="fw-bold mb-0 clickable-count" id="followersCount">{{ profile_user.followers.count|abbreviate_number }}
+                    <small class="d-block ">Followers</small></p>
+                </div>
+                <div>
+                    <p class="fw-bold mb-0 clickable-count" id="followingCount">{{ profile_user.following.count|abbreviate_number }}
+                    <small class="d-block ">Following</small></p>
+                </div>
+            </div>
+
+            {% if request.user.is_authenticated and request.user != profile_user %}
+            <div class="mt-2">
+              <button id="followBtn" class="btn btn-{{ profile.is_following|yesno:'secondary,primary' }} w-100">
+                  <span id="followBtnText">{{ profile.is_following|yesno:'Unfollow,Follow' }}</span>
+              </button>
+            </div>
+            {% endif %}
+            <div class="mt-2 d-flex gap-2 align-items-center">
+                {% if request.user == profile_user %}
+                    <a href="{% url 'update_profile' %}" class="btn btn-outline-primary flex-grow-1">
+                        <i class="fas fa-edit"></i> Edit
+                    </a>
+
+                    {% if not profile_user.is_verified_expert and request.user.id == profile_user.id %}
+                        <button id="verify-expert-btn" class="btn btn-outline-primary flex-grow-1" title="Verify your profile">
+                            🔰 (${{ status.verification_fee }})
+                        </button>
+                    {% endif %}
+                {% endif %}
+            </div>
+            <!-- Alert container -->
+            <div id="verify-alert-container" class="mt-2"></div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT SIDE -->
+    <div class="col-md-8">
+
+      <!-- ABOUT -->
+      <div class="card shadow-sm border-0 mb-4">
+        <div class="card-body">
+
+          <h5 class="fw-bold mb-3">About</h5>
+
+          {% if profile_user.bio %}
+          <p>{{ profile_user.bio }}</p>
+          {% else %}
+          <p class="">No bio added.</p>
+          {% endif %}
+
+          {% if profile_user.profile.profession %}
+          <p><b>Profession:</b> {{ profile_user.profile.profession }}</p>
+          {% endif %}
+
+          {% if profile_user.profile.website %}
+          <p><b>Website:</b> 
+          <a href="{{ profile_user.profile.website }}" target="_blank">
+          {{ profile_user.profile.website }}
+          </a>
+          </p>
+          {% endif %}
+
+          {% if profile_user.profile.country %}
+          <p><b>Country:</b> {{ profile_user.profile.country }}</p>
+          {% endif %}
+          {% if request.user == profile_user %}
+          <a href="{% url 'link_paypal_account' %}" class="btn ">
+            Connect PayPal
+          </a>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- STATS -->
+      <div class="row g-3 mb-4">
+
+        <div class="col-md-6">
+          <div class="card stat-card text-center py-3" data-type="problems">
+            <h6>Problems Posted</h6>
+            <p class="fw-bold mb-0">{{ profile_user.problems.count|abbreviate_number }}</p>
+          </div>
+        </div>
+
+        <div class="col-md-6">
+          <div class="card stat-card text-center py-3" data-type="answers">
+            <h6>Answers Provided</h6>
+            <p class="fw-bold mb-0">{{ profile_user.answers.count|abbreviate_number }}</p>
+          </div>
+        </div>
+
+        {% if request.user == profile_user %}
+        <div class="col-md-6">
+          <div class="card stat-card text-center py-3" data-type="bounties">
+            <h6>Bounties Earned</h6>
+            <p class="fw-bold mb-0">{{ profile.total_bounties_earned|abbreviate_number|default:0 }}</p>
+          </div>
+        </div>
+
+        <div class="col-md-6">
+          <div class="card stat-card text-center py-3" data-type="tips">
+            <h6>Tips Received</h6>
+            <p class="fw-bold mb-0">{{ profile.total_tips_received|abbreviate_number|default:0 }}</p>
+          </div>
+        </div>
+        {% endif %}
+
+      </div>
+
+      <!-- RECENT ACTIVITY -->
+      <div class="shadow-sm border-0 recent-activity-card">
+        <div class="card-body">
+
+          <h5 class="fw-bold mb-3">Recent Activity</h5>
+
+          <div id="recentActivity" class="recent-activity"></div>
+
+          <div id="loadMoreBtn" class="btn btn-outline-secondary w-100 load-more-btn">
+          Load More
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+<script>
+const DEFAULT_AVATAR = "{% static 'images/default_avatar.png' %}";
+</script>
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+
+    const activityContainer = document.getElementById("recentActivity");
+    const statCards = document.querySelectorAll(".stat-card");
+    const loadMoreBtn = document.getElementById("loadMoreBtn");
+    const followBtn = document.getElementById("followBtn");
+    const followersCountEl = document.getElementById("followersCount");
+    const followingCountEl = document.getElementById("followingCount");
+    const loggedUser = "{{ request.user.id }}";
+    const profileUser = "{{ profile_user.id }}";
+
+    let currentType = "problems";
+    let currentPage = 1;
+    const pageSize = 5;
+
+    // -------------------------
+    // FOLLOW / UNFOLLOW BUTTON
+    // -------------------------
+    if(followBtn){
+        followBtn.addEventListener("click", async () => {
+            const isFollowing = followBtn.classList.contains("btn-secondary");
+            const url = isFollowing
+                ? "{% url 'unfollow_user' profile_user.id %}"
+                : "{% url 'follow_user' profile_user.id %}";
+
+            try{
+                const r = await fetch(url, {
+                    method: "POST",
+                    headers: {
+                        "X-CSRFToken": document.querySelector('meta[name="csrf-token"]').content,
+                        "Accept": "application/json"
+                    }
+                });
+                if(!r.ok) throw new Error("Network error");
+                const data = await r.json();
+
+                followBtn.classList.toggle("btn-primary");
+                followBtn.classList.toggle("btn-secondary");
+                followBtn.querySelector("#followBtnText").innerText =
+                    data.status==="followed" ? "Unfollow" : "Follow";
+
+                const msg = document.createElement("div");
+                msg.className = "alert alert-success mt-2";
+                msg.style.transition = "opacity 0.5s";
+                msg.innerText = data.status==="followed" ? "Thanks for following!" : "You unfollowed this user";
+                followBtn.parentElement.appendChild(msg);
+                setTimeout(()=>{
+                    msg.style.opacity="0";
+                    setTimeout(()=>msg.remove(),500);
+                },2000);
+
+                let count = parseInt(followersCountEl.innerText);
+                followersCountEl.innerText = data.status==="followed" ? count+1 : count-1;
+
+            } catch(err){
+                console.error("Follow/Unfollow failed:",err);
+            }
+        });
+    }
+
+    // -------------------------
+    // Stat Card Click
+    // -------------------------
+    function setActive(type){
+        statCards.forEach(c=>c.classList.toggle("active", c.dataset.type===type));
+    }
+    statCards.forEach(card=>{
+        card.addEventListener("click", ()=>{
+            currentType = card.dataset.type;
+            setActive(currentType);
+            renderActivity(currentType,true);
+        });
+    });
+
+    // -------------------------
+    // Fetch Activity
+    // -------------------------
+    async function fetchActivity(type,page=1){
+        const privateTypes = ["bounties","tips"];
+        if(privateTypes.includes(type) && loggedUser != profileUser) return [];
+
+        let url = `{% url 'profile_activity_api' profile_user.id %}?type=${type}&page=${page}&page_size=${pageSize}`;
+
+        if(type==="followers") url = `{% url 'profile_followers_api' profile_user.id %}?page=${page}&page_size=${pageSize}`;
+        if(type==="following") url = `{% url 'profile_following_api' profile_user.id %}?page=${page}&page_size=${pageSize}`;
+
+        try{
+            const r = await fetch(url);
+            if(!r.ok) throw new Error("Network error");
+            const data = await r.json();
+            return data.items || data.results || [];
+        }catch(err){
+            console.error("Failed to fetch activity:", err);
+            return [];
+        }
+    }
+
+    // Helper to generate default avatar with first letter
+    function getAvatar(item) {
+        if(item.avatar_url) return item.avatar_url;
+        const firstLetter = item.username.charAt(0).toUpperCase();
+        // Using a simple SVG as a data URL
+        return `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='50' height='50'%3E%3Crect width='50' height='50' fill='%23dee2e6'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='central' text-anchor='middle' font-family='Arial, sans-serif' font-size='24' fill='%23343a40'%3E${firstLetter}%3C/text%3E%3C/svg%3E`;
+    }
+
+    // -------------------------
+    // Number Abbreviation
+    // -------------------------
+    function abbreviateNumber(value) {
+        if (value === null || value === undefined) return 0;
+        let newValue = value;
+        const suffixes = ["", "K", "M", "B", "T"];
+        let suffixNum = 0;
+
+        while (newValue >= 1000 && suffixNum < suffixes.length - 1) {
+            newValue /= 1000;
+            suffixNum++;
+        }
+
+        return newValue % 1 !== 0 ? newValue.toFixed(1) + suffixes[suffixNum] : newValue + suffixes[suffixNum];
+    }
+
+    // -------------------------
+    // Templates
+    // -------------------------
+    const templates = {
+        problems: item => `
+        <div class="activity-item">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h6><a href="${item.url}">${item.title}</a></h6>
+                    <div class="activity-meta mt-2">
+                        <span class="badge"><i class="fas fa-arrow-up"></i> ${abbreviateNumber(item.votes)}</span>
+                        <span class="badge"><i class="fas fa-eye"></i> ${abbreviateNumber(item.views)}</span>
+                    </div>
+                    <small class="">${item.date}</small>
+                </div>
+            </div>
+        </div>`,
+
+        answers: item => {
+            const text = item.content || "";
+            const preview = text.substring(0, 200);
+            const isLong = text.length > 200;
+            let body = !text && item.hasMedia
+                ? `<p class="fst-italic"><i class="fas fa-photo-video"></i> Media attached</p>`
+                : `<p class="answer-preview" data-full="${text}">${isLong ? preview + "..." : text}</p>` +
+                (isLong ? `<button class="expand-btn">Show more</button>` : "");
+
+            return `
+            <div class="activity-item">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h6>Answer provided on <a href="${item.problemUrl}">${item.problemTitle}</a></h6>
+                        ${body}
+                        <small class="">${item.date}</small>
+                    </div>
+                </div>
+            </div>`;
+        },
+
+        bounties: item => `
+        <div class="activity-item">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h6>Bounty earned from <a href="${item.problemUrl}">${item.problemTitle}</a></h6>
+                    <span class="badge bg-success text-light"><i class="fas fa-dollar-sign"></i> $${abbreviateNumber(item.amount)}</span><br>
+                    <small class="">${item.date}</small>
+                </div>
+            </div>
+        </div>`,
+
+        tips: item => `
+        <div class="activity-item">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h6>Tip received from <a href="${item.problemUrl}">${item.problemTitle}</a></h6>
+                    <p>${item.answerContent || ""}</p>
+                    <span class="badge bg-warning text-light"><i class="fas fa-dollar-sign"></i> $${abbreviateNumber(item.amount)}</span><br>
+                    <small class="">${item.date}</small>
+                </div>
+            </div>
+        </div>`,
+
+        followers: item => `
+        <div class="activity-item">
+            <div class="card shadow-sm mb-2">
+                <div class="card-body d-flex align-items-center gap-3">
+                    <img src="${getAvatar(item)}" class="rounded-circle" style="width:50px;height:50px;object-fit:cover;">
+                    <div>
+                        <h6 class="mb-0"><a href="/auth/profile/${item.id}/">${item.username}</a></h6>
+                    </div>
+                </div>
+            </div>
+        </div>`,
+
+        following: item => `
+        <div class="activity-item">
+            <div class="card shadow-sm mb-2">
+                <div class="card-body d-flex align-items-center gap-3">
+                    <img src="${getAvatar(item)}" class="rounded-circle" style="width:50px;height:50px;object-fit:cover;">
+                    <div>
+                        <h6 class="mb-0"><a href="/auth/profile/${item.id}/">${item.username}</a></h6>
+                    </div>
+                </div>
+            </div>
+        </div>`
+    };
+
+    // -------------------------
+    // Render Activity
+    // -------------------------
+    async function renderActivity(type, reset=false){
+        if(reset){
+            activityContainer.innerHTML = `<p class=" fst-italic">Loading...</p>`;
+            currentPage=1;
+        }
+        const items = await fetchActivity(type,currentPage);
+        if(reset) activityContainer.innerHTML = "";
+
+        if(!items.length){
+            if(reset) activityContainer.innerHTML = `<p class=" fst-italic">No activity yet.</p>`;
+            loadMoreBtn.style.display="none";
+            return;
+        }
+
+        items.forEach(item=>{
+            activityContainer.insertAdjacentHTML("beforeend", templates[type](item));
+        });
+
+        loadMoreBtn.style.display = items.length===pageSize ? "block" : "none";
+    }
+
+    // -------------------------
+    // Expand / Collapse Long Answer
+    // -------------------------
+    document.addEventListener("click", e=>{
+        if(e.target.classList.contains("expand-btn")){
+            const btn = e.target;
+            const preview = btn.previousElementSibling;
+            const full = preview.dataset.full;
+            if(btn.innerText==="Show more"){
+                preview.innerText=full;
+                btn.innerText="Show less";
+            } else {
+                preview.innerText=full.substring(0,200)+"...";
+                btn.innerText="Show more";
+            }
+        }
+    });
+
+    // -------------------------
+    // Click Followers / Following
+    // -------------------------
+    followersCountEl.addEventListener("click", ()=>{
+        currentType = "followers";
+        setActive(""); // no stat card active
+        renderActivity(currentType,true);
+    });
+    followingCountEl.addEventListener("click", ()=>{
+        currentType = "following";
+        setActive(""); // no stat card active
+        renderActivity(currentType,true);
+    });
+
+    // -------------------------
+    // Infinite Scroll
+    // -------------------------
+    let isFetching = false;
+    let noMoreData = false; // stop when no more items
+
+    const activityContainerEl = document.getElementById("recentActivity");
+
+    activityContainerEl.addEventListener("scroll", async () => {
+        if (isFetching || noMoreData) return;
+
+        // Check if user scrolled near the bottom
+        const { scrollTop, scrollHeight, clientHeight } = activityContainerEl;
+        if (scrollTop + clientHeight >= scrollHeight - 20) { // 20px threshold
+            isFetching = true;
+            currentPage++;
+            const items = await fetchActivity(currentType, currentPage);
+
+            if (!items.length) {
+                noMoreData = true; // stop fetching
+                return;
+            }
+
+            items.forEach(item => {
+                activityContainerEl.insertAdjacentHTML("beforeend", templates[currentType](item));
+            });
+
+            // Allow next fetch
+            isFetching = false;
+        }
+    });
+
+    // -------------------------
+    // Initial Load
+    // -------------------------
+    setActive("problems");
+    renderActivity("problems",true);
+
+});
+</script>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    const btn = document.getElementById("verify-expert-btn");
+    const msg = document.getElementById("verify-message");
+
+    if (!btn) return;
+
+    btn.addEventListener("click", () => {
+        btn.disabled = true;
+        msg.innerText = "Processing...";
+
+        fetch("{% url 'ajax_verify_expert' request.user.id %}", {
+            method: "POST",
+            headers: {
+                "X-CSRFToken": "{{ csrf_token }}",
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({})
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                msg.innerText = data.message;
+                btn.style.display = "none";
+
+                // Optionally, update badge dynamically
+                const badge = document.getElementById("expert-badge");
+                if (badge) badge.style.display = "inline-block";
+            } else {
+                msg.innerText = data.error || "Verification failed.";
+                btn.disabled = false;
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            msg.innerText = "An error occurred.";
+            btn.disabled = false;
+        });
+    });
+});
+
+document.addEventListener("DOMContentLoaded", () => {
+    const btn = document.getElementById("verify-expert-btn");
+    const alertContainer = document.getElementById("verify-alert-container");
+
+    if (!btn || !alertContainer) return;
+
+    btn.addEventListener("click", async () => {
+        btn.disabled = true;
+        alertContainer.innerHTML = ""; // clear previous alerts
+
+        try {
+            const userId = btn.dataset.userId || '{{ request.user.id }}';
+            const response = await fetch(`/ajax/verify-expert/${userId}/`, {
+                method: "POST",
+                headers: {
+                    "X-CSRFToken": "{{ csrf_token }}",
+                    "Accept": "application/json",
+                },
+            });
+
+            const data = await response.json();
+
+            let alertType = "info";
+            if (!data.success) {
+                alertType = "danger"; // red for errors
+            } else if (data.success) {
+                alertType = "success"; // green for success
+            }
+
+            // Create alert
+            const alert = document.createElement("div");
+            alert.className = `alert alert-${alertType} alert-dismissible fade show`;
+            alert.role = "alert";
+            alert.innerHTML = `
+                ${data.error || data.message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            alertContainer.appendChild(alert);
+
+            // Auto-dismiss after 5 seconds
+            setTimeout(() => {
+                const bsAlert = bootstrap.Alert.getOrCreateInstance(alert);
+                bsAlert.close();
+            }, 5000);
+
+            // If success, remove the button
+            if (data.success) {
+                btn.remove();
+            }
+
+        } catch (err) {
+            const alert = document.createElement("div");
+            alert.className = "alert alert-danger alert-dismissible fade show";
+            alert.role = "alert";
+            alert.innerHTML = `An error occurred. Please try again. <button type="button" class="btn-close" data-bs-dismiss="alert"></button>`;
+            alertContainer.appendChild(alert);
+        } finally {
+            btn.disabled = false;
+        }
+    });
+});
+</script>
+{% endblock %}

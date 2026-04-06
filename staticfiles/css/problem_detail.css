@@ -1,0 +1,425 @@
+/* =====================================
+GLOBAL VARIABLES
+===================================== */
+:root{
+  --radius:10px;
+  --radius-sm:6px;
+  --card-padding:16px;
+  --avatar-size:36px;
+  --username-size:14px;
+  --text-size:14px;
+  --comment-max-height:280px;
+  --card-max-width:720px; /* max width for desktop */
+}
+
+/* =====================================
+CARDS / PROBLEMS / ANSWERS
+===================================== */
+.card,
+.problem-card,
+.answer-card{
+  background:var(--card);
+  border-radius:var(--radius);
+  padding:clamp(8px,2vw,var(--card-padding));
+  font-size:clamp(12px,1vw,var(--text-size));
+  word-break:break-word;
+  display:flex;
+  flex-direction:column;
+  gap:clamp(6px,1vw,12px);
+  box-shadow:0 4px 12px rgba(0,0,0,0.06),0 2px 6px rgba(0,0,0,0.04);
+  transition: transform .2s ease, box-shadow .2s ease, background .2s ease;
+  overflow:hidden;
+  width:100%;             /* Full width by default */
+  max-width:var(--card-max-width); /* Restrict width on large screens */
+  margin:0 auto;          /* Center on larger screens */
+}
+
+/* Hover effect */
+.card:hover,
+.problem-card:hover,
+.answer-card:hover{
+  transform:translateY(-2px);
+  box-shadow:0 8px 20px rgba(0,0,0,0.08);
+  background:var(--hover);
+}
+
+/* =====================================
+CARD HEADER (AVATAR + NAME)
+===================================== */
+.post-header,
+.card-body .d-flex.align-items-center{
+  display:flex;
+  align-items:center;
+  gap:clamp(6px,1vw,12px);
+  flex-wrap:wrap;
+}
+
+/* =====================================
+AVATARS
+===================================== */
+.avatar-img,
+.comment-avatar,
+.comment-user-avatar{
+  width:clamp(24px,8vw,var(--avatar-size));
+  height:clamp(24px,8vw,var(--avatar-size));
+  border-radius:50%;
+  object-fit:cover;
+  flex-shrink:0;
+  border:2px solid var(--primary-soft);
+  transition:transform .2s ease, box-shadow .2s ease;
+}
+
+.avatar-img:hover,
+.comment-avatar:hover{
+  transform:scale(1.05);
+  box-shadow:0 3px 8px rgba(0,0,0,.1);
+}
+
+/* =====================================
+USERNAME + META
+===================================== */
+.comment-user strong,
+.comment-header strong,
+.answer-meta strong,
+.problem-meta strong{
+  font-size:clamp(11px,2vw,var(--username-size));
+  font-weight:600;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+.comment-user span,
+.answer-meta span{
+  font-size:clamp(9px,1.5vw,12px);
+  opacity:.7;
+}
+
+/* =====================================
+CARD TITLE + DESCRIPTION
+===================================== */
+.card-title,
+.problem-title{
+  font-size:clamp(14px,1.5vw,18px);
+  font-weight:600;
+  color:var(--text);
+  line-height:1.35;
+  word-break:break-word;
+}
+
+.card-body p,
+.problem-description{
+  font-size:clamp(12px,1.1vw,16px);
+  line-height:1.5;
+  color: var(--text);
+  margin-top: clamp(4px,0.8vw,8px);
+  word-break:break-word;
+}
+
+/* =====================================
+VOTES
+===================================== */
+.vote-box,
+.answer-vote-box{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  flex-wrap:wrap;
+}
+
+.vote-btn{
+  padding:3px 6px;
+  border-radius:5px;
+  font-size:clamp(10px,.8vw,12px);
+  cursor:pointer;
+  transition:all .15s ease;
+}
+
+.vote-btn:hover{
+  background:var(--hover);
+  transform:translateY(-1px);
+}
+
+/* =====================================
+PROMOTION BUTTONS
+===================================== */
+.promotion-feature {
+    display: flex;
+    flex-wrap: wrap;
+    gap: clamp(8px, 2vw, 16px); /* responsive spacing */
+    justify-content: center;
+    margin: 16px 0;
+}
+
+.promotion-feature button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4em; /* space between icon and text */
+    padding: clamp(6px, 1.5vw, 12px) clamp(12px, 3vw, 20px); /* responsive padding */
+    font-size: clamp(14px, 1.5vw, 18px); /* responsive text size */
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    transition: transform 0.15s ease, background-color 0.2s ease;
+    color: var(--text);
+}
+
+.promotion-feature button:hover {
+    transform: scale(1.05);
+    background-color: #0056b3;
+}
+
+/* Icons inside button */
+.promotion-feature button::before {
+    content: '';
+}
+
+/* Optional: smaller screens adjustments */
+@media (max-width: 768px) {
+    .promotion-feature {
+        flex-direction: column;
+        gap: 12px;
+    }
+    .promotion-feature button {
+        font-size: clamp(12px, 3vw, 16px);
+        padding: clamp(4px, 2vw, 10px) clamp(8px, 4vw, 16px);
+    }
+}
+
+@media (max-width: 480px) {
+    .promotion-feature button {
+        font-size: clamp(10px, 4vw, 14px);
+        padding: clamp(3px, 2.5vw, 8px) clamp(6px, 4vw, 12px);
+    }
+}
+/* =====================================
+MEDIA (IMAGE / VIDEO / AUDIO)
+===================================== */
+.media-container img,
+.media-container video,
+.media-container audio,
+.answer-media{
+  width:100%;
+  max-width:100%;
+  border-radius:6px;
+  cursor:pointer;
+}
+
+.media-container img:hover,
+.media-container video:hover{
+  transform:scale(1.02);
+  box-shadow:0 6px 15px rgba(0,0,0,0.07);
+}
+
+/* =====================================
+ACCEPTED ANSWER
+===================================== */
+.accepted-answer{
+  border:2px solid #28a745;
+  position:relative;
+}
+
+.accepted-answer::before{
+  content:"✔";
+  position:absolute;
+  left:-8px;
+  top:-8px;
+  font-size:16px;
+  color:#28a745;
+}
+
+/* =====================================
+BADGES (CATEGORY / TAGS)
+===================================== */
+.badge, .category-badge{
+  display:inline-block;
+  max-width:120px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  font-size:clamp(8px,0.7vw,12px);
+  padding:2px 6px;
+  border-radius:6px;
+  font-weight:500;
+  flex-shrink:0;
+  transition:transform .2s ease;
+}
+
+.badge:hover, .category-badge:hover{
+  transform:scale(1.05);
+}
+
+/* =====================================
+SIDEBAR
+===================================== */
+.sidebar-panel{
+  position:sticky;
+  top:10px;
+}
+
+/* =====================================
+BUTTONS
+===================================== */
+.btn-icon i{
+  margin-right:4px;
+}
+
+/* =====================================
+RESPONSIVE MEDIA QUERIES
+===================================== */
+
+/* Large screens: centered, max-width already applied */
+@media(max-width:1200px){
+  .card,
+  .problem-card,
+  .answer-card{
+    max-width:100%;
+    margin:0 auto;
+  }
+}
+
+/* Tablets */
+@media(max-width:992px){
+  .sidebar-panel{
+    position:relative;
+    top:auto;
+  }
+  .card{
+    padding:14px;
+    width:100%;
+  }
+}
+
+/* Phones */
+@media(max-width:768px){
+  .card{
+    padding:12px;
+    width:100%;
+  }
+  .avatar-img{
+    width:28px;
+    height:28px;
+  }
+  .comment-user strong{
+    font-size:12px;
+  }
+  .vote-btn{
+    font-size:11px;
+    padding:2px 5px;
+  }
+  .badge, .category-badge{
+    max-width:90px;
+    font-size:10px;
+  }
+}
+
+/* Small Phones */
+@media(max-width:480px){
+  .card{
+    padding:10px;
+    width:100%;
+  }
+  .avatar-img{
+    width:24px;
+    height:24px;
+  }
+  .comment-user strong{
+    font-size:11px;
+  }
+  .problem-content,
+  .answer-content{
+    font-size:12px;
+  }
+  .vote-btn{
+    font-size:10px;
+  }
+  .comment-form textarea,
+  .answer-form textarea{
+    font-size:11px;
+  }
+  .badge, .category-badge{
+    max-width:70px;
+    font-size:9px;
+  }
+}
+
+/* Ultra small devices (<360px) */
+@media(max-width:360px){
+  .card{
+    padding:6px;
+    width:100%;
+  }
+  .avatar-img{
+    width:20px;
+    height:20px;
+  }
+  .comment-user strong{
+    font-size:10px;
+  }
+  .problem-content,
+  .answer-content{
+    font-size:11px;
+  }
+  .vote-btn{
+    font-size:9px;
+    padding:2px 4px;
+  }
+  .vote-box,
+  .answer-vote-box{
+    gap:4px;
+  }
+  .badge, .category-badge{
+    max-width:50px;
+    font-size:8px;
+  }
+  .comment-form textarea,
+  .answer-form textarea{
+    font-size:10px;
+  }
+}
+
+.suggestion-list {
+    position: absolute;
+    border: 1px solid #ccc;
+    max-height: 150px;
+    overflow-y: auto;
+    background: #fff;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    z-index: 1000;
+    width: 100%;
+}
+.suggestion-list li {
+    padding: 6px 12px;
+    cursor: pointer;
+}
+.suggestion-list li:hover {
+    background: #eee;
+}
+
+/* Fix flex alignment when avatar missing */
+.post-header,
+.card-body .d-flex.align-items-center {
+    display: flex;
+    align-items: center; /* vertical center */
+    gap: clamp(6px, 1vw, 12px);
+    flex-wrap: nowrap;   /* prevent wrapping */
+}
+
+.avatar-img {
+    width: 35px;
+    height: 35px;
+    flex-shrink: 0;
+}
+
+.card-body .d-flex.flex-column {
+    min-width: 0; /* allow text truncation if needed */
+}
+.post-header .d-flex.flex-column strong {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: block;
+}

@@ -1,0 +1,837 @@
+{% extends "base.html" %}
+{% load widget_tweaks %}
+
+{% block title %}Create Problem | MindBridge{% endblock %}
+
+{% block content %}
+
+    <div class="card-body">
+
+      <h2 class="card-title mb-4 text-center">Create a New Problem</h2>
+
+      {% if form.non_field_errors %}
+      <div class="alert alert-danger">
+        {% for error in form.non_field_errors %}
+          <div>{{ error }}</div>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+
+        <div class="fb-composer-alt shadow-sm">
+
+          <!-- TOP BAR -->
+          <div class="fb-top-bar">
+              <a class="nav-avatar" href="{% url 'profile' user.id %}" title="Account">
+                {% if user.avatar and user.avatar.name %}
+                    <img src="{{ user.avatar.url }}" class="avatar-img">
+                {% else %}
+                    {% with first=user.username|slice:":1"|upper %}
+                        <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='30' height='30'%3E%3Crect width='30' height='40' fill='%23dee2e6'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='central' text-anchor='middle' font-family='Arial, sans-serif' font-size='20' fill='%23343a40'%3E{{ first }}%3C/text%3E%3C/svg%3E" class="avatar-img">
+                    {% endwith %}
+                {% endif %}
+              </a>
+            <strong>Create a Problem</strong>
+          </div>
+
+          <!-- TITLE -->
+          <div class="fb-field-row mb-2">
+            <input type="text" name="title" class="fb-input-title-alt" placeholder="What's your problem or idea?" required>
+            <span class="required-star">*</span>
+            <span class="info-icon"><i class="fas fa-circle-info"></i>
+              <span class="info-tooltip">Enter a short, clear title of your problem.</span>
+            </span>
+          </div>
+
+          <!-- DESCRIPTION -->
+          <div class="fb-field-row mb-2">
+            <div id="description-editor"
+                contenteditable="true"
+                class="fb-textarea-alt"
+                placeholder="Explain more details... Use @ to mention"
+                style="min-height:80px; overflow:auto; resize:both; white-space:pre-wrap;"
+                spellcheck="true"></div>
+            <input type="hidden" name="description">
+            <span class="required-star">*</span>
+            <span class="info-icon"><i class="fas fa-circle-info"></i>
+              <span class="info-tooltip text-center justify-content-center">Provide a detailed description. Mentions are possible using @username. You can paste images directly from clipboard.</span>
+            </span>
+          </div>
+
+          <!-- TAGS BELOW DESCRIPTION -->
+          <div id="tags-container" class="tags-container mb-2"></div>
+          <div id="file-preview" class="mt-3"></div>
+
+          <!-- ACTION BAR -->
+          <div class="fb-actions-alt mt-3">
+            <div class="fb-action-wrapper">
+              {{ form.category|add_class:"fb-select-pill-alt" }}
+              <span class="info-icon"><i class="fas fa-circle-info"></i>
+                <span class="info-tooltip">Choose the most relevant category.</span>
+              </span>
+            </div>
+
+            <!-- POST TYPE -->
+            <div class="fb-action-wrapper">
+              {{ form.post_type|add_class:"fb-select-pill-alt" }}
+              <span class="info-icon"><i class="fas fa-circle-info"></i>
+                <span class="info-tooltip">Select whether this post is an issue or information.</span>
+              </span>
+            </div>
+
+            <div class="fb-action-wrapper">
+              <label class="fb-action-btn-alt">
+                📷 Media
+                {{ form.file|add_class:"d-none" }}
+              </label>
+              <span class="info-icon"><i class="fas fa-circle-info"></i>
+                <span class="info-tooltip">Optional: attach audio/image/video if needed.</span>
+              </span>
+            </div>
+
+            <div class="fb-action-wrapper">
+              <input type="text" id="tag-input" class="fb-tag-input-alt" placeholder="#tags">
+              <span class="info-icon"><i class="fas fa-circle-info"></i>
+                <span class="info-tooltip">Optional: add hashtags for visibility. Type and hit enter</span>
+              </span>
+            </div>
+            <div id="bounty-wrapper" class="fb-action-wrapper d-none">
+              {{ form.bounty_amount|add_class:"fb-bounty-alt"|attr:"placeholder:💰 Bounty" }}
+              <span class="info-icon"><i class="fas fa-circle-info"></i>
+                <span class="info-tooltip text-center">
+                  Optional: add a bounty to attract solutions. Ensure you have money and your Paypal account is linked.
+                </span>
+              </span>
+            </div>
+          </div>
+                  <!-- SUBMIT -->
+  
+          <button class="btn btn-primary mt-3 rounded-pill d-flex align-items-end justify-content-center"><i class="fas fa-paper-plane"></i></button>
+        
+        </div>
+
+        <input type="hidden" name="tags_input"
+        id="tags-hidden" id="tags-hidden">
+
+      </form>
+    </div>
+
+<style>
+  /* Highlight selected image and show resize handles */
+#description-editor img {
+  max-width: 100%;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: box-shadow 0.2s;
+}
+
+#description-editor img.selected {
+  outline: 2px dashed #0d6efd;
+  position: relative;
+}
+
+/* Optional: small corners */
+#description-editor img.selected::after {
+  content: '';
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  background: #0d6efd;
+  bottom: 0;
+  right: 0;
+  cursor: se-resize;
+  border-radius: 50%;
+}
+
+#description-editor {
+  position: relative; /* relative parent for draggable images */
+  min-height: 150px;
+  padding: 10px;
+  border-radius: 10px;
+  background: #f9f9f9;
+  overflow: auto;
+}
+
+#description-editor img {
+  max-width: 200px; /* default width */
+  border-radius: 10px;
+  cursor: grab;
+  position: relative; /* will switch to absolute when dragging */
+  transition: box-shadow 0.2s;
+}
+
+#description-editor img.selected {
+  outline: 2px dashed #0d6efd;
+}
+
+#description-editor img.resizing {
+  cursor: se-resize;
+}
+
+#description-editor img.dragging {
+  opacity: 0.8;
+  z-index: 1000;
+}
+</style>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+
+  const postTypeSelect = document.querySelector("select[name='post_type']");
+  const bountyWrapper = document.getElementById("bounty-wrapper");
+
+  const toggleBounty = () => {
+    if (!postTypeSelect || !bountyWrapper) return;
+
+    if (postTypeSelect.value === "issue") {
+      bountyWrapper.classList.remove("d-none");
+    } else {
+      bountyWrapper.classList.add("d-none");
+    }
+  };
+
+  // Initial state
+  toggleBounty();
+
+  // On change
+  postTypeSelect.addEventListener("change", toggleBounty);
+
+});
+</script>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+  const editor = document.getElementById("description-editor");
+  const hiddenInput = editor.nextElementSibling;
+
+  // On form submit, copy HTML to hidden input
+  editor.closest("form").addEventListener("submit", () => {
+    hiddenInput.value = editor.innerHTML;
+  });
+
+  let selectedImg = null;
+  let startX, startY, startWidth, startHeight, offsetX, offsetY;
+  let isDragging = false;
+  let isResizing = false;
+
+  // Select image
+  editor.addEventListener("click", (e) => {
+    if (e.target.tagName === "IMG") {
+      if (selectedImg) selectedImg.classList.remove("selected");
+      selectedImg = e.target;
+      selectedImg.classList.add("selected");
+    } else {
+      if (selectedImg) selectedImg.classList.remove("selected");
+      selectedImg = null;
+    }
+  });
+
+  // Drag & resize
+  editor.addEventListener("mousedown", (e) => {
+    if (!selectedImg) return;
+
+    const rect = selectedImg.getBoundingClientRect();
+    const offsetRight = e.clientX - rect.right;
+    const offsetBottom = e.clientY - rect.bottom;
+
+    // Detect resize (click near bottom-right corner)
+    if (offsetRight > -15 && offsetRight < 5 && offsetBottom > -15 && offsetBottom < 5) {
+      isResizing = true;
+      startX = e.clientX;
+      startY = e.clientY;
+      startWidth = selectedImg.offsetWidth;
+      startHeight = selectedImg.offsetHeight;
+      selectedImg.classList.add("resizing");
+    } else {
+      // Drag mode
+      isDragging = true;
+      offsetX = e.clientX - selectedImg.offsetLeft;
+      offsetY = e.clientY - selectedImg.offsetTop;
+      selectedImg.style.position = "absolute";
+      selectedImg.classList.add("dragging");
+    }
+
+    function onMouseMove(eMove) {
+      if (isResizing) {
+        const dx = eMove.clientX - startX;
+        const dy = eMove.clientY - startY;
+        selectedImg.style.width = startWidth + dx + "px";
+        selectedImg.style.height = startHeight + dy + "px";
+      } else if (isDragging) {
+        const x = eMove.clientX - offsetX;
+        const y = eMove.clientY - offsetY;
+        selectedImg.style.left = x + "px";
+        selectedImg.style.top = y + "px";
+      }
+    }
+
+    function onMouseUp() {
+      isDragging = false;
+      isResizing = false;
+      if (selectedImg) {
+        selectedImg.classList.remove("dragging", "resizing");
+      }
+      document.removeEventListener("mousemove", onMouseMove);
+      document.removeEventListener("mouseup", onMouseUp);
+    }
+
+    document.addEventListener("mousemove", onMouseMove);
+    document.addEventListener("mouseup", onMouseUp);
+  });
+
+  // Paste images from clipboard
+  editor.addEventListener("paste", function(e) {
+    const items = (e.clipboardData || e.originalEvent.clipboardData).items;
+    for (const item of items) {
+      if (item.type.indexOf("image") !== -1) {
+        const file = item.getAsFile();
+        const reader = new FileReader();
+        reader.onload = function(event) {
+          const img = document.createElement("img");
+          img.src = event.target.result;
+          img.style.maxWidth = "200px";
+          img.style.borderRadius = "10px";
+          editor.appendChild(img);
+        };
+        reader.readAsDataURL(file);
+        e.preventDefault();
+      }
+    }
+  });
+});
+document.addEventListener("DOMContentLoaded", function(){
+
+/* --------------------------
+TAG SYSTEM
+---------------------------*/
+
+const tagInput = document.getElementById("tag-input");
+const tagsContainer = document.getElementById("tags-container");
+const hiddenInput = document.getElementById("tags-hidden");
+
+let tags = [];
+
+function updateHidden(){
+hiddenInput.value = tags.join(",");
+}
+
+function createTag(text){
+
+const tag = document.createElement("span");
+
+tag.className =
+"badge bg-primary me-1 mb-1 d-flex align-items-center";
+
+tag.textContent = text;
+
+const remove = document.createElement("button");
+
+remove.type = "button";
+remove.className = "btn-close btn-close-white btn-sm ms-2";
+
+remove.onclick = function(){
+
+tags = tags.filter(t => t !== text);
+
+tag.remove();
+
+updateHidden();
+};
+
+tag.appendChild(remove);
+
+return tag;
+}
+
+/* preload existing tags (edit mode) */
+
+if(hiddenInput.value){
+
+hiddenInput.value.split(",").forEach(t => {
+
+t = t.trim();
+
+if(t){
+
+tags.push(t);
+
+tagsContainer.appendChild(createTag(t));
+
+}
+
+});
+
+}
+
+tagInput.addEventListener("keypress", function(e){
+
+if(e.key === "Enter"){
+
+e.preventDefault();
+
+const value = tagInput.value.trim();
+
+if(value && !tags.includes(value)){
+
+tags.push(value);
+
+tagsContainer.appendChild(createTag(value));
+
+updateHidden();
+
+}
+
+tagInput.value = "";
+
+}
+
+});
+
+
+/* --------------------------
+FILE PREVIEW
+---------------------------*/
+
+const fileInput = document.getElementById("{{ form.file.id_for_label }}");
+
+const preview = document.getElementById("file-preview");
+
+fileInput.addEventListener("change", function(){
+
+preview.innerHTML = "";
+
+const file = this.files[0];
+
+if(!file) return;
+
+const ext = file.name.split(".").pop().toLowerCase();
+
+if(["jpg","jpeg","png","gif"].includes(ext)){
+
+const img = document.createElement("img");
+
+img.src = URL.createObjectURL(file);
+
+img.className = "img-fluid rounded";
+
+img.style.maxHeight = "300px";
+
+preview.appendChild(img);
+
+}
+
+else if(["mp4","webm","mov","avi","mkv"].includes(ext)){
+
+const video = document.createElement("video");
+
+video.src = URL.createObjectURL(file);
+
+video.controls = true;
+
+video.className = "img-fluid rounded";
+
+video.style.maxHeight = "300px";
+
+preview.appendChild(video);
+
+}
+
+else if(["mp3","wav","aac"].includes(ext)){
+
+const audio = document.createElement("audio");
+
+audio.src = URL.createObjectURL(file);
+
+audio.controls = true;
+
+preview.appendChild(audio);
+
+}
+
+else{
+
+preview.innerHTML = "Preview not available";
+
+}
+
+});
+
+});
+
+</script>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+
+  const textareas = document.querySelectorAll("form textarea");
+
+  textareas.forEach(textarea => {
+
+    // Create a floating suggestion box
+    const suggestionBox = document.createElement("ul");
+    suggestionBox.classList.add("suggestion-list");
+    suggestionBox.style.position = "absolute";
+    suggestionBox.style.zIndex = 1000;
+    suggestionBox.style.background = "#fff";
+    suggestionBox.style.border = "1px solid #ddd";
+    suggestionBox.style.borderRadius = "6px";
+    suggestionBox.style.listStyle = "none";
+    suggestionBox.style.padding = "0";
+    suggestionBox.style.margin = "0";
+    suggestionBox.style.display = "none";
+    suggestionBox.style.minWidth = "200px";
+    suggestionBox.style.maxWidth = "300px";
+    suggestionBox.style.boxShadow = "0 4px 12px rgba(0,0,0,0.15)";
+    suggestionBox.style.overflow = "hidden";
+    suggestionBox.style.transition = "opacity 0.2s";
+
+    document.body.appendChild(suggestionBox);
+
+    let atIndex = -1;
+
+    const updatePosition = () => {
+      const rect = textarea.getBoundingClientRect();
+      const lineHeight = 22;
+      const lines = textarea.value.substr(0, textarea.selectionStart).split("\n");
+      let top = rect.top + window.scrollY + (lines.length * lineHeight) + 4;
+      let left = rect.left + window.scrollX + 4;
+
+      // Keep suggestion box inside viewport
+      const viewportWidth = window.innerWidth;
+      if (left + suggestionBox.offsetWidth > viewportWidth - 10) {
+        left = viewportWidth - suggestionBox.offsetWidth - 10;
+      }
+
+      suggestionBox.style.top = `${top}px`;
+      suggestionBox.style.left = `${left}px`;
+    };
+
+    const renderSuggestions = (users) => {
+      suggestionBox.innerHTML = "";
+      users.forEach(user => {
+        const li = document.createElement("li");
+        li.style.padding = "6px 10px";
+        li.style.cursor = "pointer";
+        li.style.whiteSpace = "nowrap";
+        li.style.display = "flex";
+        li.style.alignItems = "center";
+        li.style.gap = "8px";
+        li.style.transition = "background 0.2s";
+
+        li.addEventListener("mouseenter", () => li.style.background = "#f0f0f0");
+        li.addEventListener("mouseleave", () => li.style.background = "transparent");
+
+        // Avatar (image or default SVG with first letter)
+        const avatar = document.createElement("img");
+        if (user.avatar_url) {
+          avatar.src = user.avatar_url;
+        } else {
+          const firstLetter = user.username.charAt(0).toUpperCase();
+          avatar.src = `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28'%3E%3Crect width='28' height='28' fill='%23dee2e6'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='central' text-anchor='middle' font-family='Arial, sans-serif' font-size='14' fill='%23343a40'%3E${firstLetter}%3C/text%3E%3C/svg%3E`;
+        }
+        avatar.style.width = "28px";
+        avatar.style.height = "28px";
+        avatar.style.borderRadius = "50%";
+        avatar.style.objectFit = "cover";
+
+        // Username link
+        const link = document.createElement("a");
+        link.href = `/auth/profile/${user.id}/`;
+        link.innerHTML = `<strong>@${user.username}</strong>`;
+        link.style.textDecoration = "none";
+        link.style.color = "#007bff";
+        link.style.flex = "1";
+
+        link.addEventListener("click", (ev) => {
+          ev.preventDefault();
+          const cursorPos = textarea.selectionStart;
+          textarea.value = textarea.value.slice(0, atIndex + 1) + user.username + " " + textarea.value.slice(cursorPos);
+          textarea.focus();
+          suggestionBox.style.display = "none";
+        });
+
+        li.appendChild(avatar);
+        li.appendChild(link);
+        suggestionBox.appendChild(li);
+      });
+
+      suggestionBox.style.display = users.length ? "block" : "none";
+    };
+
+    textarea.addEventListener("input", async () => {
+      const value = textarea.value;
+      const cursorPos = textarea.selectionStart;
+
+      atIndex = value.lastIndexOf("@", cursorPos - 1);
+      if (atIndex === -1) {
+        suggestionBox.style.display = "none";
+        return;
+      }
+
+      const query = value.slice(atIndex + 1, cursorPos).trim();
+      if (!query) {
+        suggestionBox.style.display = "none";
+        return;
+      }
+
+      updatePosition();
+
+      try {
+        const res = await fetch(`/api/user_suggest/?q=${encodeURIComponent(query)}`);
+        const data = await res.json();
+        renderSuggestions(data.users);
+      } catch (err) {
+        console.error("Failed to fetch mentions:", err);
+        suggestionBox.style.display = "none";
+      }
+    });
+
+    textarea.addEventListener("blur", () => {
+      setTimeout(() => suggestionBox.style.display = "none", 200);
+    });
+
+    // Adjust position on window resize or scroll
+    window.addEventListener("resize", updatePosition);
+    window.addEventListener("scroll", updatePosition);
+
+  });
+});
+</script>
+
+<style>
+/* MAIN COMPOSER */
+.fb-composer-alt {
+  background: var(--card);
+  border-radius: 18px;
+  padding: 18px;
+  border: 1px solid rgba(0,0,0,0.1);
+  max-width: 100%;
+  box-sizing: border-box;
+  transition: all 0.2s;
+}
+
+/* TOP BAR */
+.fb-top-bar {
+  display: flex;
+  align-items: center;
+  margin-bottom: 12px;
+  font-size: 1.05rem;
+}
+.avatar-circle {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: #bbb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 16px;
+  margin-right: 10px;
+}
+
+/* TITLE */
+.fb-input-title-alt {
+  width: 100%;
+  border: none;
+  outline: none;
+  font-size: 1.1rem;
+  font-weight: 500;
+  padding: 8px 12px;
+  background: #f9f9f9;
+  border-radius: 10px;
+  transition: all 0.2s;
+}
+.fb-input-title-alt:focus {
+  background: #fff;
+}
+
+/* DESCRIPTION */
+.fb-textarea-alt {
+  width: 100%;
+  border: none;
+  outline: none;
+  resize: vertical;
+  font-size: 0.95rem;
+  padding: 8px 12px;
+  background: #f9f9f9;
+  border-radius: 10px;
+  margin-bottom: 6px;
+  min-height: 80px;
+  transition: all 0.2s;
+}
+.fb-textarea-alt:focus {
+  background: #fff;
+}
+
+/* FIELD ROWS */
+.fb-field-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.fb-field-row textarea {
+  flex: 1 1 100%;
+  align-self: flex-start;
+}
+
+/* TAGS CONTAINER */
+.tags-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+/* ACTION BAR */
+.fb-actions-alt {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  border-top: 1px solid #eee;
+  padding-top: 10px;
+}
+
+/* ACTION WRAPPER */
+.fb-action-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: 1 1 auto;
+  min-width: 60px;
+}
+
+/* ACTION ITEMS */
+.fb-select-pill-alt,
+.fb-tag-input-alt,
+.fb-bounty-alt,
+.fb-action-btn-alt {
+  border-radius: 10px;
+  font-size: 0.9rem;
+  border: none;
+  background: var(--bg-gradient);
+  color: var(--text);
+  cursor: pointer;
+  padding: 5px 10px;
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
+  transition: all 0.2s;
+}
+.fb-select-pill-alt { min-width: 90px; max-width: 120px; flex: 1 1 auto; }
+.fb-tag-input-alt { min-width: 60px; max-width: 150px; flex: 2 1 auto; }
+.fb-bounty-alt { min-width: 60px; max-width: 100px; flex: 1 1 auto; }
+.fb-action-btn-alt { flex: 0 0 auto; }
+
+.info-icon {
+  display: inline-flex;
+  margin-left: 4px;
+  font-size: 12px;
+  color: #888;
+  cursor: pointer;
+  font-weight: 700;
+  position: relative; /* for tooltip positioning */
+}
+
+/* INFO TOOLTIP BELOW FIELD - FULL WIDTH OF CARD */
+.info-tooltip {
+  opacity: 0;
+  pointer-events: none;
+
+  position: absolute;
+  top: 100%;         /* directly below the field/icon */
+  left: 0;           
+
+  width: auto;       /* let it expand naturally */
+  min-width: 120px;  /* optional minimum */
+  max-width: 100%;   /* never exceed container width */
+  box-sizing: border-box;
+
+  background: var(--bg-gradient);
+  color: var(--text);
+  padding: 6px 10px;
+  font-size: 12px;
+  border-radius: 6px;
+
+  text-align: left;
+  z-index: 100;
+
+  white-space: normal;
+  word-break: break-word;
+  overflow-wrap: break-word;
+
+  transition: all 0.3s ease;
+}
+
+/* SHOW TOOLTIP */
+.info-icon.show-tooltip .info-tooltip {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(5px); /* small slide down */
+}
+
+/* Ensure tooltip aligns inside card/field */
+.fb-composer-alt, 
+.fb-field-row {
+  position: relative;
+}
+
+/* Optional: tweak for small screens */
+@media (max-width: 400px) {
+  .info-tooltip {
+    font-size: 11px;
+    padding: 5px 8px;
+  }
+}
+/* REQUIRED STAR */
+.required-star {
+  color: #d9534f;
+  margin-left: 2px;
+  font-weight: 600;
+}
+
+/* RESPONSIVE */
+@media (max-width: 768px) {
+  .fb-input-title-alt { font-size: 1rem; }
+  .fb-textarea-alt { font-size: 0.9rem; }
+  .fb-actions-alt { gap: 6px; }
+  .fb-action-wrapper { flex: 1 1 100%; }
+}
+
+@media (max-width: 500px) {
+  .fb-input-title-alt, .fb-textarea-alt { font-size: 0.85rem; }
+  .fb-select-pill-alt, .fb-tag-input-alt, .fb-bounty-alt, .fb-action-btn-alt { font-size: 0.8rem; padding: 4px 8px; }
+}
+</style>
+<script>
+document.querySelectorAll(".info-icon").forEach(icon => {
+  icon.addEventListener("click", (e) => {
+    e.stopPropagation();
+
+    // Remove any existing tooltips first
+    document.querySelectorAll(".info-icon.show-tooltip").forEach(i => {
+      if (i !== icon) i.classList.remove("show-tooltip");
+    });
+
+    // Show current tooltip
+    icon.classList.add("show-tooltip");
+
+    // Auto-hide after 3 seconds
+    setTimeout(() => {
+      icon.classList.remove("show-tooltip");
+    }, 3000); // 3000ms = 3 seconds
+  });
+});
+
+// Click anywhere outside = close all tooltips
+document.addEventListener("click", () => {
+  document.querySelectorAll(".info-icon.show-tooltip").forEach(icon => {
+    icon.classList.remove("show-tooltip");
+  });
+});
+</script>
+{% endblock %}

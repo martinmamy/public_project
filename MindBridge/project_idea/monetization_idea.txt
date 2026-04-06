@@ -1,0 +1,168 @@
+1. Platform Fee on Bounties (Most Natural Model)
+
+You already have bounty payments, so the easiest revenue model is a platform fee.
+
+Example
+
+User creates a bounty:
+
+Bounty: $20
+
+Platform fee: 10%
+
+Expert receives: $18
+
+You keep: $2
+
+Implementation
+
+When creating bounty:
+
+platform_fee = bounty_amount * 0.10
+payout_amount = bounty_amount - platform_fee
+
+Then send payout_amount to the expert via PayPal.
+
+Why this works
+
+This is the same model used by:
+
+Upwork
+
+Fiverr
+
+Stack Overflow (job board / ads)
+
+It scales automatically with usage.
+
+2. Featured Problem Promotion
+
+Allow users to pay to promote their problem so experts see it first.
+
+Example pricing:
+
+Feature	Price
+Featured problem for 24h	$3
+Featured for 3 days	$7
+Pinned to homepage	$15
+
+Benefits:
+
+Faster answers
+
+More visibility
+
+This is similar to promoted posts on platforms like
+Reddit or LinkedIn.
+
+3. Premium Expert Subscription
+
+Experts who want more exposure pay a monthly subscription.
+
+Example:
+
+Plan	Price	Benefit
+Expert Pro	$9/month	Appear first in expert suggestions
+Expert Elite	$19/month	Priority notifications for new problems
+
+So in your sidebar:
+
+Suggested Experts
+
+You rank paying experts first.
+
+4. Tip Fee
+
+You already support tips.
+
+Charge a small processing fee.
+
+Example:
+
+User tips: $5
+
+Expert receives: $4.50
+
+Platform fee: $0.50
+
+5. Job Marketplace for Experts
+
+Later you can add hire expert directly.
+
+User posts:
+
+Need a Django developer for API project
+Budget: $200
+
+Platform takes:
+
+15% commission
+
+Platforms doing this:
+
+Upwork
+
+Toptal
+
+6. Paid API Access
+
+You could offer a knowledge API for companies.
+
+Example:
+
+GET /api/problems/django/authentication
+
+Businesses pay:
+
+Plan	Price
+Starter	$19/month
+Developer	$49/month
+Enterprise	$199/month
+7. Ads (Optional)
+
+You can show:
+
+coding courses
+
+developer tools
+
+tech companies
+
+Ad networks:
+
+Google AdSense
+
+Carbon Ads (developer audience)
+
+But ads are less powerful than transaction fees.
+
+8. Verified Expert Badge Fee
+
+Currently your system auto-verifies experts.
+
+You could also allow manual fast verification.
+
+Example:
+
+Get verified instantly
+Price: $5
+
+Experts pay to show credibility.
+
+9. Corporate Support Plan
+
+Companies pay to ask unlimited questions.
+
+Example:
+
+Plan	Price
+Startup	$49/month
+Company	$199/month
+
+They get:
+
+priority answers
+
+expert pool
+
+private problems

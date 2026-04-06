@@ -1,0 +1,47 @@
+Architecture
+                 Users
+                   │
+                   ▼
+             CDN (Static Files)
+                   │
+                   ▼
+            Load Balancer
+                   │
+         ┌─────────┴─────────┐
+         ▼                   ▼
+   Web App Servers      Web App Servers
+      (Django)             (Django)
+         │                   │
+         └───────┬───────────┘
+                 ▼
+           API Layer
+                 │
+        ┌────────┼────────┐
+        ▼        ▼        ▼
+   PostgreSQL   Redis   Search Engine
+   (Primary DB) (Cache) (OpenSearch)
+        │
+        ▼
+   Background Workers
+       (Celery)
+        │
+        ▼
+   Object Storage
+   (Media / Files)
+
+
+FINAL Architecture:
+
+Users
+  │
+Frontend (Web / Mobile)
+  │
+Django API
+  │
+Service Layer
+  │
+Database + Redis + Search
+  │
+Background Workers
+  │
+Media Storage

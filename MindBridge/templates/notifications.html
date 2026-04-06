@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}Notifications | Fancylearn{% endblock %}
+{% block content %}
+<h2>Notifications</h2>
+<ul class="list-group">
+    {% for n in notifications %}
+        <li class="list-group-item">
+            <strong>{{ n.actor.username }}</strong> {{ n.notification_type }}
+            <small>{{ n.created_at }}</small>
+        </li>
+    {% empty %}
+        <li class="list-group-item">No notifications.</li>
+    {% endfor %}
+</ul>
+{% endblock %}

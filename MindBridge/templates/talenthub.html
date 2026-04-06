@@ -1,0 +1,1459 @@
+{% extends "base.html" %}
+
+{% load static %}
+{% load mention_tags %}
+{% load custom_tags %}
+
+{% block title %}TalentHub | Fancylearn{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/talenthub.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="row">
+
+<!-- MAIN FEED -->
+    <button id="bookmarkToggleBtn" class="sidebar-toggle-btn d-lg-none">
+      <i class="fas fa-bookmark"></i>
+    </button>
+      <!-- ========================== -->
+      <!-- Problem Cards -->
+      <!-- ========================== -->
+      <!-- Header + Search & Sort -->
+        <div class="d-flex justify-content-between align-items-start mb-4 flex-wrap gap-2">
+          <div class="d-flex flex-column gap-2 mb-3 flex-grow-1">
+
+          <!-- Search + Category + Sort: horizontal -->
+          <div class="d-flex gap-2 mb-2" style="flex-wrap: nowrap;">
+
+            <!-- Search Input -->
+            <input type="text"
+              id="problem-search"
+              class="form-control responsive-field"
+              placeholder="Search problems using the titles..."
+              style="flex:1 1 140px; max-width:200px; min-width:120px; font-size:clamp(0.85rem,1vw,1rem);">
+
+            <!-- Category Filter -->
+            <select id="problem-category"
+                    class="form-select responsive-field"
+                    style="flex:0 0 160px; min-width:120px; font-size:clamp(0.8rem,0.9vw,0.95rem);">
+              <option value="">All Categories</option>
+              {% for value, label in PREDEFINED_CATEGORIES %}
+              <option value="{{ value }}">{{ label }}</option>
+              {% endfor %}
+            </select>
+
+            <!-- Sort Select -->
+            <select id="problem-sort"
+                    class="form-select responsive-field"
+                    style="flex:0 0 140px; min-width:110px; font-size:clamp(0.8rem,0.9vw,0.95rem);">
+              <option value="recent" selected>Sort: Recent</option>
+              <option value="votes">Most Votes</option>
+              <option value="answers">Most Answers</option>
+            </select>
+
+          </div>
+
+        <!-- Text + Post Link -->
+        <div class="d-flex flex-wrap gap-2 align-items-center">
+          <small style="font-size:clamp(0.75rem,0.9vw,0.9rem);">
+            Got a question, insight, or idea? Share it with the community!
+          </small>
+          <a href="{% url 'create_problem' %}">
+                <i class="fas fa-plus"></i> Post Now
+          </a>
+        </div>
+
+      </div>
+    </div>
+    <div class="col-lg-8" id="problems-talenthub-container">
+      {% for problem in information|dictsortreversed:"created_at" %}
+        {% if problem.post_type == 'information' %}
+        <div class="problem-card mb-4" id="problem-{{ problem.id }}"
+          data-id="{{ problem.id }}"
+          data-title="{{ problem.title|escapejs }}"
+          data-category="{{ problem.category }}"
+          data-votes="{{ problem.annot_votes_score }}"
+          data-answers="{{ problem.annot_answers_count|abbreviate_number }}"
+          data-created="{{ problem.created_at.timestamp }}">
+
+          <!-- Header -->
+          <div class="problem-card-header d-flex justify-content-between align-items-center">
+            <!-- LEFT: avatar + username -->
+                <div class="header-left">
+                  <a href="{% url 'profile' problem.author.id %}" class="d-flex align-items-center text-decoration-none">
+                    {% if problem.author.avatar %}
+                      <img src="{{ problem.author.avatar.url }}" class="avatar me-2">
+                    {% else %}
+                      {% with first=problem.author.username|slice:":1"|upper %}
+                        <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40'%3E%3Crect width='40' height='40' fill='%23dee2e6'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='central' text-anchor='middle' font-family='Arial, sans-serif' font-size='20' fill='%23343a40'%3E{{ first }}%3C/text%3E%3C/svg%3E"
+                        class="avatar me-2">
+                      {% endwith %}
+                    {% endif %}
+                    </a>
+                    <div class="d-flex flex-column">
+                      <a href="{% url 'profile' problem.author.id %}">
+                        <strong>{{ problem.author.username }}</strong>
+                      </a>
+                      <small class="problem-time" data-time="{{ problem.created_at|date:'c' }}"></small>
+                    </div>
+                  
+                  {% if request.user != problem.author and not problem.is_following %}
+                        <button
+                            class="follow-btn bg-primary position-relative text-white border-0 rounded-circle"
+                            data-user-id="{{ problem.author.id }}"
+                            title="Follow"
+                            style="width:18px;height:18px;font-size:12px;bottom:-2px;display:flex;align-items:center;justify-content:center;">
+                            +
+                        </button>
+                      {% endif %}
+                </div>
+                <!-- RIGHT: category + status badges -->
+                <div class="header-right">
+                  {% if problem.category.name %}
+                    <span class="category-badge">{{ problem.category.name }}</span>
+                  {% else %}
+                    <span class="category-badge badge bg-secondary ms-2 text-light">{{ problem.category }}</span>
+                  {% endif %}
+                </div>
+
+            <!-- Controls & Badges -->
+            <div class="d-flex align-items-center gap-2">
+              {% if user == problem.author %}
+              <div class="dropdown ms-2">
+                <button class="btn btn-sm btn-light dropdown-toggle p-0" type="button" data-bs-toggle="dropdown"></button>
+                <ul class="dropdown-menu dropdown-menu-end">
+                  <li><a class="dropdown-item edit-problem-btn" href="#" data-id="{{ problem.id }}"><i class="fas fa-edit me-2"></i>Edit</a></li>
+                  <li><a class="dropdown-item delete-problem-btn" href="#" data-id="{{ problem.id }}"><i class="fas fa-trash-alt me-2"></i>Delete</a></li>
+                </ul>
+              </div>
+              {% endif %}
+            </div>
+          </div><hr>
+
+          <!-- Body -->
+          <!-- Problem Content -->
+          <div class="problem-card-body">
+          <h3 class="text-center problem-title">{{ problem.title }}</h3><br>
+          <div class="problem-content mb-2">{{ problem.description|convert_mentions|safe }}</div>
+
+          <!-- Media -->
+          {% if problem.file %}
+          {% with problem.file.url|lower as file_url %}
+          <div class="media-container mb-2 text-center">
+              {% if ".jpg" in file_url or ".jpeg" in file_url or ".png" in file_url or ".gif" in file_url %}
+              <img src="{{ problem.file.url }}" class="clickable-media" data-type="image" data-src="{{ problem.file.url }}" style="width:80%; height:250px; cursor:pointer; border-radius:8px;">
+              {% elif ".mp4" in file_url or ".mov" in file_url or ".avi" in file_url or ".mkv" in file_url or ".webm" in file_url %}
+              <video src="{{ problem.file.url }}" class="clickable-media" data-type="video" data-src="{{ problem.file.url }}" style="width:80%; height:250px; border-radius:8px;" controls></video>
+              {% elif ".mp3" in file_url or ".wav" in file_url or ".aac" in file_url %}
+              <audio src="{{ problem.file.url }}" class="clickable-media" data-type="audio" data-src="{{ problem.file.url }}" style="width:100%;" controls></audio>
+              {% endif %}
+          </div>
+          {% endwith %}
+          {% endif %}
+
+            <!-- Interaction Buttons -->
+            <div class="d-flex flex-wrap align-items-center gap-3 mb-3">
+
+              <!-- Vote buttons -->
+              <div class="d-flex align-items-center gap-1">
+                  <button class="btn vote-btn upvote" data-id="{{ problem.id }}" data-type="problem" title="Upvote">👍</button>
+                  <span id="problem-score-{{ problem.id }}" class="fw-bold">{{ problem.annot_votes_score|abbreviate_number }}</span>
+                  <button class="btn vote-btn downvote" data-id="{{ problem.id }}" data-type="problem" title="DownVote">👎</button>
+              </div>
+
+              <!-- Stats -->
+              <div class="d-flex gap-2 align-items-center">
+                <span class="small"><i class="fas fa-reply"></i> {{ problem.comments.count|abbreviate_number }}</span>
+                <span class="small"><i class="fas fa-eye"></i> {{ problem.annot_views_count|abbreviate_number }}</span>
+              </div>
+
+              <!-- Bookmark & Share -->
+              <div class="d-flex gap-2 align-items-center">
+              <span class="cursor-pointer small save-btn d-flex align-items-center gap-1" data-id="{{ problem.id }}">
+                  <i class="fas fa-bookmark {% if problem.is_bookmarked %}active{% endif %}"></i>
+                  <span class="save-text">{% if problem.is_bookmarked %}Saved{% else %}Save{% endif %}</span>
+                </span>
+                <!-- Share -->
+                <span class="cursor-pointer small d-flex align-items-center gap-1" data-bs-toggle="modal" data-bs-target="#shareModal-{{ problem.id }}">
+                  <i class="fas fa-share"></i> Share
+                </span>
+              </div>
+
+              <!-- Tip -->
+              {% if request.user != problem.author %}
+              <div class="d-flex align-items-center gap-1">
+                <input type="number" class="form-control form-control-sm problem-tip-amount" placeholder="Tip $" style="width:70px;">
+                <button class="btn btn-sm btn-warning send-problem-tip-btn" data-id="{{ problem.id }}">
+                  <i class="fas fa-coins"></i> Tip
+                </button>
+                <span class="badge bg-info text-dark d-flex align-items-center gap-1">
+                  <i class="fas fa-coins"></i> {{ problem.tips_received|abbreviate_number }}
+                </span>
+              </div>
+              {% endif %}
+
+              <!-- Promotion Buttons -->
+              {% if request.user == problem.author %}
+              <form class="d-flex align-items-center gap-1 promotion-feature-small mb-0" method="post" action="{% url 'promote_problem' problem.id %}">
+                {% csrf_token %}
+                <button type="submit" name="promotion_type" value="featured" class="btn btn-sm bg-info text-dark" title="Feature 24h for $3">⭐</button>
+                <button type="submit" name="promotion_type" value="boosted" class="btn btn-sm bg-warning text-dark" title="Boost 3 Days for $7">🚀</button>
+                <button type="submit" name="promotion_type" value="pinned" class="btn btn-sm bg-light text-dark" title="Pin to Homepage for $15">📌</button>
+              </form>
+              {% endif %}
+
+              <!-- Promotion Badge -->
+              {% if problem.promotion_priority %}
+                {% if problem.promotion_priority == 3 %}
+                  <span class="badge bg-danger">📌 Pinned</span>
+                {% elif problem.promotion_priority == 2 %}
+                  <span class="badge bg-info">🚀 Boosted</span>
+                {% elif problem.promotion_priority == 1 %}
+                  <span class="badge bg-warning">⭐ Featured</span>
+                {% endif %}
+              {% endif %}
+
+            </div>
+
+            <!-- Tags -->
+            {% if problem.tags.all %}
+            <div class="d-flex flex-wrap gap-1 mb-2">
+              {% for tag in problem.tags.all %}
+                <span class="badge bg-secondary">{{ tag.name }}</span>
+              {% endfor %}
+            </div>
+            {% endif %}
+
+          <!-- Comments Section -->
+          <div class="comment-section">
+
+            <!-- View Comments Toggle Button -->
+            {% if problem.comments.count > 0 %}
+            <button class="btn btn-sm btn-link view-comments-btn text-decoration-none" type="button">
+                Comments ({{ problem.comments.count|abbreviate_number }})
+            </button>
+            {% endif %}
+            <!-- Comment Form (always visible, not scrollable) -->
+            {% if user.is_authenticated %}
+              <form class="comment-form d-flex align-items-start gap-2 mt-2" data-problem-id="{{ problem.id }}">
+                  {% csrf_token %}
+                  <textarea 
+                      name="content" 
+                      class="form-control form-control-sm comment-textarea flex-grow-1" 
+                      placeholder="Write a comment..." 
+                      rows="1" 
+                      required
+                      style="resize: none; overflow:hidden;"
+                  ></textarea>
+                  <button type="submit" class="btn btn-sm btn-success d-flex align-items-center justify-content-center">
+                      <i class="fas fa-paper-plane"></i>
+                  </button>
+              </form>
+            {% endif %}
+            <!-- Comments List (scrollable container) -->
+            <div class="comments-list-container" style="display: none; max-height: 300px; overflow-y: auto;">
+                <div class="comments-list d-flex flex-column">
+                    {% for comment in problem.comments.all|dictsortreversed:"created_at" %}
+                    <div class="comment-card card mb-2 p-2" data-id="{{ comment.id }}" style="border-radius:8px; box-shadow:0 1px 4px rgba(0,0,0,0.08);">
+                        <div class="d-flex align-items-start gap-2">
+
+                        <!-- Avatar -->
+                        <a href="{% url 'profile' comment.user.id %}">
+                            {% if comment.user.avatar %}
+                              <img src="{{ comment.user.avatar.url }}" class="rounded-circle" style="width:36px; height:36px; object-fit:cover;">
+                            {% else %}
+                              {% with first=comment.user.username|slice:":1"|upper %}
+                              <div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center" style="width:36px; height:36px; font-weight:bold;">
+                                  {{ first }}
+                              </div>
+                              {% endwith %}
+                            {% endif %}
+                        </a>
+                        <!-- Username + Timestamp + Content -->
+                        <div class="flex-grow-1">
+                            <div class="d-flex justify-content-between align-items-start">
+                              <div class="d-flex flex-column">
+                                <a href="{% url 'profile' comment.user.id %}">
+                                  <strong>{{ comment.user.username }}</strong>
+                                </a>
+                                <small class="comment-time " data-time="{{ comment.created_at|date:'c' }}"></small>
+                              </div>
+                                {% if user == comment.user %}
+                                <div class="d-flex gap-1">
+                                    <button class="btn btn-light btn-sm action-btn edit-comment-btn" data-id="{{ comment.id }}" title="Edit">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+
+                                    <button class="btn btn-light btn-sm action-btn delete-comment-btn text-danger" data-id="{{ comment.id }}" title="Delete">
+                                        <i class="fas fa-trash-alt"></i>
+                                    </button>
+
+                                </div>
+                                {% endif %}
+                            </div>
+                            <div class="comment-content mt-3">{{ comment.content|convert_mentions|safe }}</div>
+                        </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            </div>
+          </div>
+        </div>
+        {% endif %}
+        <!-- SHARE MODAL -->
+          <div class="modal fade" id="shareModal-{{ problem.id }}" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h5 class="modal-title">Share Problem</h5>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                  <ol class="list-group list-group-numbered">
+                    {% with problem_url=problem.get_absolute_url %}
+                    <li class="list-group-item">
+                      <a href="https://twitter.com/intent/tweet?url={{ request.build_absolute_uri|add:problem_url }}" target="_blank">
+                        <i class="fab fa-twitter me-2"></i> Twitter
+                      </a>
+                    </li>
+                    <li class="list-group-item">
+                      <a href="https://www.facebook.com/sharer/sharer.php?u={{ request.build_absolute_uri|add:problem_url }}" target="_blank">
+                        <i class="fab fa-facebook me-2"></i> Facebook
+                      </a>
+                    </li>
+                    <li class="list-group-item">
+                      <a href="https://www.linkedin.com/shareArticle?mini=true&url={{ request.build_absolute_uri|add:problem_url }}" target="_blank">
+                        <i class="fab fa-linkedin me-2"></i> LinkedIn
+                      </a>
+                    </li>
+                    <li class="list-group-item">
+                      <a href="#" onclick="copyProblemLink('{{ problem.id }}'); return false;">
+                          <i class="fas fa-link me-2"></i> Copy Link
+                      </a>
+                    </li>
+                    {% endwith %}
+                  </ol>
+                </div>
+              </div>
+            </div>
+          </div>
+      {% endfor %}
+    </div>
+
+    <!-- Mobile Bookmark Panel -->
+    <div class="col-lg-4 position-relative">
+      <div class="sticky-panel" id="bookmarkcard">
+      <h5>Bookmarks</h5>
+      <div class="bookmark-content">
+        {% if bookmarked_problems %}
+          <ul class="list-group list-group-flush bookmark-list">
+            {% for bp in bookmarked_problems %}
+              <li class="list-group-item bookmark-item px-0" data-id="{{ bp.id }}">
+                <a href="#problem-{{ bp.id }}" class="bookmark-title text-decoration-none d-block">
+                  {{ bp.title|truncatechars:50 }}
+                  {% if bp.title|length > 50 %}
+                      <span class="read-more">...Read more</span>
+                  {% endif %}
+                </a>
+              </li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <div class="small">
+            <i class="fas fa-bookmark me-1"></i> No bookmarks yet.
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Overlay -->
+  <div id="bookmarkOverlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1000;"></div>
+
+</div>
+<!-- ========================== -->
+<!-- Image Modal -->
+<!-- ========================== -->
+<!-- Media Modal -->
+<div id="media-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); justify-content:center; align-items:center; z-index:2000; flex-direction:column;">
+  <span id="media-modal-close" style="position:absolute; top:20px; right:30px; font-size:30px; color:white; cursor:pointer;">&times;</span>
+  <div id="media-modal-content" style="max-width:90%; max-height:90%; display:flex; justify-content:center; align-items:center;"></div>
+</div><br><br><br>
+<script>
+function copyProblemLink(problemId) {
+    const url = "{{ request.scheme }}://{{ request.get_host }}{% url 'talenthub' %}#problem-" + problemId;
+
+    navigator.clipboard.writeText(url).then(() => {
+        alert("Link copied!");
+    });
+}
+</script>
+<style>
+/* ======================
+BOOKMARK PANEL (DESKTOP)
+====================== */
+#bookmarkcard{
+  position: sticky;
+  top: 80px; /* adjust to navbar height */
+  align-self: flex-start;
+
+  max-height: calc(100vh - 80px);
+  overflow-y: auto;
+
+  padding: clamp(12px,1.5vw,18px);
+  border-radius: 10px;
+  background: var(--card);
+
+  box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+
+  font-size: clamp(0.9rem,1vw,1rem);
+}
+
+/* bookmark list */
+.bookmark-list{
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+
+.bookmark-list .list-group-item{
+  border:none;
+  padding: clamp(8px,1vw,12px);
+  border-radius:8px;
+  background: var(--card);
+  transition:background .2s ease;
+}
+
+.bookmark-list .list-group-item:hover{
+  background: rgba(0,0,0,0.05);
+}
+
+.bookmark-list a{
+  font-size: clamp(0.85rem,1vw,0.95rem);
+  color: var(--text);
+}
+
+.bookmark-list .badge{
+  font-size: clamp(0.6rem,0.8vw,0.75rem);
+}
+
+/* Bookmark titles: single line with ellipsis */
+.bookmark-title {
+  display: inline-block;
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  vertical-align: middle;
+}
+
+/* Optional: "Read more" style */
+.read-more {
+  color: var(--primary);
+  font-weight: 500;
+  margin-left: 2px;
+  cursor: pointer;
+}
+/* ======================
+MOBILE BOOKMARK PANEL
+====================== */
+@media (max-width: 992px){
+
+  #bookmarkcard{
+    position: fixed;
+    top: 150px;
+    right: -100%;
+
+    width: 70%;
+    max-width: 300px;
+    max-height: 90vh;
+
+    background: var(--card);
+    border-left: 1px solid #ddd;
+
+    box-shadow: -4px 0 15px rgba(0,0,0,0.15);
+
+    z-index: 2000;
+
+    transition: right .35s ease;
+    padding: clamp(12px,2vw,20px);
+
+    overflow-y: auto;
+
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+
+    font-size: clamp(0.85rem,2vw,1rem);
+  }
+
+  #bookmarkcard.open{
+    right:0;
+  }
+
+  #bookmarkcard h5{
+    font-size: clamp(1rem,2.5vw,1.2rem);
+  }
+
+  #bookmarkcard .list-group-item{
+    padding: clamp(8px,2vw,12px);
+  }
+
+}
+</style>
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+  // ===========================
+  // Trending Carousel
+  // ===========================
+  const trending = document.getElementById("trendingStories");
+  document.getElementById("scrollLeft")?.addEventListener("click", () => {
+    trending.scrollBy({ left: -200, behavior: "smooth" });
+  });
+  document.getElementById("scrollRight")?.addEventListener("click", () => {
+    trending.scrollBy({ left: 200, behavior: "smooth" });
+  });
+
+  function abbreviateNumber(num) {
+    if (num >= 1000000) {
+        return (num / 1000000).toFixed(1).replace(/\.0$/, '') + 'M';
+    }
+    if (num >= 1000) {
+        return (num / 1000).toFixed(1).replace(/\.0$/, '') + 'K';
+    }
+    return num.toString();
+}
+
+  // ===========================
+  // Toggle View Comments
+  // ===========================
+  document.body.addEventListener("click", e => {
+    const btn = e.target.closest(".view-comments-btn");
+    if (!btn) return;
+
+    const section = btn.closest(".comment-section");
+    const commentsContainer = section.querySelector(".comments-list-container");
+    if (!commentsContainer) return;
+
+    // Toggle visibility
+    if (commentsContainer.style.display === "none") {
+      commentsContainer.style.display = "block";
+      btn.textContent = "Hide Comments";
+    } else {
+      commentsContainer.style.display = "none";
+      const count = commentsContainer.querySelectorAll(".comment-card").length;
+      btn.textContent = `Comments (${abbreviateNumber(count)})`;
+    }
+  });
+  // ===========================
+  // Media Modal
+  // ===========================
+  const modal = document.getElementById("media-modal");
+  const modalContent = document.getElementById("media-modal-content");
+  const modalClose = document.getElementById("media-modal-close");
+
+  document.querySelectorAll(".clickable-media").forEach(el => {
+    el.addEventListener("click", () => {
+      const type = el.dataset.type;
+      const src = el.dataset.src;
+
+      // Clear previous content
+      modalContent.innerHTML = "";
+
+      if(type === "image") {
+        const img = document.createElement("img");
+        img.src = src;
+        img.style.maxWidth = "100%";
+        img.style.maxHeight = "100%";
+        img.style.borderRadius = "10px";
+        img.style.boxShadow = "0 4px 12px rgba(0,0,0,0.5)";
+        modalContent.appendChild(img);
+      } else if(type === "video") {
+        const video = document.createElement("video");
+        video.src = src;
+        video.controls = true;
+        video.autoplay = true;
+        video.style.maxWidth = "100%";
+        video.style.maxHeight = "100%";
+        video.style.borderRadius = "10px";
+        video.style.boxShadow = "0 4px 12px rgba(0,0,0,0.5)";
+        modalContent.appendChild(video);
+      } else if(type === "audio") {
+        const audio = document.createElement("audio");
+        audio.src = src;
+        audio.controls = true;
+        audio.autoplay = true;
+        audio.style.width = "80%";
+        modalContent.appendChild(audio);
+      }
+
+      modal.style.display = "flex";
+    });
+  });
+
+  modalClose.addEventListener("click", () => {
+    modal.style.display = "none";
+    modalContent.innerHTML = ""; // Stop video/audio playback
+  });
+
+  // Close modal when clicking outside the content
+  modal.addEventListener("click", e => {
+    if(e.target === modal) {
+      modal.style.display = "none";
+      modalContent.innerHTML = "";
+    }
+  });
+
+  // Prevent right-click / drag
+  modalContent.addEventListener("contextmenu", e => e.preventDefault());
+  modalContent.addEventListener("dragstart", e => e.preventDefault());
+// ===========================
+  // VOTING (Problem Only - Smart Toggle)
+  // ===========================
+
+  // Track user vote per problem: { problemId: 1 | -1 }
+  const userVotes = {};
+
+  const showVoteMessage = (msg="Vote updated") => {
+    const toast = document.createElement("div");
+    toast.className = "position-fixed bottom-0 end-0 m-3 p-2 bg-success text-white rounded shadow";
+    toast.innerText = msg;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 1200);
+  };
+
+  const handleVote = async (btn) => {
+    const id = btn.dataset.id;
+    const type = btn.dataset.type;
+
+    if (type !== "problem") return; // 🚫 ONLY problems
+
+    const isUp = btn.classList.contains("upvote");
+    const newValue = isUp ? 1 : -1;
+
+    const scoreEl = document.getElementById(`problem-score-${id}`);
+    if (!scoreEl) return;
+
+    const currentVote = userVotes[id] || 0;
+
+    // 🚫 Prevent clicking same vote again
+    if (currentVote === newValue) {
+      showVoteMessage("You already did this");
+      return;
+    }
+
+    const oldScore = parseInt(scoreEl.innerText.replace(/,/g, "")) || 0;
+
+    // ===========================
+    // OPTIMISTIC UPDATE (SMART)
+    // ===========================
+    let updatedScore = oldScore;
+
+    if (currentVote === 0) {
+      // First vote
+      updatedScore += newValue;
+    } else {
+      // Switching vote (1 → -1 OR -1 → 1)
+      updatedScore += (newValue * 2);
+    }
+
+    scoreEl.innerText = updatedScore;
+
+    try {
+      const res = await fetch(`/vote/problem/${id}/`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": csrfToken
+        },
+        body: JSON.stringify({ value: newValue })
+      });
+
+      const data = await res.json();
+
+      if (data.status === "voted" || data.success) {
+        // ✅ Sync with backend
+        if (data.score !== undefined) {
+          scoreEl.innerText = data.score;
+        }
+
+        userVotes[id] = newValue;
+        showVoteMessage("Vote recorded");
+
+      } else {
+        // ❌ Revert if backend rejects
+        scoreEl.innerText = oldScore;
+      }
+
+    } catch (err) {
+      console.error("Vote failed:", err);
+      scoreEl.innerText = oldScore;
+    }
+  };
+
+  // Attach listeners
+  document.querySelectorAll(".vote-btn").forEach(btn => {
+    btn.addEventListener("click", () => handleVote(btn));
+  });
+
+
+// ===========================
+  // Bookmark Toggle (LIVE UI)
+  // ===========================
+  // ===========================
+  // Bookmark Toggle (LIVE UI)
+  // ===========================
+  document.body.addEventListener("click", async e => {
+    const saveBtn = e.target.closest(".save-btn");
+    if (!saveBtn) return;
+
+    const postId = saveBtn.dataset.id;
+    const icon = saveBtn.querySelector("i");
+    const text = saveBtn.querySelector(".save-text");
+
+    const panel = bookmarkcard; // use mobile panel
+    let list = panel.querySelector(".bookmark-list");
+    const emptyState = panel.querySelector(".small");
+
+    // Grab problem card on the page
+    const problemCard = document.querySelector(`.problem-card[data-id="${postId}"]`);
+    if (!problemCard) return;
+
+    const problemTitle = problemCard.querySelector(".problem-title")?.innerText?.trim() || "Untitled";
+    const problemUrl = `#problem-${postId}`;
+    problemCard.id = `problem-${postId}`;
+
+    try {
+      const res = await fetch(`/problems/talenthub/${postId}/save/`, {
+        method: "POST",
+        headers: { "X-CSRFToken": csrfToken }
+      });
+      const data = await res.json();
+
+      // Update button UI
+      if (data.status === "saved") {
+        icon.classList.add("active");
+        text.textContent = "Saved";
+      } else {
+        icon.classList.remove("active");
+        text.textContent = "Save";
+      }
+
+      // Update panel
+      let existingItem = panel.querySelector(`.bookmark-item[data-id="${postId}"]`);
+
+      if (data.status === "saved") {
+        if (emptyState) emptyState.remove();
+        if (!list) {
+          list = document.createElement("ul");
+          list.className = "list-group bookmark-list";
+          panel.querySelector(".bookmark-content").appendChild(list);
+        }
+        if (!existingItem) {
+          const li = document.createElement("li");
+          li.className = "list-group-item d-flex justify-content-between align-items-start bookmark-item";
+          li.dataset.id = postId;
+          li.innerHTML = `<a href="${problemUrl}" class="bookmark-title text-decoration-none text-dark">${problemTitle}</a>`;
+          list.prepend(li);
+
+          li.querySelector("a").addEventListener("click", e => {
+            e.preventDefault();
+            const target = document.getElementById(`problem-${postId}`);
+            if (target) target.scrollIntoView({ behavior: "smooth", block: "center" });
+            hideBookmarks(); // hide panel after click
+          });
+        }
+      } else {
+        if (existingItem) existingItem.remove();
+        if (!panel.querySelector(".bookmark-item")) {
+          const empty = document.createElement("div");
+          empty.className = "small";
+          empty.innerHTML = `<i class="fas fa-bookmark me-1"></i> No bookmarks yet.`;
+          panel.querySelector(".bookmark-content").appendChild(empty);
+        }
+      }
+
+    } catch (err) {
+      console.error("Bookmark toggle failed:", err);
+    }
+  });
+
+  // ===========================
+  // Tip Problem
+  // ===========================
+  document.body.addEventListener("click", async e => {
+    const tipBtn = e.target.closest(".send-problem-tip-btn");
+    if (!tipBtn) return;
+
+    const card = tipBtn.closest(".problem-card");
+    const pid = tipBtn.dataset.id;
+    const input = card.querySelector(".problem-tip-amount");
+    const amount = parseFloat(input.value);
+
+    if (isNaN(amount) || amount <= 0) return alert("Enter a valid tip amount");
+
+    try {
+      const formData = new FormData();
+      formData.append("csrfmiddlewaretoken", csrfToken);
+      formData.append("amount", amount);
+
+      const res = await fetch(`/problems/${pid}/tip/`, { method: "POST", body: formData });
+      const data = await res.json();
+
+      if (data.success) {
+        const badge = card.querySelector(".badge.bg-info");
+        if (badge) badge.textContent = `💰 ${data.tips_received}`;
+        input.value = "";
+      } else alert("Failed to tip");
+    } catch (err) {
+      console.error("Tip failed:", err);
+    }
+  });
+
+    // ===========================
+  // AJAX Comment Posting
+  // ===========================
+  document.querySelectorAll(".comment-form").forEach(form => {
+    form.addEventListener("submit", async e => {
+      e.preventDefault();
+
+      const pid = form.dataset.problemId;
+      const input = form.querySelector(".comment-textarea"); // ✅ fixed
+      const content = input.value.trim();
+      if (!content) return;
+
+      const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+      const formData = new FormData();
+      formData.append("csrfmiddlewaretoken", csrfToken);
+      formData.append("content", content);
+      formData.append("problem_id", pid);
+
+      try {
+        // Send comment to server
+        const res = await fetch("/comments/create/", {
+          method: "POST",
+          body: formData,
+          headers: { "X-Requested-With": "XMLHttpRequest" }
+        });
+
+        const data = await res.json();
+
+        if (!data.success) {
+          return alert(data.error || "Failed to post comment");
+        }
+
+        // Reload the page so that the view can render comments
+        window.location.reload();
+
+      } catch (err) {
+        console.error(err);
+        alert("Error posting comment");
+      }
+    });
+  });
+
+  // ===========================
+  // Edit / Delete Inline
+  // ===========================
+  document.body.addEventListener("click", async e => {
+    const editBtn = e.target.closest(".edit-problem-btn, .edit-comment-btn, .edit-answer-btn");
+    const deleteBtn = e.target.closest(".delete-problem-btn, .delete-comment-btn, .delete-answer-btn");
+
+    // EDIT
+    if (editBtn) {
+      e.preventDefault();
+      const card = editBtn.closest(".problem-card, .comment-card, .answer-card");
+      const contentDiv = card.querySelector(".problem-content, .comment-content, .answer-content");
+      const originalHTML = contentDiv.innerHTML;
+
+      const textarea = document.createElement("textarea");
+      textarea.className = "form-control mb-1";
+      textarea.value = contentDiv.innerText;
+
+      const saveBtn = document.createElement("button");
+      saveBtn.className = "btn btn-sm btn-success me-1";
+      saveBtn.textContent = "Save";
+
+      const cancelBtn = document.createElement("button");
+      cancelBtn.className = "btn btn-sm btn-secondary";
+      cancelBtn.textContent = "Cancel";
+
+      const wrapper = document.createElement("div");
+      wrapper.className = "inline-edit";
+      wrapper.append(textarea, saveBtn, cancelBtn);
+      contentDiv.replaceWith(wrapper);
+
+      cancelBtn.onclick = () => wrapper.outerHTML = `<div class="${contentDiv.className}">${originalHTML}</div>`;
+
+      saveBtn.onclick = async () => {
+        const newContent = textarea.value.trim();
+        if (!newContent) return alert("Content cannot be empty");
+
+        const id = card.dataset.id;
+        let url = "";
+        let payload = {};
+
+        if (card.classList.contains("problem-card")) {
+            url = `/problems/update/${id}/`;
+            payload = { description: newContent }; // ✅ FIX HERE
+        } 
+        else if (card.classList.contains("comment-card")) {
+            url = `/comments/problem/${id}/edit/`;
+            payload = { content: newContent };
+        } 
+        else if (card.classList.contains("answer-card")) {
+            url = `/answers/update/${id}/`;
+            payload = { content: newContent };
+        }
+
+        try {
+            const res = await fetch(url, {
+            method: "POST",
+            headers: {
+                'X-CSRFToken': csrfToken,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(payload)
+            });
+
+            if (!res.ok) throw new Error(res.status);
+
+            wrapper.outerHTML = `<div class="${contentDiv.className}">${newContent}</div>`;
+        } catch (err) {
+            console.error(err);
+            alert("Edit failed");
+        }
+        };
+    }
+
+    // DELETE
+    if (deleteBtn) {
+      e.preventDefault();
+      if (!confirm("Are you sure you want to delete this item?")) return;
+
+      const card = deleteBtn.closest(".problem-card, .comment-card, .answer-card");
+      const id = card.dataset.id;
+      let url = "";
+      if (card.classList.contains("problem-card")) url = `/problems/delete/${id}/`;
+      else if (card.classList.contains("comment-card")) url = `/comments/problem/${id}/delete/`;
+      else if (card.classList.contains("answer-card")) url = `/answers/delete/${id}/`;
+
+      try {
+        const res = await fetch(url, { method: "POST", headers: { 'X-CSRFToken': csrfToken } });
+        if (!res.ok) throw new Error(res.status);
+        card.remove();
+      } catch (err) {
+        console.error(err);
+        alert("Delete failed");
+      }
+    }
+  });
+
+// -------------------------
+// FOLLOW MESSAGE
+// -------------------------
+const showFollowMessage = (msg = "Following user!") => {
+
+  const toast = document.createElement("div");
+
+  toast.className =
+    "follow-toast position-fixed bottom-0 end-0 m-3 px-3 py-2 bg-success text-white rounded shadow";
+
+  toast.style.zIndex = "9999";
+  toast.innerText = msg;
+
+  document.body.appendChild(toast);
+
+  setTimeout(() => {
+    toast.style.opacity = "0";
+    setTimeout(() => toast.remove(), 300);
+  }, 1500);
+
+};
+
+
+// -------------------------
+// FOLLOW USER
+// -------------------------
+document.addEventListener("click", async (e) => {
+
+  const btn = e.target.closest(".follow-btn");
+  if (!btn) return;
+
+  const userId = btn.dataset.userId;
+
+  // prevent double click
+  if (btn.dataset.loading === "true") return;
+  btn.dataset.loading = "true";
+
+  try {
+
+    const res = await fetch(`/users/${userId}/follow/`, {
+      method: "POST",
+      headers: {
+        "X-CSRFToken": csrfToken,
+        "Content-Type": "application/json",
+        "X-Requested-With": "XMLHttpRequest"
+      }
+    });
+
+    if (!res.ok) {
+      throw new Error("Request failed");
+    }
+
+    const data = await res.json();
+
+    if (data.status === "followed") {
+
+      btn.remove(); // remove + button
+      showFollowMessage("Now following!");
+
+    } else if (data.status === "already") {
+
+      showFollowMessage("You already follow this user.");
+
+    }
+
+  } catch (err) {
+
+    console.error(err);
+    showFollowMessage("Follow failed. Try again.");
+
+  } finally {
+
+    btn.dataset.loading = "false";
+
+  }
+
+});
+
+// ===========================
+// LIVE FILTER & SORT PROBLEMS
+// ===========================
+const searchInput = document.getElementById("problem-search");
+const categorySelect = document.getElementById("problem-category");
+const sortSelect = document.getElementById("problem-sort");
+
+const problemContainer = document.querySelector(".col-lg-8");
+let problems = Array.from(problemContainer.querySelectorAll(".problem-card"));
+
+// Function to apply filter and sort
+const filterAndSortProblems = () => {
+  const query = searchInput.value.toLowerCase();
+  const category = categorySelect.value;
+  const sortBy = sortSelect.value;
+
+  let filtered = problems.filter(card => {
+    const title = card.dataset.title.toLowerCase();
+    const cardCategory = card.dataset.category;
+
+    const matchesQuery = title.includes(query);
+    const matchesCategory = category ? cardCategory === category : true;
+
+    return matchesQuery && matchesCategory;
+  });
+
+  // Sort
+  filtered.sort((a, b) => {
+    if (sortBy === "votes") {
+      return parseInt(b.dataset.votes) - parseInt(a.dataset.votes);
+    } else if (sortBy === "answers") {
+      return parseInt(b.dataset.answers) - parseInt(a.dataset.answers);
+    } else if (sortBy === "recent") {
+      return parseFloat(b.dataset.created) - parseFloat(a.dataset.created);
+    } else return 0;
+  });
+
+  // Clear container and re-append
+  problemContainer.innerHTML = "";
+  filtered.forEach(card => problemContainer.appendChild(card));
+};
+
+// Attach events
+searchInput.addEventListener("input", filterAndSortProblems);
+categorySelect.addEventListener("change", filterAndSortProblems);
+sortSelect.addEventListener("change", filterAndSortProblems);
+
+  // -------------------------
+  // MEDIA PROTECTION
+  // -------------------------
+  const disableMediaDownload = el => {
+    if (!el) return;
+    el.setAttribute("oncontextmenu", "return false"); // disable right-click
+    const tag = el.tagName.toLowerCase();
+    if (tag === "video" || tag === "audio") {
+      el.controlsList = "nodownload nofullscreen noremoteplayback";
+    }
+  };
+  document.querySelectorAll(".clickable-media, .answer-media").forEach(disableMediaDownload);
+
+
+// -------------------------
+  // INFINITE SCROLL / AUTOLOAD
+  // -------------------------
+  let currentPage = 1;        // Tracks current page
+  let isLoading = false;      // Prevent duplicate fetches
+  const problemsContainer = document.getElementById("problems-talenthub-container");
+
+  const loadNextPage = async () => {
+    if (isLoading) return;
+    isLoading = true;
+    currentPage++;
+
+    try {
+      const res = await fetch(`/talenthub?page=${currentPage}`);
+      if (!res.ok) return;
+
+      const html = await res.text(); // Assuming server returns HTML of new problem cards
+      const tempDiv = document.createElement("div");
+      tempDiv.innerHTML = html;
+      const newCards = Array.from(tempDiv.querySelectorAll(".problem-card"));
+
+      newCards.forEach(card => {
+        problemsContainer.appendChild(card);
+      });
+
+      // Re-initialize vote buttons, media, save buttons for newly added cards
+      newCards.forEach(card => {
+        card.querySelectorAll(".vote-btn").forEach(btn => {
+          btn.addEventListener("click", () => handleVote(btn));
+        });
+        card.querySelectorAll(".save-btn").forEach(btn => {
+          btn.addEventListener("click", async () => {
+            const problemId = btn.dataset.id;
+            const textSpan = btn.querySelector(".save-text");
+            const icon = btn.querySelector("i");
+            try {
+              const res = await fetch(`/problems/talenthub/${problemId}/save/`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json", "X-CSRFToken": csrfToken }
+              });
+              const data = await res.json();
+              if (data.status === "saved") {
+                textSpan.textContent = "Saved";
+                icon.classList.add("active");
+              } else {
+                textSpan.textContent = "Save";
+                icon.classList.remove("active");
+              }
+            } catch(err) { console.error(err); }
+          });
+        });
+        card.querySelectorAll(".clickable-media, .answer-media").forEach(disableMediaDownload);
+      });
+
+    } catch(err) {
+      console.error("Failed to load next page:", err);
+    } finally {
+      isLoading = false;
+    }
+  };
+
+  // Detect when user scrolls near bottom (200px from bottom)
+  window.addEventListener("scroll", () => {
+    if ((window.innerHeight + window.scrollY) >= (document.body.offsetHeight - 200)) {
+      loadNextPage();
+    }
+  });
+
+
+// ===========================
+// MOBILE BOOKMARK TOGGLE (FINAL)
+// ===========================
+
+  const bookmarkBtn = document.getElementById('bookmarkToggleBtn');
+  const bookmarkcard = document.getElementById('bookmarkcard');
+  const overlay = document.getElementById('bookmarkOverlay');
+
+  if (!bookmarkBtn || !bookmarkcard || !overlay) return;
+
+  const toggleBookmarks = () => {
+    const isOpen = bookmarkcard.classList.contains('open');
+    if (isOpen) {
+      bookmarkcard.classList.remove('open');
+      overlay.style.display = 'none';
+      document.body.style.overflow = ''; // restore scroll
+    } else {
+      bookmarkcard.classList.add('open');
+      overlay.style.display = 'block';
+      document.body.style.overflow = 'hidden'; // prevent background scroll
+    }
+  };
+
+  bookmarkBtn.addEventListener('click', toggleBookmarks);
+  overlay.addEventListener('click', toggleBookmarks); // click outside to close
+
+
+
+});
+</script>
+
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+
+  const inputs = document.querySelectorAll("form textarea, form input[name='content']");
+
+  inputs.forEach(input => {
+
+    // ===========================
+    // Suggestion Box
+    // ===========================
+    const suggestionBox = document.createElement("ul");
+    suggestionBox.className = "mention-box";
+
+    Object.assign(suggestionBox.style, {
+      position: "absolute",
+      zIndex: "9999",
+      background: "var(--card)",
+      border: "1px solid rgba(0,0,0,0.08)",
+      borderRadius: "12px",
+      padding: "6px",
+      margin: "0",
+      display: "none",
+      width: "260px",
+      maxHeight: "260px",
+      overflowY: "auto",
+      boxShadow: "0 8px 25px rgba(0,0,0,0.12)",
+    });
+
+    document.body.appendChild(suggestionBox);
+
+    let atIndex = -1;
+
+    // ===========================
+    // Positioning
+    // ===========================
+    const updatePosition = () => {
+      const rect = input.getBoundingClientRect();
+      suggestionBox.style.top = `${rect.bottom + window.scrollY + 8}px`;
+      suggestionBox.style.left = `${rect.left + window.scrollX}px`;
+    };
+
+    // ===========================
+    // Render Suggestions
+    // ===========================
+    const renderSuggestions = (users) => {
+      suggestionBox.innerHTML = "";
+
+      users.forEach(user => {
+
+        const li = document.createElement("li");
+
+        Object.assign(li.style, {
+          display: "flex",
+          alignItems: "center",
+          gap: "10px",
+          padding: "8px 12px",
+          borderRadius: "10px",
+          cursor: "pointer",
+          transition: "all 0.15s ease",
+        });
+
+        // ===========================
+        // Avatar
+        // ===========================
+        const avatar = document.createElement("div");
+        avatar.textContent = user.username.charAt(0).toUpperCase();
+
+        Object.assign(avatar.style, {
+          width: "32px",
+          height: "32px",
+          borderRadius: "50%",
+          background: "#e4e6eb",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          fontSize: "13px",
+          fontWeight: "600",
+          color: "#333",
+          flexShrink: "0",
+        });
+
+        // ===========================
+        // Username Wrapper (FIXED ALIGNMENT)
+        // ===========================
+        const nameWrapper = document.createElement("div");
+
+        Object.assign(nameWrapper.style, {
+          display: "flex",
+          alignItems: "center",
+          height: "32px",   // EXACT match avatar
+        });
+
+        const name = document.createElement("span");
+        name.innerHTML = `<strong>@${user.username}</strong>`;
+
+        Object.assign(name.style, {
+          fontSize: "14px",
+          lineHeight: "1",  // 🔥 critical fix
+        });
+
+        nameWrapper.appendChild(name);
+
+        // ===========================
+        // Hover Effects
+        // ===========================
+        li.addEventListener("mouseenter", () => {
+          li.style.background = "#f0f2f5";
+          li.style.transform = "translateX(4px)";
+        });
+
+        li.addEventListener("mouseleave", () => {
+          li.style.background = "transparent";
+          li.style.transform = "translateX(0)";
+        });
+
+        // ===========================
+        // Insert Mention
+        // ===========================
+        li.addEventListener("click", () => {
+          const cursorPos = input.selectionStart;
+
+          input.value =
+            input.value.slice(0, atIndex + 1) +
+            user.username + " " +
+            input.value.slice(cursorPos);
+
+          input.focus();
+          suggestionBox.style.display = "none";
+        });
+
+        li.appendChild(avatar);
+        li.appendChild(nameWrapper);
+        suggestionBox.appendChild(li);
+      });
+
+      suggestionBox.style.display = users.length ? "block" : "none";
+    };
+
+    // ===========================
+    // Input Listener
+    // ===========================
+    input.addEventListener("input", async () => {
+
+      const value = input.value;
+      const cursorPos = input.selectionStart;
+
+      atIndex = value.lastIndexOf("@", cursorPos - 1);
+
+      if (atIndex === -1) {
+        suggestionBox.style.display = "none";
+        return;
+      }
+
+      const query = value.slice(atIndex + 1, cursorPos).trim();
+
+      if (!query) {
+        suggestionBox.style.display = "none";
+        return;
+      }
+
+      updatePosition();
+
+      try {
+        const res = await fetch(`/api/user_suggest/?q=${encodeURIComponent(query)}`);
+        const data = await res.json();
+        renderSuggestions(data.users);
+      } catch {
+        suggestionBox.style.display = "none";
+      }
+
+    });
+
+    // ===========================
+    // Hide on Blur
+    // ===========================
+    input.addEventListener("blur", () => {
+      setTimeout(() => suggestionBox.style.display = "none", 200);
+    });
+
+  });
+
+});
+
+// ===========================
+// CLEAR FORM AFTER SUBMIT
+// ===========================
+document.querySelectorAll(".comment-form").forEach(form => {
+  form.addEventListener("submit", async e => {
+    e.preventDefault();
+
+    const input = form.querySelector("input[name='content']");
+    const content = input.value.trim();
+    if (!content) return;
+
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+    const formData = new FormData();
+    formData.append("csrfmiddlewaretoken", csrfToken);
+    formData.append("content", content);
+    formData.append("problem_id", form.dataset.problemId);
+
+    try {
+      const res = await fetch("/comments/create/", {
+        method: "POST",
+        body: formData,
+        headers: { "X-Requested-With": "XMLHttpRequest" }
+      });
+
+      const data = await res.json();
+
+      if (data.success) {
+        // ✅ CLEAR INPUT HERE
+        input.value = "";
+
+        // Optional: reset cursor
+        input.blur();
+        input.focus();
+      } else {
+        alert(data.error || "Failed to post comment");
+      }
+
+    } catch (err) {
+      console.error(err);
+      alert("Error posting comment");
+    }
+  });
+});
+</script>
+<script>
+function updateTimes() {
+  const timeElements = document.querySelectorAll('.problem-time, .comment-time');
+  const now = new Date();
+
+  timeElements.forEach(el => {
+    const time = new Date(el.dataset.time);
+    const diffMs = now - time;
+    const diffMins = Math.floor(diffMs / 60000);
+
+    if(diffMins < 1) {
+      el.innerText = 'Just now';
+    } else if(diffMins < 60) {
+      el.innerText = `${diffMins} min${diffMins > 1 ? 's' : ''} ago`;
+    } else if(diffMins < 1440) { // less than a day
+      const hours = Math.floor(diffMins / 60);
+      el.innerText = `${hours} hour${hours > 1 ? 's' : ''} ago`;
+    } else { // days
+      const days = Math.floor(diffMins / 1440);
+      el.innerText = `${days} day${days > 1 ? 's' : ''} ago`;
+    }
+  });
+}
+
+// Initial update
+updateTimes();
+
+// Live update every minute
+setInterval(updateTimes, 60000);
+</script>
+
+
+{% endblock %}

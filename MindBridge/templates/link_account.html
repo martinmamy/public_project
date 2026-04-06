@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+
+{% block title %}Link Payment Account{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="card shadow-sm p-4 mx-auto" style="max-width: 600px;">
+        <h2 class="mb-4">Link Your PayPal Account</h2>
+
+        {% if has_paypal %}
+            <div class="alert alert-success">
+                ✅ Your PayPal account is already linked.
+            </div>
+            <p>You can now send or receive tips and bounties securely.</p>
+        {% else %}
+            <div class="alert alert-info">
+                ⚠ You have not linked a PayPal account yet.
+            </div>
+            <p>Link your PayPal account to create bounties and receive tips in order to set bounty amount during the problem creation.</p>
+            <a href="{% url 'link_paypal_account' %}" class="btn mt-3">
+                Link PayPal Account
+            </a>
+        {% endif %}
+
+        <hr class="my-4">
+
+        <p>
+            Your linked PayPal account will be used for tipping, bounties, and other payments.
+            You can safely update your linked account at any time.
+        </p>
+
+        <a href="{% url 'profile' request.user.id %}" class="btn btn mt-2">
+            Back to Profile
+        </a>
+    </div>
+</div>
+{% endblock %}

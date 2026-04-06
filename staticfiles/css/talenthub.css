@@ -1,0 +1,394 @@
+/* =====================================
+🌍 GLOBAL DESIGN SYSTEM
+===================================== */
+
+/* =====================================
+🧱 LAYOUT
+===================================== */
+
+/* =====================================
+📦 CARD SYSTEM
+===================================== */
+.problem-card{
+  background:var(--card);
+  border-radius:var(--radius);
+  
+  margin-bottom:18px;
+  border:1px solid transparent;
+  transition:var(--transition);
+}
+
+.problem-card:hover{
+  transform:translateY(-3px);
+  box-shadow:var(--shadow-md);
+  border-color:var(--border);
+}
+
+/* =====================================
+👤 HEADER
+===================================== */
+.problem-card-header{
+  padding:14px 16px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+
+.header-left{
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+
+.header-right{
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+
+/* Avatar */
+.avatar{
+  width:42px;
+  height:42px;
+  border-radius:50%;
+  object-fit:cover;
+  border:2px solid #fff;
+  box-shadow:0 0 0 1px var(--border);
+  transition:var(--transition);
+}
+
+.avatar:hover{
+  transform:scale(1.05);
+}
+
+/* Meta */
+.problem-time{
+  font-size:12px;
+  color:var(--muted);
+}
+
+/* Category */
+.category-badge{
+  font-size:11px;
+  background:var(--primary-soft);
+  color:var(--primary);
+  padding:4px 10px;
+  border-radius:999px;
+  font-weight:600;
+}
+
+/* =====================================
+📝 BODY
+===================================== */
+.problem-card-body{
+  padding:0 16px 14px;
+}
+
+.problem-title{
+  font-size:18px;
+  font-weight:700;
+  margin-bottom:6px;
+  text-align:center;
+}
+
+.problem-content{
+  font-size:14px;
+  line-height:1.6;
+  color:var(--text);
+}
+
+/* =====================================
+🖼 MEDIA
+===================================== */
+.media-container{
+  margin-top:10px;
+  text-align:center;
+}
+
+.media-container img,
+.media-container video{
+  width:80%;
+  height:250px;
+  object-fit:cover;
+  border-radius:12px;
+  transition:var(--transition);
+}
+
+.media-container img:hover{
+  transform:scale(1.02);
+  box-shadow:var(--shadow-md);
+}
+
+/* =====================================
+⚡ INTERACTION BAR
+===================================== */
+.problem-actions{
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  gap:12px;
+  margin-top:10px;
+  padding-top:10px;
+  border-top:1px solid var(--border);
+}
+
+/* Buttons */
+.vote-btn{
+  border:none;
+  background:#f0f2f5;
+  border-radius:50%;
+  width:34px;
+  height:34px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:16px;
+  transition:var(--transition);
+}
+
+.vote-btn:hover{
+  background:var(--primary-soft);
+  transform:scale(1.1);
+}
+
+.vote-count{
+  font-weight:600;
+}
+
+/* Small icons */
+.problem-actions .small{
+  color:var(--muted);
+}
+
+/* =====================================
+💬 COMMENTS
+===================================== */
+.comment-section{
+  margin-top:12px;
+}
+
+.comments-list-container{
+  max-height:280px;
+  overflow-y:auto;
+  padding-right:4px;
+}
+
+/* Comment */
+.comment-card{
+  background:#f0f2f5;
+  border-radius:12px;
+  padding:8px 10px;
+  margin-bottom:6px;
+  transition:var(--transition);
+}
+
+.comment-card:hover{
+  background:#e9ebee;
+}
+
+.comment-content{
+  font-size:13px;
+}
+
+.comment-time{
+  font-size:11px;
+  color:var(--muted);
+}
+
+/* Input */
+.comment-form textarea{
+  border-radius:20px;
+  font-size:13px;
+  padding:10px 14px;
+  border:1px solid var(--border);
+}
+
+.comment-form textarea:focus{
+  border-color:var(--primary);
+  box-shadow:0 0 0 2px rgba(24,119,242,0.15);
+  outline:none;
+}
+
+/* =====================================
+🎞 TRENDING STORIES
+===================================== */
+.trending-stories-wrapper{
+  position:relative;
+  margin-bottom:1.5rem;
+}
+
+.trending-stories{
+  display:flex;
+  gap:12px;
+  overflow-x:auto;
+  scroll-behavior:smooth;
+  padding-bottom:6px;
+  scrollbar-width:none;
+}
+
+.trending-stories::-webkit-scrollbar{
+  display:none;
+}
+
+/* Story Card */
+.story-card{
+  flex-shrink:0;
+  width:180px;
+  background:var(--card);
+  border-radius:12px;
+  padding:8px;
+  cursor:pointer;
+  transition:var(--transition);
+}
+
+.story-card:hover{
+  transform:scale(1.05);
+}
+
+/* Story Media */
+.story-media{
+  height:100px;
+  border-radius:8px;
+  overflow:hidden;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+/* Story Title */
+.story-title{
+  font-size:13px;
+  font-weight:600;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+/* Buttons */
+.trending-stories-wrapper .btn{
+  width:32px;
+  height:32px;
+  border-radius:50%;
+  box-shadow:var(--shadow-sm);
+}
+
+/* =====================================
+📌 BOOKMARK PANEL
+===================================== */
+#bookmarkcard{
+  position:sticky;
+  top:90px;
+  background:var(--card);
+  border-radius:14px;
+  padding:16px;
+  box-shadow:var(--shadow-sm);
+}
+
+.bookmark-item{
+  padding:6px 0;
+  transition:var(--transition);
+}
+
+.bookmark-item:hover{
+  padding-left:6px;
+  color:var(--primary);
+}
+
+/* =====================================
+📱 MOBILE BUTTON
+===================================== */
+.sidebar-toggle-btn{
+  position:fixed;
+  top:100px;
+  right:15px;
+  z-index:2000;
+
+  width:48px;
+  height:48px;
+  border-radius:50%;
+  background:var(--primary);
+  color:white;
+
+  border:none;
+  box-shadow:0 6px 18px rgba(0,0,0,0.25);
+}
+
+/* =====================================
+🎞 MODAL
+===================================== */
+#media-modal{
+  backdrop-filter:blur(6px);
+}
+
+#media-modal-content img,
+#media-modal-content video{
+  border-radius:16px;
+  max-width:100%;
+  max-height:90vh;
+}
+
+/* =====================================
+🧼 SCROLLBAR
+===================================== */
+::-webkit-scrollbar{
+  width:6px;
+}
+::-webkit-scrollbar-thumb{
+  background:#bcc0c4;
+  border-radius:10px;
+}
+
+/* =====================================
+📲 RESPONSIVE
+===================================== */
+@media(max-width:768px){
+
+  .problem-title{
+    font-size:16px;
+  }
+
+  .story-card{
+    width:150px;
+  }
+
+  .media-container img,
+  .media-container video{
+    width:100%;
+    height:220px;
+  }
+}
+
+@media(max-width:480px){
+
+  .problem-title{
+    font-size:15px;
+  }
+
+  .story-card{
+    width:120px;
+  }
+
+  .story-media{
+    height:80px;
+  }
+
+  .avatar{
+    width:34px;
+    height:34px;
+  }
+}
+
+/* =====================================
+✨ MICRO INTERACTIONS
+===================================== */
+button:active{
+  transform:scale(0.95);
+}
+
+a{
+  transition:var(--transition);
+}
+
+a:hover{
+  opacity:.85;
+}

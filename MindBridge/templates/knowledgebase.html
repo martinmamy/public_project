@@ -1,0 +1,336 @@
+{% extends "base.html" %}
+{% load mention_tags %}
+{% load custom_tags %}
+
+{% block title %}Knowledge Base | Fancylearn{% endblock %}
+
+{% block content %}
+<style>
+/* ========================
+   GENERAL LAYOUT
+======================== */
+.kb-container { height: calc(100vh - 80px); background: #f5f7fa; display: flex; flex-direction: column; }
+.kb-content { overflow-y:auto; height:100%; padding:20px; box-sizing:border-box; }
+
+/* ========================
+   SIDEBAR
+======================== */
+.kb-sidebar {
+    height: 100%;
+    overflow-y: auto;
+    background: var(--card);
+    border-right:1px solid #e0e4e8;
+    transition: transform 0.3s ease;
+    border-radius:0 8px 8px 0;
+    z-index:1050;
+    color: var(--text);
+}
+@media(max-width:768px){
+    .kb-sidebar{
+        position: fixed;
+        top:150px;
+        left:0;
+        width:280px;
+        height:100vh;
+        transform: translateX(-100%);
+        padding-top:70px;
+    }
+    .kb-sidebar.show{ transform:translateX(0); }
+}
+
+.kb-overlay{ display:none; }
+@media(max-width:768px){
+    .kb-overlay.show{
+        display:block;
+        position:fixed;
+        top:0; left:0;
+        width:100%; height:100%;
+        background:rgba(0,0,0,0.25);
+        backdrop-filter:blur(1px);
+        z-index:1040;
+    }
+}
+
+/* ========================
+   SIDEBAR TOGGLE
+======================== */
+.kb-toggle-arrow{
+    display:none;
+}
+@media(max-width:768px){
+    .kb-toggle-arrow{
+        position:fixed;
+        top:50%;
+        right:0;
+        z-index:6000;
+        width:32px;
+        height:32px;
+        border-radius:50%;
+        background:var(--primary);
+        color:white;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        font-size:18px;
+        cursor:pointer;
+        transition:0.3s;
+    }
+    .kb-toggle-arrow:hover{ background:#1e40af; transform:scale(1.1); }
+}
+
+/* ========================
+   SIDEBAR LINKS
+======================== */
+.kb-category{ font-size:12px; text-transform:uppercase; color:var(--text); margin-top:25px; font-weight:600; }
+.kb-link{ display:block; padding:8px 14px; border-radius:8px; color:var(--text); text-decoration:none; font-size:14px; transition:0.3s; margin-bottom:4px; word-break:break-word; }
+.kb-link:hover{ background:#e0e7ff; transform:translateX(3px); }
+.kb-link.active{ background:#2563eb; color:white; font-weight:500; box-shadow:0 2px 6px rgba(37,99,235,0.3); }
+
+/* ========================
+   CARD & CONTENT
+======================== */
+.kb-card{ background:var(--card); color:var(--text); border-radius:12px; padding:25px; box-shadow:0 2px 12px rgba(0,0,0,0.05); transition:box-shadow 0.3s; word-break:break-word; }
+.kb-card:hover{ box-shadow:0 4px 16px rgba(0,0,0,0.08); }
+.kb-section-title{ font-weight:600; margin-top:20px; color:var(--text); }
+.kb-solution-list{ padding-left:20px; }
+.kb-media{ max-width:100%; border-radius:10px; margin-top:12px; box-shadow:0 2px 8px rgba(0,0,0,0.08); cursor:pointer; transition:transform 0.3s; user-select:none; }
+.kb-media:hover{ transform:scale(1.02); }
+.kb-empty{ height:100%; display:flex; align-items:center; justify-content:center; color:#6b7280; font-style:italic; font-size:18px; padding:50px 0; }
+.kb-summary{ font-style:italic; color:var(--text); margin-bottom:12px; }
+/* CATEGORY TOGGLE */
+.kb-category-toggle{
+    font-size:12px;
+    text-transform:uppercase;
+    color:#6b7280;
+    margin-top:20px;
+    font-weight:600;
+    cursor:pointer;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:6px 4px;
+    border-radius:6px;
+    transition:0.2s;
+}
+
+.kb-category-toggle:hover{
+    background:#e5e7eb;
+}
+
+.kb-cat-arrow{
+    font-size:12px;
+    transition:transform 0.3s ease;
+}
+
+/* COLLAPSIBLE CONTENT */
+.kb-category-content{
+    max-height:0;
+    overflow:hidden;
+    transition:max-height 0.3s ease;
+    color:var(--text);
+}
+
+.kb-category-content.open{
+    max-height:500px; /* enough for many items */
+}
+
+/* Rotate arrow when open */
+.kb-category-content.open + .kb-cat-arrow{
+    transform:rotate(90deg);
+}
+
+/* Sidebar scroll improvement */
+.kb-sidebar{
+    overflow-y:auto;
+    scrollbar-width:thin;
+}
+
+.kb-sidebar::-webkit-scrollbar{
+    width:6px;
+}
+.kb-sidebar::-webkit-scrollbar-thumb{
+    background:#cbd5f5;
+    border-radius:10px;
+}
+/* ========================
+   MODAL
+======================== */
+#img-modal{ display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); justify-content:center; align-items:center; z-index:2000; }
+#img-modal-content{ max-width:90%; max-height:90%; border-radius:10px; box-shadow:0 4px 12px rgba(0,0,0,0.5); pointer-events:none; }
+#img-modal-close{ position:absolute; top:20px; right:30px; font-size:30px; color:white; cursor:pointer; user-select:none; }
+</style>
+
+  <div class="row h-100">
+
+    <div id="kbOverlay" class="kb-overlay" onclick="toggleSidebar()"></div>
+
+    <div id="kbSidebar" class="col-md-3 kb-sidebar p-3">
+      <h5 class="mb-3" style="font-weight:700; color:#2563eb;">📚 Knowledge Base</h5>
+
+      <form method="get" class="mb-3">
+        <input type="text" name="search" value="{{ search }}"
+              class="form-control form-control-sm"
+              placeholder="Search articles...">
+      </form>
+
+      {% for category, entries in categories.items %}
+        
+        <!-- CATEGORY HEADER (CLICKABLE) -->
+        <div class="kb-category-toggle"
+            onclick="toggleCategory('cat-{{ forloop.counter }}')">
+          {{ category }}
+          <span class="kb-cat-arrow" id="arrow-cat-{{ forloop.counter }}">►</span>
+        </div>
+
+        <!-- CATEGORY CONTENT -->
+        <div class="kb-category-content {% for e in entries %}{% if e.id|stringformat:'s' == selected_entry_id %}open{% endif %}{% endfor %} {% if selected_entry_id and selected_entry_id in entries|join:', ' %}open{% endif %}"
+            id="cat-{{ forloop.counter }}">
+
+          {% for entry_item in entries %}
+            <a href="?entry={{ entry_item.id }}"
+              class="kb-link {% if selected_entry_id == entry_item.id|stringformat:'s' %}active{% endif %}">
+              {{ entry_item.title|truncatechars:40 }}
+            </a>
+          {% endfor %}
+
+        </div>
+
+      {% endfor %}
+    </div>
+
+    <div class="col-md-9 kb-content">
+      {% if entry %}
+        <div class="kb-card">
+          <h2>{{ entry.title }}</h2>
+          <p class="small">{{ entry.category }}</p>
+          <hr>
+
+          <!-- Problem Summary -->
+          <div class="kb-summary">
+            <div><strong>Summary</strong></div>
+            {{ entry.description|convert_mentions|problem_summary|safe }}
+          </div>
+
+          <!-- Problem Detail -->
+          <div class="kb-section">
+            <h5 class="kb-section-title">Detail</h5>
+            <div class="problem-content">{{ entry.description|convert_mentions|linebreaks|smart_breaks|safe }}</div>
+
+            {% if entry.problem.file %}
+              {% with entry.problem.file.url|lower as file_url %}
+              <div class="media-container text-center my-3">
+                {% if ".jpg" in file_url or ".jpeg" in file_url or ".png" in file_url or ".gif" in file_url %}
+                  <img src="{{ entry.problem.file.url }}" class="kb-media" draggable="false">
+                {% elif ".mp4" in file_url or ".mov" in file_url or ".avi" in file_url or ".mkv" in file_url or ".webm" in file_url %}
+                  <video controls class="kb-media" oncontextmenu="return false;" controlsList="nodownload"><source src="{{ entry.problem.file.url }}"></video>
+                {% elif ".mp3" in file_url or ".wav" in file_url or ".aac" in file_url %}
+                  <audio controls class="kb-media w-100" oncontextmenu="return false;" controlsList="nodownload"><source src="{{ entry.problem.file.url }}"></audio>
+                {% endif %}
+              </div>
+              {% endwith %}
+            {% endif %}
+          </div>
+
+          <!-- Solution -->
+          <div class="kb-section">
+            <h5 class="kb-section-title">Solution</h5>
+            {% if entry.answer.content %}
+              <ul class="kb-solution-list">
+                {% for line in entry.answer.content.splitlines %}
+                  {% if line %}
+                    <li>{{ line|convert_mentions|linebreaks|smart_breaks|safe }}</li>
+                  {% endif %}
+                {% endfor %}
+              </ul>
+            {% endif %}
+
+            {% if entry.answer.file %}
+              {% with entry.answer.file.url|lower as file_url %}
+              <div class="media-container text-center my-3">
+                {% if ".jpg" in file_url or ".jpeg" in file_url or ".png" in file_url or ".gif" in file_url %}
+                  <img src="{{ entry.answer.file.url }}" class="kb-media" draggable="false">
+                {% elif ".mp4" in file_url or ".mov" in file_url or ".avi" in file_url or ".mkv" in file_url or ".webm" in file_url %}
+                  <video controls class="kb-media" oncontextmenu="return false;" controlsList="nodownload"><source src="{{ entry.answer.file.url }}"></video>
+                {% elif ".mp3" in file_url or ".wav" in file_url or ".aac" in file_url %}
+                  <audio controls class="kb-media w-100" oncontextmenu="return false;" controlsList="nodownload"><source src="{{ entry.answer.file.url }}"></audio>
+                {% endif %}
+              </div>
+              {% endwith %}
+            {% endif %}
+          </div>
+        </div>
+      {% else %}
+        <div class="kb-empty">
+          <h4>Select an article from the left to view details</h4>
+        </div>
+      {% endif %}
+    </div>
+
+  </div>
+
+
+<!-- Image Modal -->
+<div id="img-modal">
+  <span id="img-modal-close">&times;</span>
+  <img id="img-modal-content" src="">
+</div>
+
+<div class="kb-toggle-arrow" onclick="toggleSidebar()" id="kbArrow">KB</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+  const modal = document.getElementById("img-modal");
+  const modalImg = document.getElementById("img-modal-content");
+  const closeBtn = document.getElementById("img-modal-close");
+
+  // Select all images and media
+  document.querySelectorAll(".problem-content img, .kb-media").forEach(media => {
+    media.style.cursor = "zoom-in";
+    media.setAttribute("draggable", "false");
+
+    // Open modal on click
+    media.addEventListener("click", () => {
+      modal.style.display = "flex";
+      modalImg.src = media.src || media.querySelector("source").src;
+    });
+
+    // Prevent right-click
+    media.addEventListener("contextmenu", e => e.preventDefault());
+  });
+
+  // Close modal
+  closeBtn.addEventListener("click", () => { modal.style.display = "none"; });
+
+  // Click outside image closes modal
+  modal.addEventListener("click", e => { if (e.target === modal) modal.style.display = "none"; });
+
+  // Prevent right-click on modal image
+  modalImg.addEventListener("contextmenu", e => e.preventDefault());
+
+  // Extra: prevent right-click anywhere inside the modal overlay
+  modal.addEventListener("contextmenu", e => e.preventDefault());
+});
+
+function toggleCategory(id){
+  const el = document.getElementById(id);
+  const arrow = document.getElementById("arrow-" + id);
+
+  if(el.classList.contains("open")){
+    el.classList.remove("open");
+    arrow.style.transform = "rotate(0deg)";
+  } else {
+    el.classList.add("open");
+    arrow.style.transform = "rotate(90deg)";
+  }
+}
+
+function toggleSidebar() {
+  const sidebar = document.getElementById("kbSidebar");
+  const overlay = document.getElementById("kbOverlay");
+  const arrow = document.getElementById("kbArrow");
+  sidebar.classList.toggle("show");
+  overlay.classList.toggle("show");
+  arrow.innerHTML = sidebar.classList.contains("show") ? "KB" : "KB";
+}
+</script>
+{% endblock %}

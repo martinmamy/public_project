@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+
+  <!-- Main Domain -->
+  <url>
+    <loc>https://studies-buddy.com/</loc>
+  </url>
+  <url>
+    <loc>https://studies-buddy.com/login/</loc>
+  </url>
+  <url>
+    <loc>https://studies-buddy.com/signup/</loc>
+  </url>
+  <url>
+    <loc>https://studies-buddy.com/aboutus/</loc>
+  </url>
+  <url>
+    <loc>https://studies-buddy.com/privacy_policy/</loc>
+  </url>
+  <url>
+    <loc>https://studies-buddy.com/cookies/</loc>
+  </url>
+  <url>
+    <loc>https://studies-buddy.com/p/r/p/</loc>
+  </url>
+  <url>
+    <loc>https://studies-buddy.com/sre/</loc>
+  </url>
+  <url>
+    <loc>https://studies-buddy.com/static/privacy_policy.pdf</loc>
+  </url>
+
+  <!-- WWW Subdomain -->
+  <url>
+    <loc>https://www.studies-buddy.com/</loc>
+  </url>
+  <url>
+    <loc>https://www.studies-buddy.com/login/</loc>
+  </url>
+  <url>
+    <loc>https://www.studies-buddy.com/signup/</loc>
+  </url>
+  <url>
+    <loc>https://www.studies-buddy.com/aboutus/</loc>
+  </url>
+  <url>
+    <loc>https://www.studies-buddy.com/privacy_policy/</loc>
+  </url>
+  <url>
+    <loc>https://www.studies-buddy.com/cookies/</loc>
+  </url>
+
+</urlset>

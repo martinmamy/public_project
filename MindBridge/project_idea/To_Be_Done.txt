@@ -1,0 +1,48 @@
+payment service: --implemented
+    need to ensure users can link their paypal account to the apps
+    need to ensure that bounties/tips are set only if user has money
+        1-so the app will take money from the user paypal account when they set bounty if they have enough money to match the bounty amount
+        2-then they app will put the amount taken from their account that matches the bounty on hold
+        3-once answer accepted, it automatically sends to the correct answer author a 70% while app gets 30%
+        4-same logic entirely for tips and if no money just shows not sufficient money to give tips
+
+Security Layer:
+    need to get all security stuff from previous app to set in here and the settings
+
+Additional Layer:
+    need to add Marketplace, Events, TalentHub later on after successful launch of first platforms
+
+
+    New features:
+        Local Service Marketplace + Chat Automation
+
+            Problem: Small businesses don’t have websites or booking systems
+            Solution: A simple platform where users can find services (plumber, driver, tutor) and chat/order instantly
+
+            👉 Why it’s strong:
+
+            Works globally (and especially in developing regions)
+
+            You already built something similar with ChatBusiness → you can refine it
+
+            💡 MVP Features:
+
+            Business profiles
+
+            Chat-based ordering (rule-based bot)
+
+            Reviews
+
+            Location filtering
+
+
+        Micro-Learning / Knowledge Sharing Platform(AI automation work)
+
+            Problem: People want quick answers, not long courses
+            Solution: Q&A + short lessons + community knowledge base
+
+            👉 This can evolve into:
+
+            Developer hub
+
+            Student help platform

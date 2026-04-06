@@ -1,0 +1,94 @@
+PREDEFINED_CATEGORIES = [
+    ("IT", "IT"),
+    ("Technology", "Technology"),
+    ("Software Development", "Software Development"),
+    ("Cybersecurity", "Cybersecurity"),
+    ("Data Science", "Data Science"),
+    ("Artificial Intelligence", "Artificial Intelligence"),
+    ("Machine Learning", "Machine Learning"),
+    ("Cloud Computing", "Cloud Computing"),
+    ("DevOps", "DevOps"),
+
+    ("Agriculture", "Agriculture"),
+    ("Farming", "Farming"),
+    ("Food Production", "Food Production"),
+    ("Fisheries", "Fisheries"),
+    ("Forestry", "Forestry"),
+
+    ("Healthcare", "Healthcare"),
+    ("Medicine", "Medicine"),
+    ("Public Health", "Public Health"),
+    ("Mental Health", "Mental Health"),
+    ("Pharmacy", "Pharmacy"),
+
+    ("Education", "Education"),
+    ("E-learning", "E-learning"),
+    ("Research", "Research"),
+    ("Academic Support", "Academic Support"),
+
+    ("Environment", "Environment"),
+    ("Climate Change", "Climate Change"),
+    ("Renewable Energy", "Renewable Energy"),
+    ("Sustainability", "Sustainability"),
+
+    ("Finance", "Finance"),
+    ("Accounting", "Accounting"),
+    ("Banking", "Banking"),
+    ("Investments", "Investments"),
+    ("Cryptocurrency", "Cryptocurrency"),
+    ("Insurance", "Insurance"),
+
+    ("Business", "Business"),
+    ("Entrepreneurship", "Entrepreneurship"),
+    ("Startups", "Startups"),
+    ("Management", "Management"),
+    ("Marketing", "Marketing"),
+    ("Sales", "Sales"),
+
+    ("Law", "Law"),
+    ("Legal Advice", "Legal Advice"),
+    ("Government", "Government"),
+    ("Public Policy", "Public Policy"),
+
+    ("Engineering", "Engineering"),
+    ("Civil Engineering", "Civil Engineering"),
+    ("Mechanical Engineering", "Mechanical Engineering"),
+    ("Electrical Engineering", "Electrical Engineering"),
+
+    ("Construction", "Construction"),
+    ("Architecture", "Architecture"),
+    ("Real Estate", "Real Estate"),
+
+    ("Transportation", "Transportation"),
+    ("Logistics", "Logistics"),
+    ("Automotive", "Automotive"),
+    ("Aviation", "Aviation"),
+
+    ("Media", "Media"),
+    ("Journalism", "Journalism"),
+    ("Photography", "Photography"),
+    ("Film & Video", "Film & Video"),
+
+    ("Arts", "Arts"),
+    ("Music", "Music"),
+    ("Design", "Design"),
+    ("Graphic Design", "Graphic Design"),
+
+    ("Sports", "Sports"),
+    ("Fitness", "Fitness"),
+    ("Nutrition", "Nutrition"),
+
+    ("Tourism", "Tourism"),
+    ("Hospitality", "Hospitality"),
+    ("Travel", "Travel"),
+
+    ("Retail", "Retail"),
+    ("E-commerce", "E-commerce"),
+    ("Customer Service", "Customer Service"),
+
+    ("Social Issues", "Social Issues"),
+    ("Community Development", "Community Development"),
+    ("Nonprofit", "Nonprofit"),
+    ("Human Rights", "Human Rights"),
+
+]

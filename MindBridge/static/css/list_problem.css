@@ -1,0 +1,313 @@
+/* =====================================
+MODERN CARD SYSTEM (PRODUCTION READY)
+===================================== */
+
+/* Base Variables (ensure consistency) */
+
+/* =====================================
+CARD BASE
+===================================== */
+.card,
+.problem-card,
+.answer-card {
+  background: linear-gradient(145deg, #111827, #0b1220);
+  border-radius: var(--radius);
+  padding: clamp(10px, 1.8vw, var(--card-padding));
+  display: flex;
+  flex-direction: column;
+  gap: clamp(8px, 1vw, 14px);
+
+ 
+
+  transition: all 0.25s ease;
+  overflow: hidden;
+  min-width: 0;
+}
+
+/* Hover effect (premium feel) */
+.card:hover,
+.problem-card:hover,
+.answer-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-md);
+  background: linear-gradient(145deg, #111827, #1f2937);
+}
+
+/* spacing between cards */
+.problem-card + .problem-card {
+  margin-top: clamp(12px, 2vw, 18px);
+}
+
+/* =====================================
+CARD HEADER
+===================================== */
+.card-header,
+.post-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: nowrap;
+}
+
+/* LEFT SIDE */
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
+}
+
+/* RIGHT SIDE */
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+/* =====================================
+AVATAR (MODERN STYLE)
+===================================== */
+.avatar,
+.comment-avatar {
+  width: clamp(30px, 5vw, 42px);
+  height: clamp(30px, 5vw, 42px);
+  border-radius: 50%;
+
+  object-fit: cover;
+  flex-shrink: 0;
+
+  border: 2px solid var(--primary-soft);
+  background: var(--primary-soft);
+  color: var(--primary);
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: clamp(11px, 1vw, 14px);
+  font-weight: 600;
+
+  transition: all 0.2s ease;
+}
+
+.avatar:hover {
+  transform: scale(1.08);
+  box-shadow: 0 6px 16px rgba(0,0,0,0.3);
+}
+
+/* =====================================
+USERNAME + META
+===================================== */
+.header-left strong,
+.answer-meta strong {
+  font-size: clamp(13px, 1vw, 15px);
+  font-weight: 600;
+  color: var(--text);
+
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.header-left small,
+.answer-meta span {
+  font-size: clamp(10px, 0.8vw, 12px);
+  color: var(--muted);
+}
+
+/* =====================================
+TITLE + DESCRIPTION
+===================================== */
+.problem-title {
+  font-size: clamp(15px, 1.4vw, 19px);
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.problem-title a {
+  color: var(--text);
+  text-decoration: none;
+}
+
+.problem-title a:hover {
+  color: var(--primary);
+}
+
+.problem-description,
+.card-body p {
+  font-size: clamp(13px, 1.1vw, 16px);
+  line-height: 1.6;
+  color: var(--muted);
+}
+
+/* =====================================
+CATEGORY BADGE
+===================================== */
+.category-badge {
+  font-size: clamp(10px, 0.8vw, 12px);
+  padding: 4px 8px;
+  border-radius: 8px;
+
+  background: var(--primary-soft);
+  color: var(--primary);
+
+  font-weight: 500;
+  white-space: nowrap;
+
+  transition: 0.2s ease;
+}
+
+.category-badge:hover {
+  transform: scale(1.05);
+}
+
+/* =====================================
+MEDIA (SOCIAL STYLE)
+===================================== */
+.media-container img,
+.media-container video,
+.media-container audio {
+  width: 100%;
+  max-height: clamp(160px, 30vh, 420px);
+  border-radius: 12px;
+  object-fit: cover;
+
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.media-container img:hover,
+.media-container video:hover {
+  transform: scale(1.02);
+  box-shadow: var(--shadow-md);
+}
+
+/* =====================================
+ANSWER CARD
+===================================== */
+.answer-card {
+  background: #0b1220;
+  border-left: 3px solid transparent;
+}
+
+.answer-card:hover {
+  border-left: 3px solid var(--primary);
+}
+
+.accepted-answer {
+  border-left: 4px solid #10b981 !important;
+}
+
+/* =====================================
+ACTION BAR (CLEAN UX)
+===================================== */
+.problem-stats {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+}
+
+/* Buttons */
+.vote-btn {
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  font-size: 14px;
+
+  transition: all 0.2s ease;
+}
+
+.vote-btn:hover {
+  color: var(--primary);
+  transform: scale(1.2);
+}
+
+/* Bookmark */
+.save-btn i.active {
+  color: var(--primary);
+}
+
+/* =====================================
+RESPONSIVE DESIGN
+===================================== */
+
+/* TABLETS */
+@media (max-width: 768px) {
+  .card,
+  .problem-card,
+  .answer-card {
+    padding: 12px;
+  }
+
+  .problem-title {
+    font-size: 16px;
+  }
+
+  .problem-description {
+    font-size: 14px;
+  }
+
+  .avatar {
+    width: 32px;
+    height: 32px;
+  }
+}
+
+/* MOBILE */
+@media (max-width: 480px) {
+
+  .card-header {
+    flex-direction: row;
+    align-items: center;
+  }
+
+  .header-left strong {
+    font-size: 13px;
+  }
+
+  .problem-title {
+    font-size: 15px;
+  }
+
+  .problem-description {
+    font-size: 13px;
+  }
+
+  .media-container img,
+  .media-container video {
+    max-height: 250px;
+  }
+
+  .problem-stats {
+    gap: 8px;
+    font-size: 12px;
+  }
+}
+
+/* ULTRA SMALL */
+@media (max-width: 360px) {
+
+  .problem-title {
+    font-size: 14px;
+  }
+
+  .problem-description {
+    font-size: 12px;
+  }
+
+  .avatar {
+    width: 26px;
+    height: 26px;
+  }
+
+  .category-badge {
+    font-size: 9px;
+  }
+}

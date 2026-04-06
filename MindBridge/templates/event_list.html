@@ -1,0 +1,428 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container py-5">
+
+<!-- CREATE EVENT -->
+<div class="mb-4 text-end">
+  <a href="{% url 'create_event' %}" class="btn btn-primary">
+    <i class="fa fa-plus"></i> Create Event
+  </a>
+</div>
+
+
+<!-- =============================
+TABS
+============================= -->
+<ul class="nav nav-tabs mb-4" id="eventTabs">
+  <li class="nav-item">
+    <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#liveTab">
+      <i class="fa fa-broadcast-tower me-1"></i> Live Events
+    </button>
+  </li>
+
+  <li class="nav-item">
+    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#recordedTab">
+      <i class="fa fa-video me-1"></i> Recorded Events
+    </button>
+  </li>
+</ul>
+
+
+<div class="tab-content">
+
+<!-- ====================================================
+LIVE EVENTS
+==================================================== -->
+<div class="tab-pane fade show active" id="liveTab">
+
+{% for event in events %}
+
+<div class="card shadow-sm mb-4 border-0 rounded-4">
+
+<div class="card-body">
+
+<!-- HEADER -->
+<div class="d-flex justify-content-between align-items-start mb-2">
+
+<h5 class="mb-0 fw-semibold">
+<a href="{% url 'event_detail' event.id %}" class="text-decoration-none text-dark">
+{{ event.title }}
+</a>
+</h5>
+
+{% if event.is_live %}
+<span class="badge bg-danger px-3 py-2">
+<i class="fa fa-circle me-1"></i> LIVE
+</span>
+{% endif %}
+
+</div>
+
+
+<p class="text-muted small mb-1">
+Hosted by <strong>{{ event.host.username }}</strong>
+</p>
+
+<p class="mb-2">{{ event.description }}</p>
+
+<p class="small text-muted mb-0">
+<strong>Start:</strong> {{ event.start_time|date:"M d, Y H:i" }}
+</p>
+
+{% if event.end_time %}
+<p class="small text-muted">
+<strong>End:</strong> {{ event.end_time|date:"M d, Y H:i" }}
+</p>
+{% endif %}
+
+
+<!-- VIDEO AREA -->
+<div id="liveArea-{{ event.id }}" class="mt-3">
+
+{% if request.user == event.host %}
+
+<div class="d-flex flex-wrap gap-2 mb-3">
+
+<button class="btn btn-success startLive"
+data-event-id="{{ event.id }}">
+<i class="fa fa-play"></i>
+</button>
+
+<button class="btn btn-danger stopLive"
+data-event-id="{{ event.id }}"
+{% if not event.is_live %}disabled{% endif %}>
+<i class="fa fa-stop"></i>
+</button>
+
+<button class="btn btn-secondary recordLive"
+data-event-id="{{ event.id }}" disabled>
+<i class="fa fa-circle-dot"></i>
+</button>
+
+<button class="btn btn-info fullscreenLive"
+data-event-id="{{ event.id }}">
+<i class="fa fa-expand"></i>
+</button>
+
+<span class="badge bg-info ms-auto recordTimer"
+id="recordTimer-{{ event.id }}"
+style="display:none;">
+00:00
+</span>
+
+</div>
+
+
+<video
+id="localVideo-{{ event.id }}"
+autoplay
+muted
+playsinline
+controls
+class="w-100 rounded-3 shadow-sm"
+style="max-height:480px;background:black;"
+controlsList="nodownload"
+oncontextmenu="return false;">
+</video>
+
+<div id="recordedLink-{{ event.id }}" class="mt-2"></div>
+
+<div class="text-end mt-3">
+<button class="btn btn-outline-danger btn-sm deleteEvent"
+data-event-id="{{ event.id }}">
+<i class="fa fa-trash"></i>
+</button>
+</div>
+
+{% elif request.user in event.participants.all %}
+
+{% if event.is_live %}
+
+<video
+id="remoteVideo-{{ event.id }}"
+autoplay
+playsinline
+controls
+class="w-100 rounded-3 shadow-sm"
+style="max-height:480px;background:black;"
+controlsList="nodownload"
+oncontextmenu="return false;">
+</video>
+
+<button class="btn btn-success mt-3 joinLive"
+data-event-id="{{ event.id }}">
+<i class="fa fa-sign-in-alt me-1"></i> Join
+</button>
+
+{% else %}
+
+<p class="text-success fw-semibold">
+Waiting for host to start the live stream...
+</p>
+
+{% endif %}
+
+{% else %}
+
+{% if event.is_public %}
+<span class="badge bg-primary">Public Event</span>
+
+{% elif event.user_invited %}
+<span class="badge bg-warning text-dark">Invite Pending</span>
+
+{% else %}
+<span class="badge bg-secondary">Private Event</span>
+
+{% endif %}
+
+{% endif %}
+
+</div>
+</div>
+</div>
+
+{% empty %}
+
+<div class="text-center py-5 text-muted">
+<i class="fa fa-video fa-2x mb-2"></i>
+<p>No live events available</p>
+</div>
+
+{% endfor %}
+
+</div>
+
+
+<!-- ====================================================
+RECORDED EVENTS (VIDEO GRID)
+==================================================== -->
+
+<div class="tab-pane fade" id="recordedTab">
+
+<div class="row g-4">
+
+{% for event in events %}
+{% for recording in event.recordings.all %}
+
+<div class="col-lg-6 col-xl-4">
+
+<div class="card border-0 shadow-sm rounded-4 h-100">
+
+<video
+autoplay
+controls
+class="card-img-top rounded-top-4"
+style="aspect-ratio:16/9;object-fit:cover;background:black;">
+<source src="{{ recording.file.url }}">
+</video>
+
+<div class="card-body">
+
+<h6 class="fw-semibold mb-1">
+{{ event.title }}
+</h6>
+
+<p class="text-muted small mb-0">
+Hosted by {{ event.host.username }}
+</p>
+
+</div>
+
+</div>
+
+</div>
+
+{% endfor %}
+{% endfor %}
+
+</div>
+
+
+{% if not events %}
+
+<div class="text-center py-5 text-muted">
+<i class="fa fa-video fa-2x mb-2"></i>
+<p>No recorded events yet</p>
+</div>
+
+{% endif %}
+
+</div>
+
+
+</div>
+</div>
+
+<script>
+
+const csrfToken = "{{ csrf_token }}";
+
+const mediaRecorders = {};
+const recordedChunks = {};
+const timers = {};
+
+function toggle(btn,state){
+if(btn) btn.disabled = !state;
+}
+
+/* =====================
+START LIVE
+===================== */
+
+document.querySelectorAll(".startLive").forEach(btn=>{
+btn.onclick=async()=>{
+
+const eventId=btn.dataset.eventId;
+const video=document.getElementById(`localVideo-${eventId}`);
+const stopBtn=document.querySelector(`.stopLive[data-event-id="${eventId}"]`);
+const recordBtn=document.querySelector(`.recordLive[data-event-id="${eventId}"]`);
+
+try{
+
+const stream=await navigator.mediaDevices.getUserMedia({video:true,audio:true});
+
+video.srcObject=stream;
+video.stream=stream;
+
+toggle(btn,false);
+toggle(stopBtn,true);
+toggle(recordBtn,true);
+
+await fetch(`/events/${eventId}/start-live/`,{
+method:"POST",
+headers:{"X-CSRFToken":csrfToken}
+});
+
+}catch(e){alert("Camera access denied");}
+
+};
+});
+
+
+/* =====================
+STOP LIVE
+===================== */
+
+document.querySelectorAll(".stopLive").forEach(btn=>{
+btn.onclick=async()=>{
+
+const id=btn.dataset.eventId;
+const video=document.getElementById(`localVideo-${id}`);
+const startBtn=document.querySelector(`.startLive[data-event-id="${id}"]`);
+const recordBtn=document.querySelector(`.recordLive[data-event-id="${id}"]`);
+
+if(video.stream){
+video.stream.getTracks().forEach(t=>t.stop());
+}
+
+video.srcObject=null;
+
+await fetch(`/events/${id}/stop-live/`,{
+method:"POST",
+headers:{"X-CSRFToken":csrfToken}
+});
+
+toggle(btn,false);
+toggle(startBtn,true);
+toggle(recordBtn,false);
+
+};
+});
+
+
+/* =====================
+RECORD STREAM
+===================== */
+
+document.querySelectorAll(".recordLive").forEach(btn=>{
+btn.onclick=()=>{
+
+const id=btn.dataset.eventId;
+const video=document.getElementById(`localVideo-${id}`);
+const timer=document.getElementById(`recordTimer-${id}`);
+
+if(!video.stream){
+alert("Start live first");
+return;
+}
+
+if(!mediaRecorders[id]){
+
+recordedChunks[id]=[];
+
+const recorder=new MediaRecorder(video.stream);
+
+let seconds=0;
+
+recorder.ondataavailable=e=>{
+if(e.data.size>0) recordedChunks[id].push(e.data);
+};
+
+recorder.onstop=async()=>{
+
+clearInterval(timers[id]);
+timer.style.display="none";
+
+const blob=new Blob(recordedChunks[id],{type:"video/webm"});
+
+const form=new FormData();
+form.append("video",blob,`event-${id}.webm`);
+
+const res=await fetch(`/events/${id}/save-recording/`,{
+method:"POST",
+headers:{"X-CSRFToken":csrfToken},
+body:form
+});
+
+};
+
+mediaRecorders[id]=recorder;
+
+recorder.start();
+
+timer.style.display="inline-block";
+
+timers[id]=setInterval(()=>{
+seconds++;
+timer.innerText=new Date(seconds*1000).toISOString().substr(14,5);
+},1000);
+
+btn.innerHTML='<i class="fa fa-stop"></i>';
+
+}else{
+
+mediaRecorders[id].stop();
+mediaRecorders[id]=null;
+
+btn.innerHTML='<i class="fa fa-circle-dot"></i>';
+
+}
+
+};
+});
+
+
+/* =====================
+PLAY RECORDED VIDEO
+===================== */
+
+document.querySelectorAll(".playRecording").forEach(link=>{
+link.onclick=(e)=>{
+
+e.preventDefault();
+
+const target=document.getElementById(link.dataset.target);
+
+target.style.display="block";
+
+const video=target.querySelector("video");
+video.play();
+
+};
+});
+
+</script>
+
+{% endblock %}
