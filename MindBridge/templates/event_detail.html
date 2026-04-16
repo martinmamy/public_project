@@ -1,0 +1,213 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Event Details | Fancylearn{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+
+  <!-- EVENT HEADER -->
+  <div class="mb-4">
+    <h1 class="mb-1">{{ event.title }}</h1>
+    <p class="text-muted mb-0">Hosted by {{ event.host.username }}</p>
+    <p>{{ event.description }}</p>
+    <p class="mb-0"><strong>Starts at:</strong> {{ event.start_time|date:"M d, Y H:i" }}</p>
+    {% if event.end_time %}
+    <p><strong>Ends at:</strong> {{ event.end_time|date:"M d, Y H:i" }}</p>
+    {% endif %}
+  </div>
+
+  <!-- LIVE VIDEO AREA -->
+  <div id="liveContainer" class="mb-4">
+
+    {% if is_host %}
+    <!-- HOST CONTROLS -->
+    <div class="d-flex align-items-center gap-2 mb-2">
+      <button id="startLiveBtn" class="btn btn-success" title="Start Live">
+        <i class="fa fa-play me-1"></i> Start Live
+      </button>
+      <button id="recordBtn" class="btn btn-secondary" title="Record" disabled>
+        <i class="fa fa-circle-dot"></i>
+      </button>
+      <span id="recordTimer" class="badge bg-info ms-auto" style="display:none;">00:00</span>
+    </div>
+    <video id="hostVideo" autoplay muted playsinline
+           style="width:100%; max-height:500px; background:black; border-radius:0.5rem; display:none;"
+           controls controlsList="nodownload" oncontextmenu="return false;"></video>
+
+    {% elif request.user in event.participants.all %}
+    <!-- PARTICIPANT VIEW -->
+    <video id="remoteVideo" autoplay playsinline
+           style="width:100%; max-height:500px; background:black; border-radius:0.5rem;"
+           controls controlsList="nodownload" oncontextmenu="return false;"></video>
+    <p class="text-success fw-bold mt-2">Waiting for host to start the live stream...</p>
+
+    {% else %}
+    <!-- NON-PARTICIPANTS -->
+    <div class="d-flex gap-2">
+      {% if event.is_public %}
+      <button id="joinBtn" class="btn btn-success" title="Join Live">
+        <i class="fa fa-sign-in-alt me-1"></i> Join Live
+      </button>
+      {% elif event.user_invited %}
+      <button id="acceptInviteBtn" class="btn btn-warning" title="Accept Invite">
+        <i class="fa fa-envelope-open-text me-1"></i> Accept Invite
+      </button>
+      {% else %}
+      <span class="badge bg-secondary">Private Event</span>
+      {% endif %}
+    </div>
+    {% endif %}
+
+  </div>
+
+  <!-- HOST INVITATIONS -->
+  {% if is_host %}
+  <hr>
+  <h5 class="mb-2">Invite Users</h5>
+  <form id="inviteForm" class="d-flex gap-2">
+    <input type="text" class="form-control" name="user_identifier" placeholder="Username or Email" required>
+    <button type="submit" class="btn btn-primary" title="Invite User">
+      <i class="fa fa-user-plus"></i>
+    </button>
+  </form>
+  <div id="inviteMessage" class="mt-2"></div>
+  {% endif %}
+
+</div>
+
+<script>
+const csrfToken = '{{ csrf_token }}';
+const isHost = {{ is_host|yesno:"true,false" }} === "true";
+const eventId = "{{ event.id }}";
+
+let mediaRecorder, recordedChunks = [], recordInterval;
+
+// ------------------------------
+// HOST: Start Live + Recording
+// ------------------------------
+if(isHost){
+  const startBtn = document.getElementById("startLiveBtn");
+  const hostVideo = document.getElementById("hostVideo");
+  const recordBtn = document.getElementById("recordBtn");
+  const recordTimer = document.getElementById("recordTimer");
+
+  startBtn.addEventListener("click", async () => {
+    try{
+      const stream = await navigator.mediaDevices.getUserMedia({ video:true, audio:true });
+      hostVideo.srcObject = stream;
+      hostVideo.style.display = "block";
+      startBtn.style.display = "none";
+      recordBtn.disabled = false;
+
+      console.log(`Host started live streaming for event ${eventId}`);
+      // TODO: Broadcast via WebRTC or WebSocket
+
+      // RECORD BUTTON
+      recordBtn.addEventListener("click", () => {
+        if(!mediaRecorder){
+          recordedChunks = [];
+          mediaRecorder = new MediaRecorder(stream);
+          let seconds = 0;
+
+          mediaRecorder.ondataavailable = e => { if(e.data.size>0) recordedChunks.push(e.data); };
+          mediaRecorder.onstop = async () => {
+            clearInterval(recordInterval);
+            recordTimer.style.display = "none";
+
+            const blob = new Blob(recordedChunks, { type:"video/webm" });
+            const formData = new FormData();
+            formData.append("video", blob, `event-${eventId}-${Date.now()}.webm`);
+
+            const res = await fetch(`/events/${eventId}/save-recording/`, {
+              method:"POST", headers:{"X-CSRFToken":csrfToken}, body:formData
+            });
+            const data = await res.json();
+            if(data.status==="ok"){ alert("Recording saved!"); }
+          };
+
+          mediaRecorder.start();
+          recordTimer.style.display="inline-block";
+          recordInterval = setInterval(()=>{
+            seconds++;
+            recordTimer.innerText = new Date(seconds*1000).toISOString().substr(14,5);
+          },1000);
+          recordBtn.innerHTML = '<i class="fa fa-stop me-1"></i> Stop Recording';
+        } else {
+          mediaRecorder.stop();
+          mediaRecorder = null;
+          recordBtn.innerHTML = '<i class="fa fa-circle-dot me-1"></i> Record';
+        }
+      });
+
+    } catch(err){
+      console.error(err);
+      alert("Please allow camera and microphone access.");
+    }
+  });
+}
+
+// ------------------------------
+// PARTICIPANTS: Join / Accept Invite
+// ------------------------------
+const joinBtn = document.getElementById("joinBtn");
+if(joinBtn){
+  joinBtn.addEventListener("click", async () => {
+    try{
+      const res = await fetch(`/events/${eventId}/join/`, { method:"POST", headers:{"X-CSRFToken":csrfToken} });
+      const data = await res.json();
+      if(data.status==="joined"){ location.reload(); }
+    } catch(err){ console.error(err); }
+  });
+}
+
+const acceptBtn = document.getElementById("acceptInviteBtn");
+if(acceptBtn){
+  acceptBtn.addEventListener("click", async () => {
+    try{
+      const inviteId = "{{ event.invite_id|default:'' }}";
+      if(!inviteId) return;
+      const res = await fetch(`/events/invite/${inviteId}/accept/`, { method:"POST", headers:{"X-CSRFToken":csrfToken} });
+      const data = await res.json();
+      if(data.status==="accepted"){ location.reload(); }
+    } catch(err){ console.error(err); }
+  });
+}
+
+// ------------------------------
+// HOST: Invite Users
+// ------------------------------
+const inviteForm = document.getElementById("inviteForm");
+if(inviteForm){
+  inviteForm.addEventListener("submit", async e => {
+    e.preventDefault();
+    const identifier = inviteForm.user_identifier.value.trim();
+    const msgDiv = document.getElementById("inviteMessage");
+    if(!identifier){ msgDiv.innerText="Please enter a username or email."; return; }
+
+    try{
+      const res = await fetch(`/events/${eventId}/invite/`, {
+        method:"POST",
+        headers:{"X-CSRFToken":csrfToken,"Content-Type":"application/json"},
+        body:JSON.stringify({ identifier })
+      });
+      const data = await res.json();
+      if(data.status==="invited"){
+        msgDiv.innerText="User invited!";
+        msgDiv.className="text-success";
+      } else if(data.status==="already_invited"){
+        msgDiv.innerText="User already invited.";
+        msgDiv.className="text-warning";
+      } else if(data.status==="not_found"){
+        msgDiv.innerText="User not found.";
+        msgDiv.className="text-danger";
+      }
+      inviteForm.reset();
+    } catch(err){
+      console.error(err);
+      msgDiv.innerText="Error inviting user.";
+      msgDiv.className="text-danger";
+    }
+  });
+}
+</script>
+{% endblock %}

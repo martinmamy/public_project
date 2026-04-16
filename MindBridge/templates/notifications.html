@@ -1,0 +1,374 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block extra_css %}
+<style>
+/* ===== Cards ===== */
+.notification-card {
+  border-radius: 12px;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.notification-card:hover {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+/* Ensure dropdown is not clipped */
+#notificationsList,
+.card,
+.card-body {
+  overflow: visible !important;
+}
+
+/* Remove bootstrap arrow */
+.dropdown-toggle::after {
+  display: none;
+}
+
+/* ===== GLOBAL FLOATING DROPDOWN ===== */
+.global-dropdown {
+  position: fixed !important;
+  z-index: 999999 !important;
+  min-width: 180px;
+  border-radius: 10px;
+  display: none;
+  padding: 0.25rem 0;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+  left: 50% !important;
+  transform: translateX(-50%);
+}
+
+.global-dropdown.show {
+  display: block;
+}
+
+/* Loader styling */
+#loading {
+  text-align: center;
+  padding: 1rem;
+  color: #6c757d;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .global-dropdown {
+    min-width: 140px;
+    font-size: 0.85rem;
+  }
+}
+
+@media (max-width: 576px) {
+  .global-dropdown {
+    min-width: 100px;
+    font-size: 0.8rem;
+  }
+  .global-dropdown .dropdown-item {
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+    text-align: center;
+  }
+  .global-dropdown .dropdown-item span {
+    display: none; /* hide text, keep icons */
+  }
+  .global-dropdown .dropdown-item .icon-only {
+    display: inline;
+  }
+
+  /* Mark all button icon-only */
+  #notifMarkAllRead span.full-text {
+    display: none;
+  }
+  #notifMarkAllRead span.icon-only {
+    display: inline;
+  }
+}
+
+/* Prevent stacking bugs */
+body {
+  position: relative;
+  z-index: 1;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4" style="max-width:700px;">
+  <!-- HEADER -->
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h4 class="mb-0">Notifications</h4>
+    <button id="notifMarkAllRead" class="btn btn-sm btn-primary" title="Mark ALL notifications as READ">
+      <span class="full-text">Mark all as read</span>
+      <span class="icon-only" style="display:none;">✅</span>
+    </button>
+  </div>
+
+  <!-- NOTIFICATIONS LIST -->
+  <div id="notificationsList"></div>
+  <div id="loading">Loading...</div>
+</div>
+
+<!-- GLOBAL DROPDOWN -->
+<div id="globalDropdown" class="dropdown-menu global-dropdown shadow">
+  <button class="dropdown-item mark-read-btn" title="Mark as read">
+    <span class="full-text">✅ Read</span>
+    <span class="icon-only" style="display:none;">✅ Read</span>
+  </button>
+
+  <button class="dropdown-item text-danger delete-btn" title="Delete notification">
+    <span class="full-text">🗑 Delete</span>
+    <span class="icon-only" style="display:none;">🗑 Delete</span>
+  </button>
+</div>
+
+<script>
+// Dynamically toggle icon-only mode on small screens
+function updateIcons() {
+  const width = window.innerWidth;
+
+  // Dropdown items
+  document.querySelectorAll('.global-dropdown .dropdown-item').forEach(item => {
+    if (width <= 576) {
+      item.querySelector('.full-text').style.display = 'none';
+      item.querySelector('.icon-only').style.display = 'inline';
+    } else {
+      item.querySelector('.full-text').style.display = 'inline';
+      item.querySelector('.icon-only').style.display = 'none';
+    }
+  });
+
+  // Mark all button
+  const markAllBtn = document.getElementById('notifMarkAllRead');
+  if (width <= 576) {
+    markAllBtn.querySelector('.full-text').style.display = 'none';
+    markAllBtn.querySelector('.icon-only').style.display = 'inline';
+  } else {
+    markAllBtn.querySelector('.full-text').style.display = 'inline';
+    markAllBtn.querySelector('.icon-only').style.display = 'none';
+  }
+}
+
+window.addEventListener('resize', updateIcons);
+window.addEventListener('load', updateIcons);
+</script>
+
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const list = document.getElementById("notificationsList");
+  const loader = document.getElementById("loading");
+  const dropdown = document.getElementById("globalDropdown");
+  const markAllBtn = document.getElementById("notifMarkAllRead");
+  let activeCard = null;
+
+  let notificationsCache = [];
+  let nextCursor = null;
+  let loading = false;
+  let loadedIds = new Set();
+  let allReadMode = false;
+
+  const getCSRF = () => document.cookie.split("; ").find(c => c.startsWith("csrftoken="))?.split("=")[1];
+
+  // =========================
+  // RENDER NOTIFICATION
+  // =========================
+  const renderNotification = (n, prepend = false) => {
+    if (loadedIds.has(n.id)) return;
+    loadedIds.add(n.id);
+
+    const isRead = allReadMode ? true : n.is_read;
+
+    const avatar = n.actor?.avatar_url
+      ? `<img src="${n.actor.avatar_url}" class="rounded-circle me-2" style="width:40px;height:40px;object-fit:cover;">`
+      : `<div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center me-2" style="width:40px;height:40px;">
+           ${(n.actor?.username || "?")[0].toUpperCase()}
+         </div>`;
+
+    const card = document.createElement("div");
+    card.className = `card mb-2 notification-card ${!isRead ? "border-primary" : ""}`;
+    // ✅ FIX: Use redirect endpoint instead of raw URL
+    const safeUrl = `/notifications/redirect/${n.id}/`;
+    card.dataset.id = safeUrl; // Store safe URL for actions
+
+    card.innerHTML = `
+      <div class="card-body d-flex justify-content-between align-items-start">
+        <div class="d-flex">
+          ${avatar}
+          <div>
+            <a href="${n.url || '#'}" class="text-decoration-none ${!isRead ? "fw-bold" : ""}">
+              ${n.message}
+            </a>
+            <div class="small">${n.created_at}</div>
+          </div>
+        </div>
+        <button class="btn btn-sm btn-light dropdown-trigger">⋮</button>
+      </div>
+    `;
+
+    if (prepend) list.prepend(card);
+    else list.appendChild(card);
+  };
+
+  // =========================
+  // LOAD NOTIFICATIONS
+  // =========================
+  const loadNotifications = async () => {
+    if (loading) return;
+    loading = true;
+    loader.innerText = "Loading...";
+
+    let url = "/notifications/api/";
+    if (nextCursor) url += `?cursor=${encodeURIComponent(nextCursor)}`;
+
+    try {
+      const res = await fetch(url);
+      const data = await res.json();
+
+      notificationsCache = notificationsCache.concat(data.notifications);
+      data.notifications.forEach(n => renderNotification(n));
+      nextCursor = data.next_cursor;
+
+      loader.innerText = nextCursor ? "Scroll to load more..." : "No more notifications";
+    } catch (err) {
+      console.error(err);
+      loader.innerText = "Error loading notifications";
+    }
+
+    loading = false;
+  };
+
+  // =========================
+  // POLLING FOR NEW NOTIFICATIONS
+  // =========================
+  const pollNewNotifications = async () => {
+    try {
+      const latestId = notificationsCache[0]?.id;
+      let url = "/notifications/api/new/";
+      if (latestId) url += `?after_id=${encodeURIComponent(latestId)}`;
+
+      const res = await fetch(url);
+      const data = await res.json();
+
+      if (data.notifications?.length) {
+        data.notifications.reverse().forEach(n => renderNotification(n, true));
+        notificationsCache = data.notifications.concat(notificationsCache);
+      }
+    } catch (err) {
+      console.error("Failed to load new notifications:", err);
+    }
+  };
+
+  setInterval(pollNewNotifications, 5000);
+
+  // =========================
+  // INFINITE SCROLL
+  // =========================
+  window.addEventListener("scroll", () => {
+    if (loading || !nextCursor) return;
+    if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 200) {
+      loadNotifications();
+    }
+  });
+
+  // =========================
+  // DROPDOWN
+  // =========================
+  const openDropdown = (button, card) => {
+    const rect = button.getBoundingClientRect();
+    dropdown.style.top = rect.bottom + "px";
+    dropdown.style.left = (rect.right - 180) + "px";
+    dropdown.classList.add("show");
+    activeCard = card;
+  };
+
+  const closeDropdown = () => {
+    dropdown.classList.remove("show");
+    activeCard = null;
+  };
+
+  document.addEventListener("click", (e) => {
+    const trigger = e.target.closest(".dropdown-trigger");
+    if (trigger) {
+      e.stopPropagation();
+      const card = trigger.closest(".notification-card");
+      if (dropdown.classList.contains("show") && activeCard === card) closeDropdown();
+      else openDropdown(trigger, card);
+      return;
+    }
+    if (!e.target.closest("#globalDropdown")) closeDropdown();
+  });
+
+  // =========================
+  // DROPDOWN ACTIONS (Mark as Read + Delete)
+  // =========================
+  dropdown.addEventListener("click", async (e) => {
+    if (!activeCard) return;
+    const id = activeCard.dataset.id;
+    const targetBtn = e.target.closest("button");
+
+    if (!targetBtn) return;
+
+    // MARK SINGLE AS READ
+    if (targetBtn.classList.contains("mark-read-btn")) {
+      try {
+        await fetch(`/notifications/mark_read/${id}/`, {
+          method: "POST",
+          headers: { "X-CSRFToken": getCSRF() }
+        });
+        activeCard.classList.remove("border-primary");
+        activeCard.querySelector("a")?.classList.remove("fw-bold");
+      } catch (err) {
+        console.error("Failed to mark as read:", err);
+      }
+      closeDropdown();
+    }
+
+    // DELETE
+    if (targetBtn.classList.contains("delete-btn")) {
+      try {
+        const res = await fetch(`/notifications/delete/${id}/`, {
+          method: "POST",
+          headers: { "X-CSRFToken": getCSRF() }
+        });
+        const data = await res.json();
+        if (data.success) {
+          notificationsCache = notificationsCache.filter(n => n.id != id);
+          activeCard.remove();
+        }
+      } catch (err) {
+        console.error("Failed to delete notification:", err);
+      }
+      closeDropdown();
+    }
+  });
+
+  // =========================
+  // MARK ALL AS READ
+  // =========================
+  markAllBtn?.addEventListener("click", async () => {
+    try {
+      await fetch("/notifications/mark_all_read/", {
+        method: "POST",
+        headers: { "X-CSRFToken": getCSRF() }
+      });
+
+      allReadMode = true;
+      document.querySelectorAll(".notification-card").forEach(card => {
+        card.classList.remove("border-primary");
+        card.querySelector("a")?.classList.remove("fw-bold");
+      });
+      notificationsCache.forEach(n => n.is_read = true);
+
+    } catch (err) {
+      console.error("Failed to mark all as read:", err);
+    }
+  });
+
+  // =========================
+  // INITIAL LOAD
+  // =========================
+  loadNotifications();
+});
+</script>
+{% endblock %}

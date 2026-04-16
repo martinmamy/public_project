@@ -1,0 +1,193 @@
+{% extends "base.html" %}
+{% block title %}Verify Email | Fancylearn{% endblock %}
+
+{% block content %}
+
+<div class="row justify-content-center">
+    <div class="col-md-5">
+
+        <div class="card shadow-sm border-0 p-4 text-center">
+
+            <h3 class="fw-bold mb-3">Verify Your Email</h3>
+
+            <p class="text-muted small mb-4">
+                Enter the 6-digit code sent to your email address
+            </p>
+
+            {% if error %}
+                <div class="alert alert-danger">
+                    {{ error }}
+                </div>
+            {% endif %}
+
+            <form method="post" id="otpForm">
+                {% csrf_token %}
+
+                <!-- OTP INPUTS -->
+                <div class="d-flex justify-content-between mb-4 otp-inputs">
+                    {% for i in "123456" %}
+                        <input type="text" maxlength="1" class="form-control otp-box">
+                    {% endfor %}
+                </div>
+
+                <!-- hidden combined code -->
+                <input type="hidden" name="code" id="fullCode">
+
+                <button type="submit" class="btn btn-success w-100" id="verifyBtn">
+                    Verify Code
+                </button>
+            </form>
+
+            <!-- RESEND -->
+            <div class="mt-3">
+                <button id="resendBtn" class="btn btn-link" disabled>
+                    Resend code (30s)
+                </button>
+            </div>
+
+        </div>
+
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_scripts %}
+
+<script>
+// =========================
+// OTP INPUT HANDLING
+// =========================
+const inputs = document.querySelectorAll(".otp-box");
+const hiddenInput = document.getElementById("fullCode");
+const form = document.getElementById("otpForm");
+
+function updateCode() {
+    hiddenInput.value = Array.from(inputs).map(i => i.value).join("");
+}
+
+// move automatically
+inputs.forEach((input, index) => {
+
+    input.addEventListener("input", () => {
+        input.value = input.value.replace(/[^0-9]/g, "");
+
+        if (input.value && index < inputs.length - 1) {
+            inputs[index + 1].focus();
+        }
+
+        updateCode();
+
+        // auto submit when full
+        if (hiddenInput.value.length === 6) {
+            form.submit();
+        }
+    });
+
+    input.addEventListener("keydown", (e) => {
+        if (e.key === "Backspace" && !input.value && index > 0) {
+            inputs[index - 1].focus();
+        }
+    });
+});
+
+// paste support
+inputs[0].addEventListener("paste", (e) => {
+    const paste = e.clipboardData.getData("text").slice(0, 6);
+
+    if (!/^\d+$/.test(paste)) return;
+
+    inputs.forEach((input, i) => {
+        input.value = paste[i] || "";
+    });
+
+    updateCode();
+});
+
+// =========================
+// RESEND OTP LOGIC
+// =========================
+let countdown = 30;
+const resendBtn = document.getElementById("resendBtn");
+
+function startTimer() {
+    resendBtn.disabled = true;
+    countdown = 30;
+
+    const timer = setInterval(() => {
+        countdown--;
+        resendBtn.innerText = `Resend code (${countdown}s)`;
+
+        if (countdown <= 0) {
+            clearInterval(timer);
+            resendBtn.disabled = false;
+            resendBtn.innerText = "Resend code";
+        }
+    }, 1000);
+}
+
+startTimer();
+
+resendBtn.addEventListener("click", () => {
+    resendBtn.disabled = true;
+
+    fetch("{% url 'resend_otp' %}", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: {
+            "X-CSRFToken": "{{ csrf_token }}"
+        }
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.status === "resent") {
+            alert("New code sent!");
+            startTimer();
+        } else {
+            alert("Failed to resend code");
+            resendBtn.disabled = false;
+        }
+    })
+    .catch(() => {
+        alert("Error sending request");
+        resendBtn.disabled = false;
+    });
+});
+</script>
+
+<style>
+.otp-inputs {
+    gap: 10px;
+}
+
+.otp-box {
+    width: 45px;
+    height: 55px;
+    text-align: center;
+    font-size: 20px;
+    font-weight: bold;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    transition: all 0.2s ease;
+}
+
+.otp-box:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 8px rgba(92,106,196,0.3);
+    outline: none;
+}
+
+/* card */
+.card {
+    backdrop-filter: blur(12px);
+}
+
+/* dark mode */
+[data-theme="dark"] .otp-box {
+    background: var(--input-bg);
+    color: var(--text);
+    border: 1px solid var(--input-border);
+}
+</style>
+
+{% endblock %}

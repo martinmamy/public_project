@@ -1,0 +1,164 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Create Event | Fancylearn{% endblock %}
+{% block content %}
+<div class="container py-5">
+  <div class="card shadow-sm border-0 mx-auto" style="max-width:700px;">
+    <div class="card-body">
+
+      <h2 class="card-title mb-4 text-center">Create Live Webinar/Event</h2>
+
+      {% if error %}
+      <div class="alert alert-danger">{{ error }}</div>
+      {% endif %}
+
+      <form method="post">
+        {% csrf_token %}
+
+        <!-- EVENT TITLE -->
+        <div class="fb-field-row mb-3">
+          <input type="text" name="title" class="fb-input-title-alt" placeholder="Enter event title" required>
+          <span class="required-star">*</span>
+          <span class="info-icon">i
+            <span class="info-tooltip">Enter a short, clear title for your event.</span>
+          </span>
+        </div>
+
+        <!-- DESCRIPTION -->
+        <div class="fb-field-row mb-3">
+          <textarea name="description" class="fb-textarea-alt" placeholder="Event description" rows="4"></textarea>
+          <span class="info-icon">i
+            <span class="info-tooltip">Provide a detailed description of your event.</span>
+          </span>
+        </div>
+
+        <!-- PUBLIC EVENT -->
+        <div class="fb-field-row mb-3 align-items-center">
+          <input type="checkbox" class="form-check-input me-2" id="is_public" name="is_public" checked>
+          <label for="is_public" class="form-check-label">Public Event</label>
+          <span class="info-icon ms-2">i
+            <span class="info-tooltip">Check if this event should be publicly visible.</span>
+          </span>
+        </div>
+
+        <!-- START TIME -->
+        <div class="fb-field-row mb-3">
+          <input type="datetime-local" name="start_time" class="fb-input-title-alt" required>
+          <span class="info-icon">i
+            <span class="info-tooltip">Set the start date and time for the event.</span>
+          </span>
+        </div>
+
+        <!-- SUBMIT BUTTON -->
+        <div class="d-grid mt-4">
+          <button type="submit" class="btn btn-primary rounded-pill">Create Event</button>
+        </div>
+
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Styles -->
+<style>
+/* MAIN COMPOSER-LIKE FORM STYLING */
+.fb-field-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.fb-input-title-alt,
+.fb-textarea-alt {
+  width: 100%;
+  border: none;
+  outline: none;
+  border-radius: 10px;
+  padding: 8px 12px;
+  font-size: 14px;
+  background: #f9f9f9;
+  transition: background 0.2s;
+}
+.fb-input-title-alt:focus,
+.fb-textarea-alt:focus {
+  background: #fff;
+}
+
+.info-icon {
+  display: inline-flex;
+  margin-left: 4px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #888;
+  position: relative;
+  cursor: pointer;
+}
+.info-icon:hover .info-tooltip {
+  display: block;
+}
+.info-tooltip {
+  display: none;
+  position: absolute;
+  bottom: 125%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: max-content;
+  max-width: 220px;
+  background: #ece7e7;
+  color: #202020;
+  padding: 5px 8px;
+  font-size: 12px;
+  border-radius: 6px;
+  text-align: left;
+  z-index: 100;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+.info-tooltip::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  margin-left: -5px;
+  border-width: 5px;
+  border-style: solid;
+  border-color: #ece7e7 transparent transparent transparent;
+}
+
+/* REQUIRED STAR */
+.required-star {
+  color: #d9534f;
+  margin-left: 2px;
+  font-weight: 600;
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .fb-input-title-alt,
+  .fb-textarea-alt {
+    background: #2c2c2c;
+    color: #f0f0f0;
+  }
+  .info-tooltip {
+    background: #2c2c2c;
+    color: #f0f0f0;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+  }
+  .info-tooltip::after {
+    border-color: #2c2c2c transparent transparent transparent;
+  }
+}
+
+/* RESPONSIVE */
+@media (max-width: 500px) {
+  .fb-field-row {
+    flex-direction: column;
+    gap: 4px;
+  }
+  .fb-input-title-alt,
+  .fb-textarea-alt {
+    font-size: 13px;
+  }
+}
+</style>
+{% endblock %}

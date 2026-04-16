@@ -1,0 +1,386 @@
+/* =====================================
+MODERN CARD SYSTEM (2026 CLEAN UI)
+===================================== */
+
+/* =========================
+CARD BASE
+========================= */
+.card,
+.problem-card,
+.answer-card {
+  background: var(--card);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+
+  padding: clamp(12px, 1.8vw, 18px);
+
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+
+  box-shadow: var(--shadow-sm);
+  transition: all 0.25s ease;
+
+  min-width: 0;
+  overflow: hidden;
+}
+
+/* premium hover */
+.card:hover,
+.problem-card:hover,
+.answer-card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-md);
+}
+
+/* spacing between cards */
+.problem-card + .problem-card {
+  margin-top: 16px;
+}
+
+/* =========================
+HEADER
+========================= */
+.card-header,
+.post-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+
+/* left */
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
+}
+
+/* right */
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.problem-main-content {
+  width: 100%;
+  overflow: hidden;
+}
+/* =========================
+AVATAR (MODERN MINIMAL)
+========================= */
+.avatar,
+.comment-avatar {
+  width: clamp(32px, 4vw, 40px);
+  height: clamp(32px, 4vw, 40px);
+
+  border-radius: 50%;
+  object-fit: cover;
+
+  background: var(--primary-soft);
+  color: var(--primary);
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-weight: 600;
+  font-size: 13px;
+
+  transition: all 0.2s ease;
+}
+
+/* subtle hover */
+.avatar:hover {
+  transform: scale(1.05);
+}
+
+/* =========================
+TEXT META
+========================= */
+.header-left strong,
+.answer-meta strong {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text);
+
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.header-left small,
+.answer-meta span {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+/* =========================
+TITLE
+========================= */
+.problem-title {
+  font-size: clamp(16px, 1.4vw, 18px);
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.problem-title a {
+  color: var(--text);
+}
+
+.problem-title a:hover {
+  color: var(--primary);
+}
+
+/* =========================
+DESCRIPTION
+========================= */
+.problem-description,
+.card-body p {
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: var(--muted);
+}
+
+/* =========================
+BADGE (SOFT MODERN)
+========================= */
+.category-badge {
+  font-size: 0.75rem;
+  padding: 5px 10px;
+  border-radius: 999px;
+
+  background: var(--primary-soft);
+  color: var(--primary);
+
+  font-weight: 500;
+  transition: 0.2s;
+}
+
+.category-badge:hover {
+  transform: translateY(-1px);
+}
+
+/* =========================
+MEDIA
+========================= */
+.media-container img,
+.media-container video {
+  width: 100%;
+  max-height: 420px;
+  border-radius: 12px;
+  object-fit: cover;
+
+  transition: all 0.25s ease;
+}
+
+/* hover zoom */
+.media-container img:hover,
+.media-container video:hover {
+  transform: scale(1.02);
+}
+
+/* =========================
+ANSWER CARD
+========================= */
+.answer-card {
+  border-left: 2px solid transparent;
+}
+
+.answer-card:hover {
+  border-left: 2px solid var(--primary);
+}
+
+.accepted-answer {
+  border-left: 3px solid #22c55e !important;
+}
+
+/* =========================
+ACTION BAR
+========================= */
+.problem-stats {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+}
+
+/* buttons */
+.vote-btn {
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  font-size: 14px;
+
+  display: flex;
+  align-items: center;
+  gap: 4px;
+
+  transition: 0.2s;
+}
+
+.vote-btn:hover {
+  color: var(--primary);
+  transform: translateY(-1px);
+}
+
+/* bookmark */
+.save-btn i.active {
+  color: var(--primary);
+}
+
+/* =========================
+RESPONSIVE
+========================= */
+
+/* tablet */
+@media (max-width: 768px) {
+  .card,
+  .problem-card,
+  .answer-card {
+    padding: 14px;
+  }
+
+  .problem-title {
+    font-size: 16px;
+  }
+
+  .problem-description {
+    font-size: 14px;
+  }
+}
+
+/* mobile */
+@media (max-width: 480px) {
+
+  .problem-title {
+    font-size: 15px;
+  }
+
+  .problem-description {
+    font-size: 13px;
+  }
+
+  .media-container img,
+  .media-container video {
+    max-height: 260px;
+  }
+
+  .problem-stats {
+    gap: 8px;
+    font-size: 12px;
+  }
+}
+
+/* ultra small */
+@media (max-width: 360px) {
+
+  .avatar {
+    width: 28px;
+    height: 28px;
+  }
+
+  .category-badge {
+    font-size: 0.7rem;
+  }
+}
+
+
+.problem-tip-box {
+  flex-wrap: wrap;              /* allow wrapping on small screens */
+}
+
+/* Input */
+.problem-tip-amount {
+  width: 70px;
+  min-width: 50px;
+  max-width: 80px;
+  flex-shrink: 1;               /* allow shrinking */
+  padding: 2px 6px;
+  font-size: 0.8rem;
+}
+
+/* Button */
+.send-problem-tip-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+
+  padding: 4px 8px;
+  font-size: 0.8rem;
+
+  flex-shrink: 1;               /* allow shrinking */
+}
+
+/* Badge stays readable */
+.problem-tip-box .badge {
+  font-size: 0.75rem;
+  padding: 4px 6px;
+}
+
+@media (max-width: 576px) {
+
+  .problem-tip-box {
+    gap: 6px;
+  }
+
+  .problem-tip-amount {
+    width: 50px;
+    font-size: 0.75rem;
+  }
+
+  .send-problem-tip-btn {
+    padding: 3px 6px;
+    font-size: 0.75rem;
+  }
+
+  /* Hide text, keep icon only */
+  .tip-text {
+    display: none;
+  }
+}
+
+/* Container */
+.answer-tip-box {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;              /* allow wrapping on small screens */
+}
+
+/* Input */
+.answer-tip-box .tip-amount {
+  width: 65px;
+  min-width: 45px;
+  max-width: 75px;
+
+  flex-shrink: 1;
+  padding: 2px 6px;
+  font-size: 0.8rem;
+}
+
+/* Button */
+.answer-tip-box .send-tip-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+
+  padding: 4px 8px;
+  font-size: 0.8rem;
+
+  flex-shrink: 1;
+  white-space: nowrap;
+}
+
+/* Badge */
+.answer-tip-box .badge {
+  font-size: 0.75rem;
+  padding: 4px 6px;
+  white-space: nowrap;
+}

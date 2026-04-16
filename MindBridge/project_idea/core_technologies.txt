@@ -1,0 +1,40 @@
+Core Technology Stack
+Backend
+
+Framework:
+
+Django
+
+Django REST Framework
+
+Database:
+
+PostgreSQL/MySQL
+
+Cache / Performance:
+
+Redis(50/50)
+
+Background Tasks:
+
+Celery(50/50)
+
+Search:
+
+OpenSearch / Elasticsearch(50/50)
+
+Storage:
+
+S3 compatible storage/within App
+
+Example:
+
+Amazon Web Services S3
+
+Cloudflare R2
+
+Frontend:
+
+Django Templates (initially)
+
+Later: React or Vue

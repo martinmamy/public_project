@@ -1,0 +1,44 @@
+<div class="problem-ads position-relative">
+
+  {% if ads %}
+    {% for ad in ads %}
+      <a href="{{ ad.target_url }}"
+         target="_blank"
+         onclick="trackAdClick('{{ ad.id }}')"
+         class="d-block position-relative mb-2">
+        <img src="{{ ad.image.url }}"
+             class="img-fluid rounded shadow-sm"
+             alt="ad">
+        {% if user_has_created_ads %}
+          <!-- Floating Premium badge -->
+          <span class="premium-badge">Premium</span>
+        {% endif %}
+      </a>
+    {% endfor %}
+  {% else %}
+    <!-- Fallback AdSense without Premium label -->
+    <ins class="adsbygoogle"
+         style="display:block"
+         data-ad-client="ca-pub-XXXXXX"
+         data-ad-slot="YYYYYY"
+         data-ad-format="auto"></ins>
+  {% endif %}
+
+</div>
+
+<style>
+.problem-ads .premium-badge {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    background-color: #ffce00;
+    color: #000;
+    font-size: 0.75rem;
+    font-weight: bold;
+    padding: 2px 6px;
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+    z-index: 10;
+    text-transform: uppercase;
+}
+</style>

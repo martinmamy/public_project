@@ -1,0 +1,114 @@
+Application Modules
+
+Split the logic into independent apps.
+
+users:
+
+Handles
+
+authentication
+profiles
+followers
+reputation
+subscriptions
+problems
+
+Handles
+
+posting problems
+tags
+categories
+problem media
+view counts
+SEO pages
+answers
+
+Handles
+
+answers
+accepted answers
+answer ranking
+answer statistics
+comments
+
+Handles
+
+comments on answers
+comments on problems
+threaded discussions
+voting
+
+Handles
+
+upvotes
+downvotes
+score calculations
+monetization
+
+Handles
+
+tips
+bounties
+creator subscriptions
+payments
+ads
+notifications
+
+Handles
+
+mentions
+answers
+comments
+tips
+followers
+moderation
+
+Handles
+
+reports
+content moderation
+banned users
+content flags
+search
+
+Handles
+
+problem search
+tag search
+user search
+autocomplete
+analytics
+
+Handles
+
+problem views
+engagement metrics
+growth analytics
+
+
+Service Layer (Important):
+
+services/
+services/
+│
+├── problem_service.py
+├── answer_service.py
+├── vote_service.py
+├── monetization_service.py
+└── notification_service.py
+
+
+Critical protections:
+
+CSRF protection
+rate limiting
+spam filtering
+input validation
+XSS protection
+file upload scanning
+
+Libraries:
+
+django-ratelimit
+django-cleanup
+django-cors-headers

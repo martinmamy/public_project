@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+{% block title %}Welcome | Fancylearn{% endblock %}
+
+{% block content %}
+<div class="text-center my-5">
+    <h1 class="display-4 fw-bold mb-3">Welcome to <strong><span class="fancy-part">Fancy</span><span class="learn-part">learn</span></strong></h1>
+    <p class="lead mb-4 text-muted">
+        <strong><span class="fancy-part">Fancy</span><span class="learn-part">learn</span></strong> is your <strong> knowledge-sharing social media platform</strong> – connect with experts, explore challenging problems/issues, and grow your skills.
+    </p>
+    <p class="lead text-muted">
+        Be the source of information for others and help them stay up to date with educational posts.
+    </p>
+
+    <!-- Call-to-action buttons -->
+    {% if not user.is_authenticated %}
+    <div class="mb-5">
+        <a href="{% url 'register' %}" class="btn btn-primary btn-lg me-3">
+            <i class="fa-solid fa-user-plus me-2"></i> Register
+        </a>
+        <a href="{% url 'login' %}" class="btn btn-outline-primary btn-lg">
+            <i class="fa-solid fa-right-to-bracket me-2"></i> Login
+        </a>
+    </div>
+    {% endif %}
+
+    <!-- Feature highlights -->
+    <div class="row justify-content g-4">
+        <div class="col-lg-4">
+            <div class="card h-100 text-center shadow-sm">
+                <div class="card-body">
+                    <i class="fa-solid fa-lightbulb fa-2xl text-primary mb-3"></i>
+                    <h5 class="card-title fw-bold">Explore Problems</h5>
+                    <p class="card-text text-muted">
+                        Browse a wide variety of real-world problems/issues and educational posts posted by the community. Learn, practice, and find solutions.
+                    </p>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="card h-100 text-center shadow-sm">
+                <div class="card-body">
+                    <i class="fa-solid fa-users fa-2xl text-primary mb-3"></i>
+                    <h5 class="card-title fw-bold">Connect with Experts</h5>
+                    <p class="card-text text-muted">
+                        Follow top contributors, ask questions, and gain insights from experienced professionals across multiple fields.
+                    </p>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="card h-100 text-center shadow-sm">
+                <div class="card-body">
+                    <i class="fa-solid fa-chart-line fa-2xl text-primary mb-3"></i>
+                    <h5 class="card-title fw-bold">Track Trends & Progress</h5>
+                    <p class="card-text text-muted">
+                        Stay updated with the latest trending problems and lessons, monitor your learning progress, and identify emerging topics.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- About Fancylearn -->
+<div class="my-5">
+    <h2 class="fw-bold mb-3 text-center">About <strong><span class="fancy-part">Fancy</span><span class="learn-part">learn</span></strong></h2>
+    <p class="text-center text-muted mx-auto" style="max-width:700px;">
+        <strong><span class="fancy-part">Fancy</span><span class="learn-part">learn</span></strong> is designed for everyone with no exceptions especially learners, professionals, and enthusiasts who want to engage with meaningful problems/issues, share knowledge, and grow their expertise. 
+        Users can post problems(issues they need help with), answer challenges, educate others, follow each other, and track the most trending discussions in the community.
+    </p>
+</div>
+
+<!-- How it Works -->
+<div class="my-5">
+    <h2 class="fw-bold mb-4 text-center">How It Works</h2>
+    <div class="row g-4 justify-content-center">
+        <div class="col-lg-4">
+            <div class="card h-100 text-center shadow-sm">
+                <div class="card-body">
+                    <i class="fa-solid fa-pencil fa-2xl text-primary mb-3"></i>
+                    <h5 class="card-title fw-bold">1. Post & Explore</h5>
+                    <p class="card-text text-muted">
+                        Share your problems/issues and idea or explore others’ challenges to test your knowledge.
+                    </p>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="card h-100 text-center shadow-sm">
+                <div class="card-body">
+                    <i class="fa-solid fa-comments fa-2xl text-primary mb-3"></i>
+                    <h5 class="card-title fw-bold">2. Engage & Collaborate</h5>
+                    <p class="card-text text-muted">
+                        Comment, suggest solutions, and collaborate with each other in real-time discussions.
+                    </p>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="card h-100 text-center shadow-sm">
+                <div class="card-body">
+                    <i class="fa-solid fa-award fa-2xl text-primary mb-3"></i>
+                    <h5 class="card-title fw-bold">3. Learn & Earn Recognition</h5>
+                    <p class="card-text text-muted">
+                        Gain recognition for your contributions, track your progress, and improve your expertise.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Footer Call-to-action -->
+{% if not user.is_authenticated %}
+<div class="text-center my-5">
+    <a href="{% url 'register' %}" class="btn btn-lg btn-outline-primary">
+        <i class="fa-solid fa-user-plus me-2"></i> Join <strong><span class="fancy-part">Fancy</span><span class="learn-part">learn</span></strong> Today
+    </a>
+</div>
+{% endif %}
+
+{% endblock %}

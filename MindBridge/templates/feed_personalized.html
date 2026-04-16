@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}Personalized Feed | Fancylearn{% endblock %}
+{% block content %}
+<h2>Personalized Feed</h2>
+<ul class="list-group">
+    {% for problem in problems %}
+        <li class="list-group-item">
+            <a href="{% url 'problem_detail' problem.id %}">{{ problem.title }}</a>
+            <span class="badge bg-success">{{ problem.votes_score }} votes</span>
+        </li>
+    {% endfor %}
+</ul>
+{% endblock %}

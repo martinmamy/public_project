@@ -1,0 +1,1545 @@
+{% extends "base.html" %}
+{% load static %}
+{% load mention_tags %}
+{% load custom_tags %}
+
+{% block title %}{{ problem.title }} | Fancylearn{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/problem_detail_partial.css' %}">
+{% endblock %}
+
+{% block content %}
+
+  <div class="row">
+
+    <!-- MAIN CONTENT -->
+    <div class="col-lg-7">
+    <button id="sidebarToggle" class="sidebar-toggle-btn d-lg-none" title="Open Post details">
+        <i class="fas fa-chevron-left"></i>
+    </button>
+      <!-- PROBLEM CARD -->
+      <div class="card shadow-sm mb-4 p-3" id="problem-{{ problem.id }}">
+         <!-- RIGHT: category + status badges -->
+         <div class="d-flex justify-content-end">
+            {% if problem.category.name %}
+              <span title="Post category" class="category-badge">{{ problem.category.name }}</span>
+            {% else %}
+              <span title="Post category" class="category-badge badge bg-secondary ms-2 text-light">{{ problem.category }}</span>
+            {% endif %}
+            {% if problem.is_solved %}
+              <span title="Post status" class="badge-status badge bg-success ms-2 text-light"><i class="fas fa-check-circle"></i> Solved</span>
+            {% endif %}
+        </div>
+        <div class="card-body">
+          <div class="d-flex align-items-center justify-content-between mb-3">
+            <a href="{% url 'profile' problem.author.id %}" class="d-flex text-decoration-none align-items-start">
+    
+                <!-- Avatar -->
+                {% if problem.author.avatar %}
+                    <img src="{{ problem.author.avatar.url|default:'/static/img/default-avatar.png' }}" 
+                        class="rounded-circle me-2" 
+                        style="width:35px; height:35px; object-fit:cover;">
+                {% else %}
+                    {% with first=problem.author.username|slice:":1"|upper %}
+                    <img style="width:35px; height:35px; object-fit:cover;" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40'%3E%3Crect width='40' height='40' fill='%23dee2e6'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='central' text-anchor='middle' font-family='Arial, sans-serif' font-size='20' fill='%23343a40'%3E{{ first }}%3C/text%3E%3C/svg%3E"
+                        class="avatar-img me-2">
+                    {% endwith %}
+                {% endif %}
+
+                <!-- Username + Time -->
+                <div class="d-flex flex-column">
+                    <strong class="small ">{{ problem.author.username }}</strong>
+                    <small data-time="{{ problem.created_at|date:'c' }}"></small>
+                </div>
+
+            </a>
+
+            {% if user == problem.author %}
+            <div class="dropdown">
+                <button class="btn btn-sm btn-light dropdown-toggle p-1" type="button" data-bs-toggle="dropdown">
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end">
+                <li><a class="dropdown-item edit-problem-btn" href="#" data-id="{{ problem.id }}"><i class="fas fa-edit me-2"></i> Edit</a></li>
+                <li><a class="dropdown-item delete-problem-btn" href="#" data-id="{{ problem.id }}"><i class="fas fa-trash-alt me-2"></i> Delete</a></li>
+                </ul>
+            </div>
+            {% endif %}
+            
+          </div><hr>
+          <h3 class="text-center">{{ problem.title }}</h3>
+          <div class="problem-content mb-3">
+              {{ problem.description|convert_mentions|linebreaks|safe }}
+          </div>
+
+          <!-- MEDIA -->
+          {% if problem.file %}
+          {% with problem.file.url|lower as file_url %}
+          <div class="media-container text-center mb-3">
+            {% if ".jpg" in file_url or ".jpeg" in file_url or ".png" in file_url or ".gif" in file_url %}
+              <img src="{{ problem.file.url }}" style="width:300px; height:auto; cursor:pointer; border-radius:8px;" class="clickable-media" data-src="{{ problem.file.url }}">
+            {% elif ".mp4" in file_url or ".mov" in file_url or ".avi" in file_url or ".mkv" in file_url or ".webm" in file_url %}
+              <video style="width:300px; height:auto; cursor:pointer; border-radius:8px;" controls class="clickable-media" data-src="{{ problem.file.url }}">
+                <source src="{{ problem.file.url }}">
+              </video>
+            {% elif ".mp3" in file_url or ".wav" in file_url or ".aac" in file_url %}
+              <audio style="width:300px;" controls class="clickable-media" data-src="{{ problem.file.url }}">
+                <source src="{{ problem.file.url }}">
+              </audio>
+            {% endif %}
+          </div>
+          {% endwith %}
+          {% endif %}
+
+         <!-- METRICS & PROMOTIONS -->
+          <div class="d-flex flex-wrap align-items-center gap-2 mb-3 metrics-row">
+
+            <!-- VOTES -->
+            <div class="vote-box d-flex align-items-center gap-1">
+              <div class="vote-btn vote-problem" data-id="{{ problem.id }}" data-value="1" title="UpVote">👍</div>
+              <div title="Votes count on this post" id="problem-score">{{ problem.votes_score|abbreviate_number }}</div>
+              <div class="vote-btn vote-problem" data-id="{{ problem.id }}" data-value="-1" title="DownVote">👎</div>
+            </div>
+
+            <!-- ANSWERS -->
+            <span title="Answer count on this post" class="badge bg-primary text-white d-flex align-items-center">
+              <i class="fas fa-reply me-1"></i> {{ problem.answers.count|abbreviate_number }}
+            </span>
+
+            <!-- VIEWS -->
+            <span title="Views count on this post" class="badge bg-secondary text-white d-flex align-items-center">
+              <i class="fas fa-eye me-1"></i> {{ problem.views_count|abbreviate_number }}
+            </span>
+
+            <!-- BOUNTY -->
+            {% if problem.bounty_amount and problem.bounty_amount > 0 %}
+              <span title="Bounty amount for this post" class="badge bg-warning text-dark d-flex align-items-center">
+                <i class="fas fa-coins me-1"></i> {{ problem.bounty_amount|abbreviate_number }}
+              </span>
+            {% endif %}
+
+            <!-- TIPS -->
+            {% if request.user == problem.author %}
+              <span title="Tips received for this post" class="badge bg-info text-dark d-flex align-items-center">
+                <i class="fas fa-coins me-1"></i> {{ problem.tips_received|abbreviate_number }}
+              </span>
+
+              <form class="d-flex align-items-center gap-1 promotion-feature-small" method="post" action="{% url 'promote_problem' problem.id %}">
+                {% csrf_token %}
+
+                <!-- Featured -->
+                <button type="submit" name="promotion_type" value="featured" class="btn btn-sm btn-icon bg-info text-dark" title="Feature 24h for $3">
+                  ⭐
+                </button>
+                <i class="fa-solid fa-circle-info info-icon" tabindex="0" data-bs-toggle="popover" data-bs-content="Feature this problem for 24 hours - $3"></i>
+
+                <!-- Boosted -->
+                <button type="submit" name="promotion_type" value="boosted" class="btn btn-sm btn-icon bg-warning text-dark" title="Boost 3 Days for $7">
+                  🚀
+                </button>
+                <i class="fa-solid fa-circle-info info-icon" tabindex="0" data-bs-toggle="popover" data-bs-content="Boost this problem for 3 days - $7"></i>
+
+                <!-- Pinned -->
+                <button type="submit" name="promotion_type" value="pinned" class="btn btn-sm btn-icon bg-light text-dark" title="Pin to Homepage for $15">
+                  📌
+                </button>
+                <i class="fa-solid fa-circle-info info-icon" tabindex="0" data-bs-toggle="popover" data-bs-content="Pin this problem to homepage - $15"></i>
+
+              </form>
+
+            {% endif %}
+
+            <!-- TIP INPUT -->
+            {% if request.user != problem.author %}
+              <div class="problem-tip-box d-flex align-items-center gap-2">
+                <input type="number"
+                      class="form-control form-control-sm problem-tip-amount"
+                      placeholder="$"  title="Enter amount to tip">
+
+                <button class="btn btn-warning btn-sm send-problem-tip-btn"
+                        data-id="{{ problem.id }}" title="Tip this post">
+                  <i class="fas fa-coins"></i>
+                  <span class="tip-text">Tip</span>
+                </button>
+
+                <span title="Tips sent from you for this post" class="badge bg-info text-dark d-flex align-items-center gap-1">
+                  <i class="fas fa-coins"></i>
+                  {{ problem.tips_received|abbreviate_number }}
+                </span>
+              </div>
+              {% endif %}
+
+          </div>
+
+          <!-- ACTIONS -->
+          <!-- COMMENTS -->
+          <div class="mt-3">
+            <button class="btn btn-sm btn-light mb-2" data-bs-toggle="collapse" data-bs-target="#comments-problem"  title="View comments">
+              <i class="fas fa-comments"></i>{{ problem.comments.count|abbreviate_number }}
+            </button>
+            <div class="collapse" id="comments-problem">
+              <div class="border rounded bg-light d-flex flex-column comments-problem">
+                {% if user.is_authenticated %}
+                <div class="bg-white py-2 px-3 border-bottom sticky-top" style="z-index:2;">
+                  <form id="post-comment-problem" class="comment-form d-flex flex-column gap-2" method="post" action="{% url 'create_comment' %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="problem_id" value="{{ problem.id }}">
+                    {{ comment_form.as_p }}
+                    <!-- Suggestions dropdown -->
+                    <ul id="mentionSuggestions" class="suggestion-list"></ul>
+                    <button class="btn btn-primary btn-icon d-flex align-items-center justify-content-center" title="Post comment"><i class="fas fa-paper-plane"></i></button>
+                  </form>
+                </div>
+                {% endif %}
+
+                <ul class="list-group list-group-flush flex-grow-1">
+                  {% for comment in problem.comments.all|dictsortreversed:"created_at" %}
+                    <li class="list-group-item d-flex justify-content-between align-items-start py-2 comment-item" id="comment-{{ comment.id }}">
+                    
+                    <!-- Left side: avatar + username + time + content -->
+                    <div class="d-flex align-items-start gap-2">
+
+                        <!-- Avatar -->
+                        <a href="{% url 'profile' comment.user.id %}">
+                            {% if comment.user.avatar %}
+                                <img src="{{ comment.user.avatar.url|default:'/static/img/default-avatar.png' }}"
+                                    class="rounded-circle"
+                                    style="width:35px; height:35px; object-fit:cover;">
+                            {% else %}
+                                {% with first=comment.user.username|slice:":1"|upper %}
+                                <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='35' height='35'%3E%3Crect width='35' height='35' fill='%23dee2e6'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='central' text-anchor='middle' font-family='Arial, sans-serif' font-size='16' fill='%23343a40'%3E{{ first }}%3C/text%3E%3C/svg%3E"
+                                    class="avatar-img">
+                                {% endwith %}
+                            {% endif %}
+                        </a>
+
+                        <!-- Username + Time + Content -->
+                        <div class="d-flex flex-column">
+                            <a href="{% url 'profile' comment.user.id %}" class="text-decoration-none">
+                                <strong>{{ comment.user.username }}</strong>
+                            </a>
+
+                            <span class=" small">
+                                • <small data-time="{{ comment.created_at|date:'c' }}"></small>
+                            </span>
+
+                            <div class="comment-content mt-1">
+                                {{ comment.content|convert_mentions|linebreaks|safe }}
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- Dropdown for edit/delete -->
+                    {% if user == comment.user %}
+                    <div class="dropdown ms-2">
+                        <button class="btn btn-sm btn-light dropdown-toggle p-0" data-bs-toggle="dropdown"></button>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                        <li><a class="dropdown-item edit-problem-comment-btn" href="#" data-id="{{ comment.id }}"><i class="fas fa-edit me-2"></i>Edit</a></li>
+                        <li><a class="dropdown-item delete-problem-comment-btn" href="#" data-id="{{ comment.id }}"><i class="fas fa-trash-alt me-2"></i>Delete</a></li>
+                        </ul>
+                    </div>
+                    {% endif %}
+
+                    </li>
+                    {% empty %}
+                    <li class="list-group-item ">No comments yet</li>
+                    {% endfor %}
+                </ul>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ANSWER FORM -->
+      {% if user.is_authenticated %}
+        <div class="answer-form-wrapper">
+          <div class="answer-form-card">
+
+            <h5 class="answer-form-title">
+              <i class="fas fa-pencil-alt"></i> Post Your Answer
+            </h5>
+
+            <form method="post" action="{% url 'create_answer' problem.id %}" enctype="multipart/form-data" id="answerForm">
+              {% csrf_token %}
+
+              <!-- TEXTAREA -->
+              <div class="form-row">
+                <textarea id="answerTextarea" name="content"
+                          placeholder="Write your answer..."
+                          rows="4" required
+                          class="answer-textarea"></textarea>
+                <span class="required-star">*</span>
+              </div>
+
+              <!-- FILE UPLOAD -->
+              <div class="form-row">
+                <label class="upload-label">
+                  📷 Media
+                  {{ answer_form.file|add_class:"d-none" }}
+                </label>
+              </div>
+
+              <!-- PREVIEW -->
+              <div id="file-preview" class="file-preview"></div>
+
+              <!-- BUTTONS -->
+              <div class="answer-actions">
+                <button type="button" id="generateAnswerBtn" class="btn btn-secondary" title="Let AI Generate your answer">
+                  <i class="fas fa-paper-plane"></i>
+                  <span class="btn-text">AI Generate</span>
+                </button>
+
+                <button type="submit" class="btn btn-primary" title="Post your answer">
+                  <i class="fas fa-paper-plane"></i>
+                  <span class="btn-text">Post</span>
+                </button>
+              </div>
+
+              <!-- Mentions -->
+              <ul id="mentionSuggestions" class="mention-list"></ul>
+            </form>
+
+          </div>
+        </div>
+      {% endif %}
+
+      <!-- ANSWERS -->
+      <h4 class="mb-3"><i class="fas fa-reply-all"></i> Answers ({{ problem.answers.count|abbreviate_number }})</h4>
+      <div class="answers-container border rounded p-2 mb-4" id="answers-list">
+        {% for answer in problem.answers.all|dictsortreversed:"created_at" %}
+        <div class="card shadow-sm mb-3 {% if answer.is_accepted %}accepted-answer{% endif %}" id="answer-{{ answer.id }}" data-votes="{{ answer.votes_score }}">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <div class="d-flex align-items-center gap-2 mb-2">
+
+                    <!-- Avatar -->
+                    <a href="{% url 'profile' answer.author.id %}">
+                        {% if answer.author.avatar %}
+                            <img src="{{ answer.author.avatar.url|default:'/static/img/default-avatar.png' }}" 
+                                class="rounded-circle" 
+                                style="width:35px; height:35px; object-fit:cover;">
+                        {% else %}
+                            {% with first=answer.author.username|slice:":1"|upper %}
+                            <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='35' height='35'%3E%3Crect width='35' height='35' fill='%23dee2e6'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='central' text-anchor='middle' font-family='Arial, sans-serif' font-size='16' fill='%23343a40'%3E{{ first }}%3C/text%3E%3C/svg%3E"
+                                class="avatar-img">
+                            {% endwith %}
+                        {% endif %}
+                    </a>
+
+                    <!-- Username + Time -->
+                    <div class="d-flex flex-column small">
+                        <a href="{% url 'profile' answer.author.id %}" class="text-decoration-none ">
+                            <strong>{{ answer.author.username }}</strong>
+                        </a>
+                        <span class=""><small data-time="{{ answer.created_at|date:'c' }}"></small></span>
+                    </div>
+
+                </div>
+              {% if user == answer.author %}
+              <div class="dropdown">
+                <button class="btn btn-sm btn-light dropdown-toggle p-1" type="button" data-bs-toggle="dropdown"></button>
+                <ul class="dropdown-menu dropdown-menu-end">
+                  <li><a class="dropdown-item edit-answer-btn" href="#" data-id="{{ answer.id }}"><i class="fas fa-edit me-2"></i>Edit</a></li>
+                  <li><a class="dropdown-item delete-answer-btn" href="#" data-id="{{ answer.id }}"><i class="fas fa-trash-alt me-2"></i>Delete</a></li>
+                </ul>
+              </div>
+              {% endif %}
+            </div>
+
+            <div class="answer-content mb-2">{{ answer.content|convert_mentions|linebreaks|safe }}</div>
+
+            {% if answer.file %}
+            {% with answer.file.url|lower as file_url %}
+            <div class="media-container text-center mb-3">
+              {% if ".jpg" in file_url or ".jpeg" in file_url or ".png" in file_url or ".gif" in file_url %}
+                <img src="{{ answer.file.url }}" style="width:300px; height:auto; cursor:pointer; border-radius:8px;" class="answer-media clickable-media" data-src="{{ answer.file.url }}">
+              {% elif ".mp4" in file_url or ".mov" in file_url or ".avi" in file_url or ".mkv" in file_url or ".webm" in file_url %}
+                <video style="width:300px; height:auto; cursor:pointer; border-radius:8px;" controls class="answer-media clickable-media" data-src="{{ answer.file.url }}">
+                  <source src="{{ answer.file.url }}">
+                </video>
+              {% elif ".mp3" in file_url or ".wav" in file_url or ".aac" in file_url %}
+                <audio style="width:300px;" controls class="answer-media clickable-media" data-src="{{ answer.file.url }}">
+                  <source src="{{ answer.file.url }}">
+                </audio>
+              {% endif %}
+            </div>
+            {% endwith %}
+            {% endif %}
+
+            <div class="answer-vote-box d-flex flex-wrap align-items-center gap-2 mb-2">
+
+              <!-- KEEP THIS GROUP TOGETHER -->
+              <div class="vote-group d-flex align-items-center gap-2">
+                <div class="vote-btn vote-answer" data-id="{{ answer.id }}" data-value="1" title="UpVote">👍</div>
+                <div title="Votes count for this answer" id="answer-score-{{ answer.id }}">{{ answer.votes_score|abbreviate_number }}</div>
+                <div class="vote-btn vote-answer" data-id="{{ answer.id }}" data-value="-1" title="DownVote">👎</div>
+                <span></span>
+              </div>
+              <!-- Tips badge visible only to the answer's author -->
+              {% if request.user == answer.author %}
+                  <span title="Tips received for this answer" class="badge bg-info text-dark ms-2" title="Tips Accumulated on this answer">
+                    <i class="fas fa-coins"></i> {{ answer.tips_received|abbreviate_number }}
+                  </span>
+              {% endif %}
+              {% if answer.is_accepted %}
+                  <span title="Acccepted answer" class="badge bg-success ms-2 text-white"><i class="fas fa-check-circle"></i> Accepted</span>
+              {% elif user == problem.author and answer.author != problem.author %}
+                  <form method="post" action="{% url 'accept_answer' answer.id %}" class="d-inline accept-answer-form">
+                      {% csrf_token %}
+                      <button type="submit" title="Accept answer" class="btn btn-sm btn-success btn-icon ms-2 text-white">Accept</button>
+                  </form>
+              {% endif %}
+              {% if request.user != answer.author %}
+                    <div class="answer-tip-box d-flex align-items-center gap-2">
+                      <input type="number"
+                            class="form-control form-control-sm tip-amount"
+                            placeholder="$" title="Enter tip amount">
+
+                      <button class="btn btn-warning btn-sm send-tip-btn" data-id="{{ answer.id }}" title="Tip this answer">
+                        <i class="fas fa-coins"></i>
+                        <span class="tip-text">Tip</span>
+                      </button>
+
+                      <span title="Tips sent from you for this answer" class="badge bg-info text-dark d-flex align-items-center gap-1">
+                        <i class="fas fa-coins"></i>
+                        {{ answer.tips_received|abbreviate_number }}
+                      </span>
+                    </div>
+                  {% endif %}
+            </div>
+
+            <!-- ANSWER COMMENTS -->
+            <div class="mt-3">
+              <button title="View all comments" class="btn btn-sm comment-toggle-btn btn-light mb-2" data-bs-toggle="collapse" data-bs-target="#comments-{{ answer.id }}">
+                <i class="fas fa-comments"></i> {{ answer.comments.count|abbreviate_number }}
+              </button>
+              <div class="collapse" id="comments-{{ answer.id }}">
+                <div class="border rounded p-3 comment-container bg-light">
+                  {% if user.is_authenticated %}
+                  <div class="sticky-top bg-white py-2 mb-3 shadow-sm" style="z-index:1;">
+                    <form class="comment-form d-flex flex-column gap-2" method="post" action="{% url 'create_comment' %}">
+                      {% csrf_token %}
+                      <input type="hidden" name="answer_id" value="{{ answer.id }}">
+                      {{ comment_form.as_p }}
+                      <!-- Suggestions dropdown -->
+                      <ul id="mentionSuggestions" class="suggestion-list"></ul>
+                      <button class="btn btn-primary btn-sm w-100 btn-icon d-flex align-items-center justify-content-center"><i class="fas fa-paper-plane"></i></button>
+                    </form>
+                  </div>
+                  {% endif %}
+                  <ul class="list-group list-group-flush" id="answer-comments-{{ answer.id }}">
+                    {% for comment in answer.comments.all|dictsortreversed:"created_at" %}
+                    <li class="list-group-item d-flex justify-content-between align-items-start py-2 comment-item" id="comment-answer-{{ comment.id }}">
+                    
+                    <div class="d-flex align-items-start gap-2">
+    
+                        <!-- Avatar -->
+                        <a href="{% url 'profile' comment.user.id %}">
+                            {% if comment.user.avatar %}
+                                <img src="{{ comment.user.avatar.url|default:'/static/img/default-avatar.png' }}" 
+                                    class="rounded-circle" 
+                                    style="width:35px; height:35px; object-fit:cover;">
+                            {% else %}
+                                {% with first=comment.user.username|slice:":1"|upper %}
+                                <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='35' height='35'%3E%3Crect width='35' height='35' fill='%23dee2e6'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='central' text-anchor='middle' font-family='Arial, sans-serif' font-size='16' fill='%23343a40'%3E{{ first }}%3C/text%3E%3C/svg%3E"
+                                    class="avatar-img">
+                                {% endwith %}
+                            {% endif %}
+                        </a>
+
+                        <!-- Username + Time + Content -->
+                        <div class="d-flex flex-column">
+                            <a href="{% url 'profile' comment.user.id %}" class="text-decoration-none ">
+                                <strong>{{ comment.user.username }}</strong>
+                            </a>
+
+                            <span class=" small">
+                                • <small data-time="{{ comment.created_at|date:'c' }}"></small>
+                            </span>
+
+                            <div class="comment-answer-content mt-1">
+                                {{ comment.content|convert_mentions|linebreaks|safe }}
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- Dropdown for edit/delete -->
+                    {% if user == comment.user %}
+                    <div class="dropdown ms-2">
+                        <button class="btn btn-sm btn-light dropdown-toggle p-0" type="button" data-bs-toggle="dropdown"></button>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                        <li><a class="dropdown-item edit-answer-comment-btn" href="#" data-id="{{ comment.id }}"><i class="fas fa-edit me-2"></i>Edit</a></li>
+                        <li><a class="dropdown-item delete-answer-comment-btn" href="#" data-id="{{ comment.id }}"><i class="fas fa-trash-alt me-2"></i>Delete</a></li>
+                        </ul>
+                    </div>
+                    {% endif %}
+
+                    </li>
+                    {% empty %}
+                    <li class="list-group-item ">No comments yet</li>
+                    {% endfor %}
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+
+    </div>
+
+    <!-- SIDEBAR -->
+    <div class="col-lg-5 sidebar-panel" id="problemSidebar"> <!-- wider sidebar -->
+      <div class="card mb-4 shadow-sm p-3">
+        <div class="card-body">
+          <h5><i class="fas fa-info-circle"></i> Problem Info</h5>
+          <p><i class="fas fa-user"></i> <strong>Author:</strong> {{ problem.author.username }}</p>
+          <p><i class="fas fa-calendar-alt"></i> <strong>Created:</strong> <small data-time="{{ problem.created_at|date:'c' }}"></small></p>
+          <p><i class="fas fa-folder"></i> <strong>Category:</strong> {{ problem.category }}</p>
+          <p><i class="fas fa-tags"></i> <strong>Tags:</strong>
+            {% if tags_list %}
+              {% for t in tags_list %}
+                <span class="badge bg-secondary me-1 text-light">{{ t }}</span>
+              {% endfor %}
+            {% else %}
+              <span class="">No tags</span>
+            {% endif %}
+          </p>
+          {% if problem.bounty_amount and problem.bounty_amount > 0 %}
+            <p><i class="fas fa-coins"></i> <strong>Bounty:</strong> ${{ problem.bounty_amount|abbreviate_number }}</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+<!-- Image Preview Modal -->
+<div id="img-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); justify-content:center; align-items:center; z-index:2000;">
+  <span id="img-modal-close" style="position:absolute; top:20px; right:30px; font-size:30px; color:white; cursor:pointer;">&times;</span>
+  <img id="img-modal-content" src="" style="max-width:90%; max-height:90%; border-radius:10px; box-shadow:0 4px 12px rgba(0,0,0,0.5);"/>
+</div>
+<!-- MEDIA MODAL -->
+<div class="modal fade" id="mediaModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content bg-transparent border-0">
+      <div class="modal-body text-center" id="modal-media-container"></div>
+      <button type="button" class="btn-close position-absolute top-0 end-0 m-3" data-bs-dismiss="modal"></button>
+    </div>
+  </div>
+</div>
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    const btn = document.getElementById("generateAnswerBtn");
+    const textarea = document.getElementById("answerTextarea");
+
+    btn.addEventListener("click", async () => {
+        textarea.value = "Generating AI answer...";
+
+        try {
+            const response = await fetch("{% url 'generate_ai_answer' problem.id %}", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRFToken": "{{ csrf_token }}"
+                },
+                body: JSON.stringify({})
+            });
+
+            const data = await response.json();
+            textarea.value = data.answer || "Failed to generate AI answer.";
+            textarea.focus();
+        } catch (error) {
+            textarea.value = "Error generating AI answer.";
+            console.error(error);
+        }
+    });
+});
+</script>
+
+<!-- FILE PREVIEW SCRIPT -->
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+  // Modal elements
+  const modal = document.getElementById("img-modal");
+  const modalImg = document.getElementById("img-modal-content");
+  const closeBtn = document.getElementById("img-modal-close");
+
+  // Click any image in problem description to enlarge
+  document.querySelectorAll(".problem-content img").forEach(img => {
+    img.style.cursor = "zoom-in";
+
+    // Prevent drag
+    img.setAttribute("draggable", "false");
+
+    img.addEventListener("click", () => {
+      modal.style.display = "flex";
+      modalImg.src = img.src;
+
+      // Prevent dragging the modal image
+      modalImg.setAttribute("draggable", "false");
+    });
+
+    // Disable right-click on the image
+    img.addEventListener("contextmenu", (e) => e.preventDefault());
+  });
+
+  // Close modal
+  closeBtn.addEventListener("click", () => {
+    modal.style.display = "none";
+  });
+
+  // Click outside image closes modal
+  modal.addEventListener("click", (e) => {
+    if (e.target === modal) modal.style.display = "none";
+  });
+
+  // Disable right-click on modal image
+  modalImg.addEventListener("contextmenu", (e) => e.preventDefault());
+});
+
+  // -------------------------
+  // TIME FORMAT (FB STYLE)
+  // -------------------------
+  const fbTimeSince = dateString => {
+    const now = new Date();
+    const past = new Date(dateString);
+    const seconds = Math.floor((now - past)/1000);
+    if (seconds < 60) return `${seconds}s ago`;
+    if (seconds < 3600) return `${Math.floor(seconds/60)}m ago`;
+    if (seconds < 86400) return `${Math.floor(seconds/3600)}h ago`;
+    if (seconds < 604800) return `${Math.floor(seconds/86400)}d ago`;
+    return past.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+  };
+  document.querySelectorAll("[data-time]").forEach(el => el.innerText = fbTimeSince(el.dataset.time));
+
+document.addEventListener("DOMContentLoaded", function(){
+  const fileInput = document.querySelector('input[type="file"]');
+  const preview = document.getElementById("file-preview");
+
+  if(fileInput){
+    fileInput.addEventListener("change", function(){
+      preview.innerHTML = "";
+      const file = this.files[0];
+      if(!file) return;
+      const ext = file.name.split(".").pop().toLowerCase();
+
+      if(["jpg","jpeg","png","gif"].includes(ext)){
+        const img = document.createElement("img");
+        img.src = URL.createObjectURL(file);
+        img.style.maxWidth="100%";
+        img.style.borderRadius="10px";
+        preview.appendChild(img);
+      } else if(["mp4","webm","mov","avi","mkv"].includes(ext)){
+        const video = document.createElement("video");
+        video.src = URL.createObjectURL(file);
+        video.controls = true;
+        video.style.maxWidth="100%";
+        video.style.borderRadius="10px";
+        preview.appendChild(video);
+      } else if(["mp3","wav","aac"].includes(ext)){
+        const audio = document.createElement("audio");
+        audio.src = URL.createObjectURL(file);
+        audio.controls = true;
+        preview.appendChild(audio);
+      } else {
+        preview.innerHTML = "Preview not available";
+      }
+    });
+  }
+
+  // Info tooltip toggle
+  document.querySelectorAll('.info-icon').forEach(icon=>{
+    icon.addEventListener('mouseenter',()=>{ icon.children[0].style.display='block'; });
+    icon.addEventListener('mouseleave',()=>{ icon.children[0].style.display='none'; });
+  });
+});
+</script>
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+
+  // -------------------------
+  // CSRF HELPER
+  // -------------------------
+  const getCSRFToken = () => {
+    const token = document.querySelector('[name=csrfmiddlewaretoken]');
+    if (token) return token.value;
+    const cookie = document.cookie.split("; ").find(c => c.trim().startsWith("csrftoken="));
+    return cookie ? cookie.split("=")[1] : "";
+  };
+  const csrfToken = getCSRFToken();
+
+  // -------------------------
+  // MEDIA PROTECTION SETTINGS
+  // -------------------------
+  const disableMediaDownload = (el) => {
+    if (!el) return;
+    el.setAttribute("oncontextmenu", "return false");  // prevent right-click
+    if (el.tagName.toLowerCase() === "video" || el.tagName.toLowerCase() === "audio") {
+      el.controlsList = "nodownload nofullscreen noremoteplayback";  // hide download button
+      el.setAttribute("controlsList", "nodownload"); // fallback
+    }
+  };
+
+  // Apply to existing media on page
+  document.querySelectorAll(".clickable-media, .answer-media").forEach(disableMediaDownload);
+
+  // -------------------------
+  // MEDIA MODAL
+  // -------------------------
+  const mediaModalEl = document.getElementById("mediaModal");
+  const mediaContainer = document.getElementById("modal-media-container");
+
+  document.addEventListener("click", e => {
+    const media = e.target.closest(".clickable-media, .answer-media");
+    if (!media || !mediaContainer) return;
+
+    const src = media.dataset.src;
+    const tag = media.tagName.toLowerCase();
+    let html = "";
+
+    if (tag === "img") {
+      html = `<img src="${src}" class="img-fluid rounded" style="max-height:80vh;" oncontextmenu="return false;">`;
+    } else if (tag === "video") {
+      html = `<video autoplay controls class="w-100 rounded" style="max-height:80vh;" controlsList="nodownload" oncontextmenu="return false">
+                <source src="${src}">
+              </video>`;
+    } else if (tag === "audio") {
+      html = `<audio autoplay controls class="w-100" controlsList="nodownload" oncontextmenu="return false">
+                <source src="${src}">
+              </audio>`;
+    }
+
+    mediaContainer.innerHTML = html;
+    if (mediaModalEl) new bootstrap.Modal(mediaModalEl).show();
+  });
+
+  mediaModalEl?.addEventListener("hidden.bs.modal", () => {
+    mediaContainer.innerHTML = "";
+  });
+
+// -------------------------
+// VOTING
+// -------------------------
+const showVoteMessage = (msg="Thanks for voting!") => {
+  const toast = document.createElement("div");
+  toast.className = "vote-toast position-fixed bottom-0 end-0 m-3 p-2 bg-success rounded shadow";
+  toast.innerText = msg;
+  document.body.appendChild(toast);
+  setTimeout(() => toast.remove(), 1500);
+};
+
+// Track voted posts (client-side)
+const votedPosts = new Set();
+
+const handleVote = (url, scoreEl, value, postId) => {
+  // Prevent multiple votes per post
+  if (votedPosts.has(postId)) {
+    alert("You have already voted on this post.");
+    return;
+  }
+
+  fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "X-CSRFToken": csrfToken },
+    body: JSON.stringify({ value })
+  })
+  .then(r => r.json())
+  .then(d => {
+    if (!d || d.status === "error") {
+      alert("Vote failed. Please try again.");
+      return;
+    }
+
+    if (scoreEl && d.score !== undefined) scoreEl.innerText = d.score;
+
+    if (d.status === "voted") {
+      showVoteMessage("Vote recorded!");
+      votedPosts.add(postId); // mark post as voted
+    }
+
+    if (url.includes("/vote/answer/")) sortAnswers();
+  })
+  .catch(err => {
+    console.error(err);
+    alert("Vote failed. Please try again.");
+  });
+};
+
+document.addEventListener("click", e => {
+  const btn = e.target.closest(".vote-problem, .vote-answer");
+  if (!btn) return;
+
+  const isProblem = btn.classList.contains("vote-problem");
+  const id = btn.dataset.id;
+  const value = parseInt(btn.dataset.value);
+  const scoreEl = document.getElementById(isProblem ? "problem-score" : `answer-score-${id}`);
+  const url = isProblem ? `/vote/problem/${id}/` : `/vote/answer/${id}/`;
+
+  // Use problem/answer id as key to track votes
+  const postId = (isProblem ? "problem-" : "answer-") + id;
+  handleVote(url, scoreEl, value, postId);
+});
+
+  // -------------------------
+  // SORT ANSWERS
+  // -------------------------
+  const sortAnswers = () => {
+    const container = document.getElementById("answers-list");
+    if (!container) return;
+
+    const accepted = container.querySelector(".accepted-answer");
+    const cards = Array.from(container.querySelectorAll(".card")).filter(c => !c.classList.contains("accepted-answer"));
+    cards.sort((a, b) => {
+      const aScore = parseInt(a.querySelector("[id^='answer-score']")?.innerText || 0);
+      const bScore = parseInt(b.querySelector("[id^='answer-score']")?.innerText || 0);
+      return bScore - aScore;
+    });
+
+    container.innerHTML = "";
+    if (accepted) container.appendChild(accepted);
+    cards.forEach(c => container.appendChild(c));
+  };
+
+  // -------------------------
+  // ACCEPT ANSWER
+  // -------------------------
+document.addEventListener("submit", async (e) => {
+    const form = e.target.closest(".accept-answer-form");
+    if (!form) return;
+
+    e.preventDefault();
+
+    // Get CSRF token dynamically from meta tag
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
+
+    if (!csrfToken) {
+        console.error("CSRF token not found!");
+        return;
+    }
+
+    try {
+        const response = await fetch(form.action, {
+            method: "POST",
+            headers: {
+                "X-CSRFToken": csrfToken,
+                "Accept": "application/json"
+            }
+        });
+
+        if (!response.ok) {
+            const errData = await response.json();
+            console.error("Error accepting answer:", errData);
+            alert(errData.error || "Failed to accept answer.");
+            return;
+        }
+
+        const data = await response.json();
+
+        if (data.status === "accepted") {
+            // Option 1: Reload page
+            location.reload();
+
+            // Option 2: Dynamic update (no reload)
+            // const badge = form.closest(".card-body").querySelector(".badge");
+            // if (badge) badge.innerHTML = '<i class="fas fa-check-circle"></i> Accepted';
+            // form.remove(); // remove accept button
+        }
+
+    } catch (err) {
+        console.error("Network error while accepting answer:", err);
+        alert("Network error. Please try again.");
+    }
+});
+
+ const enableInlineEdit = type => {
+    document.addEventListener("click", e => {
+      const btn = e.target.closest(`.edit-${type}-btn`);
+      if (!btn) return;
+      e.preventDefault();
+
+      const id = btn.dataset.id;
+      const containerId = type === "answer-comment" ? `comment-answer-${id}` :
+                          type === "problem-comment" ? `comment-${id}` : `${type}-${id}`;
+      const element = document.getElementById(containerId);
+      if (!element) return;
+
+      const contentSelector = type === "problem-comment" ? ".comment-content" :
+                              type === "answer-comment" ? ".comment-answer-content" : `.${type}-content`;
+      const contentDiv = element.querySelector(contentSelector);
+      if (!contentDiv) return;
+
+      const originalHTML = contentDiv.innerHTML;
+
+      // -----------------------
+      // Editable div
+      // -----------------------
+      const editorDiv = document.createElement("div");
+      editorDiv.contentEditable = "true";
+      editorDiv.className = "inline-editor form-control mb-2";
+      editorDiv.style.minHeight = "80px";
+      editorDiv.style.padding = "8px";
+      editorDiv.style.borderRadius = "10px";
+      editorDiv.style.background = 'var(--card)';
+      editorDiv.style.position = "relative";
+      editorDiv.innerHTML = originalHTML;
+
+      // Buttons
+      const saveBtn = document.createElement("button");
+      saveBtn.className = "btn btn-success btn-sm me-2";
+      saveBtn.innerText = "Save";
+
+      const cancelBtn = document.createElement("button");
+      cancelBtn.className = "btn btn-secondary btn-sm";
+      cancelBtn.innerText = "Cancel";
+
+      const wrapper = document.createElement("div");
+      wrapper.append(editorDiv, saveBtn, cancelBtn);
+      contentDiv.replaceWith(wrapper);
+
+      // -----------------------
+      // Drag & resize images
+      // -----------------------
+      let selectedImg = null;
+      let startX, startY, startWidth, startHeight, offsetX, offsetY;
+      let isDragging = false;
+      let isResizing = false;
+
+      editorDiv.addEventListener("click", e => {
+        if (e.target.tagName === "IMG") {
+          if (selectedImg) selectedImg.classList.remove("selected");
+          selectedImg = e.target;
+          selectedImg.classList.add("selected");
+        } else {
+          if (selectedImg) selectedImg.classList.remove("selected");
+          selectedImg = null;
+        }
+      });
+
+      editorDiv.addEventListener("mousedown", e => {
+        if (!selectedImg) return;
+
+        const rect = selectedImg.getBoundingClientRect();
+        const offsetRight = e.clientX - rect.right;
+        const offsetBottom = e.clientY - rect.bottom;
+
+        // Resize if near bottom-right corner
+        if (offsetRight > -15 && offsetRight < 5 && offsetBottom > -15 && offsetBottom < 5) {
+          isResizing = true;
+          startX = e.clientX;
+          startY = e.clientY;
+          startWidth = selectedImg.offsetWidth;
+          startHeight = selectedImg.offsetHeight;
+          selectedImg.classList.add("resizing");
+        } else {
+          // Drag
+          isDragging = true;
+          offsetX = e.clientX - selectedImg.offsetLeft;
+          offsetY = e.clientY - selectedImg.offsetTop;
+          selectedImg.style.position = "absolute";
+          selectedImg.classList.add("dragging");
+        }
+
+        function onMouseMove(eMove) {
+          if (isResizing) {
+            const dx = eMove.clientX - startX;
+            const dy = eMove.clientY - startY;
+            selectedImg.style.width = startWidth + dx + "px";
+            selectedImg.style.height = startHeight + dy + "px";
+          } else if (isDragging) {
+            let x = eMove.clientX - offsetX;
+            let y = eMove.clientY - offsetY;
+            // Clamp inside editor
+            x = Math.max(0, Math.min(x, editorDiv.clientWidth - selectedImg.offsetWidth));
+            y = Math.max(0, Math.min(y, editorDiv.clientHeight - selectedImg.offsetHeight));
+            selectedImg.style.left = x + "px";
+            selectedImg.style.top = y + "px";
+          }
+        }
+
+        function onMouseUp() {
+          isDragging = false;
+          isResizing = false;
+          if (selectedImg) selectedImg.classList.remove("dragging", "resizing");
+          document.removeEventListener("mousemove", onMouseMove);
+          document.removeEventListener("mouseup", onMouseUp);
+        }
+
+        document.addEventListener("mousemove", onMouseMove);
+        document.addEventListener("mouseup", onMouseUp);
+      });
+
+      // -----------------------
+      // Paste images
+      // -----------------------
+      editorDiv.addEventListener("paste", e => {
+        const items = (e.clipboardData || e.originalEvent.clipboardData).items;
+        for (const item of items) {
+          if (item.type.indexOf("image") !== -1) {
+            const file = item.getAsFile();
+            const reader = new FileReader();
+            reader.onload = ev => {
+              const img = document.createElement("img");
+              img.src = ev.target.result;
+              img.style.maxWidth = "200px";
+              img.style.borderRadius = "10px";
+              editorDiv.appendChild(img);
+            };
+            reader.readAsDataURL(file);
+            e.preventDefault();
+          }
+        }
+      });
+
+      // -----------------------
+      // Save / Cancel
+      // -----------------------
+      saveBtn.onclick = () => {
+        const payload = type === "problem" ? { description: editorDiv.innerHTML } : { content: editorDiv.innerHTML };
+        let url = type === "problem" ? `/problems/update/${id}/` :
+                  type === "answer" ? `/answers/update/${id}/` :
+                  type === "problem-comment" ? `/comments/problem/${id}/edit/` :
+                  `/comments/answer/${id}/edit/`;
+
+        fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "X-CSRFToken": csrfToken },
+          body: JSON.stringify(payload)
+        })
+        .then(r => r.json())
+        .then(d => {
+          if (d.status === "updated" || d.success) {
+            const newDiv = document.createElement("div");
+            newDiv.className = contentDiv.className;
+            newDiv.innerHTML = editorDiv.innerHTML;
+            wrapper.replaceWith(newDiv);
+          } else alert(d.error || "Update failed");
+        })
+        .catch(console.error);
+      };
+
+      cancelBtn.onclick = () => {
+        const originalDiv = document.createElement("div");
+        originalDiv.className = contentDiv.className;
+        originalDiv.innerHTML = originalHTML;
+        wrapper.replaceWith(originalDiv);
+      };
+    });
+  };
+
+  ["problem", "answer", "problem-comment", "answer-comment"].forEach(enableInlineEdit);
+
+  // -------------------------
+  // DELETE HANDLER
+  // -------------------------
+  const enableDelete = type => {
+    document.addEventListener("click", async e => {
+      const btn = e.target.closest(`.delete-${type}-btn`);
+      if (!btn) return;
+      e.preventDefault();
+
+      const id = btn.dataset.id;
+      if (!confirm(`Delete this ${type}?`)) return;
+
+      const urls = {
+        "problem": `/problems/delete/${id}/`,
+        "answer": `/answers/delete/${id}/`,
+        "problem-comment": `/comments/problem/${id}/delete/`,
+        "answer-comment": `/comments/answer/${id}/delete/`
+      };
+      const url = urls[type];
+      if (!url) return;
+
+      try {
+        const response = await fetch(url, {
+          method: "POST",
+          headers: { "X-CSRFToken": csrfToken, "X-Requested-With": "XMLHttpRequest" }
+        });
+
+        if (!response.ok) {
+          const text = await response.text();
+          console.error("Server error:", text);
+          alert("Delete failed: check console for details.");
+          return;
+        }
+
+        const data = await response.json();
+
+        if (data.status === "deleted" || data.success) {
+          if (type === "problem") window.location.href = "/problems/";
+          else {
+            const elId = type === "problem-comment" ? `comment-${id}` :
+                         type === "answer-comment" ? `comment-answer-${id}` :
+                         `${type}-${id}`;
+            document.getElementById(elId)?.remove();
+          }
+        } else alert(data.error || "Delete failed");
+      } catch (err) {
+        console.error("Delete error:", err);
+        alert("An error occurred while deleting. Please try again.");
+      }
+    });
+  };
+
+  ["problem", "answer", "problem-comment", "answer-comment"].forEach(enableDelete);
+
+  // -------------------------
+  // INITIAL SORT
+  // -------------------------
+  sortAnswers();
+
+  // -------------------------
+  // DISABLE ACCEPT BUTTONS IF ANSWER EXISTS
+  // -------------------------
+  const disableAcceptButtons = () => {
+    const accepted = document.querySelector(".accepted-answer");
+    if (!accepted) return;
+    document.querySelectorAll(".accept-answer-form button[type='submit']")
+      .forEach(btn => btn.disabled = true);
+  };
+  disableAcceptButtons();
+// -------------------------
+// MOBILE SIDEBAR TOGGLE
+// -------------------------
+const sidebar = document.getElementById("problemSidebar");
+const toggleBtn = document.getElementById("sidebarToggle");
+
+if(toggleBtn && sidebar){
+
+  toggleBtn.addEventListener("click", () => {
+
+      sidebar.classList.toggle("open");
+
+      const icon = toggleBtn.querySelector("i");
+
+      if(sidebar.classList.contains("open")){
+          icon.classList.remove("fa-chevron-left");
+          icon.classList.add("fa-chevron-right");
+      }else{
+          icon.classList.remove("fa-chevron-right");
+          icon.classList.add("fa-chevron-left");
+      }
+
+  });
+
+}
+});
+</script>
+
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+
+  const textareas = document.querySelectorAll("form textarea");
+
+  textareas.forEach(textarea => {
+
+    // Create a floating suggestion box
+    const suggestionBox = document.createElement("ul");
+    suggestionBox.classList.add("suggestion-list");
+    suggestionBox.style.position = "absolute";
+    suggestionBox.style.zIndex = 1000;
+    suggestionBox.style.background = "#fff";
+    suggestionBox.style.border = "1px solid #ddd";
+    suggestionBox.style.borderRadius = "6px";
+    suggestionBox.style.listStyle = "none";
+    suggestionBox.style.padding = "0";
+    suggestionBox.style.margin = "0";
+    suggestionBox.style.display = "none";
+    suggestionBox.style.minWidth = "200px";
+    suggestionBox.style.maxWidth = "300px";
+    suggestionBox.style.boxShadow = "0 4px 12px rgba(0,0,0,0.15)";
+    suggestionBox.style.overflow = "hidden";
+    suggestionBox.style.transition = "opacity 0.2s";
+
+    document.body.appendChild(suggestionBox);
+
+    let atIndex = -1;
+
+    const updatePosition = () => {
+      const rect = textarea.getBoundingClientRect();
+      const lineHeight = 22;
+      const lines = textarea.value.substr(0, textarea.selectionStart).split("\n");
+      let top = rect.top + window.scrollY + (lines.length * lineHeight) + 4;
+      let left = rect.left + window.scrollX + 4;
+
+      // Keep suggestion box inside viewport
+      const viewportWidth = window.innerWidth;
+      if (left + suggestionBox.offsetWidth > viewportWidth - 10) {
+        left = viewportWidth - suggestionBox.offsetWidth - 10;
+      }
+
+      suggestionBox.style.top = `${top}px`;
+      suggestionBox.style.left = `${left}px`;
+    };
+
+    const renderSuggestions = (users) => {
+      suggestionBox.innerHTML = "";
+      users.forEach(user => {
+        const li = document.createElement("li");
+        li.style.padding = "6px 10px";
+        li.style.cursor = "pointer";
+        li.style.whiteSpace = "nowrap";
+        li.style.display = "flex";
+        li.style.alignItems = "center";
+        li.style.gap = "8px";
+        li.style.transition = "background 0.2s";
+
+        li.addEventListener("mouseenter", () => li.style.background = "#f0f0f0");
+        li.addEventListener("mouseleave", () => li.style.background = "transparent");
+
+        // Avatar (image or default SVG with first letter)
+        const avatar = document.createElement("img");
+        if (user.avatar_url) {
+          avatar.src = user.avatar_url;
+        } else {
+          const firstLetter = user.username.charAt(0).toUpperCase();
+          avatar.src = `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28'%3E%3Crect width='28' height='28' fill='%23dee2e6'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='central' text-anchor='middle' font-family='Arial, sans-serif' font-size='14' fill='%23343a40'%3E${firstLetter}%3C/text%3E%3C/svg%3E`;
+        }
+        avatar.style.width = "28px";
+        avatar.style.height = "28px";
+        avatar.style.borderRadius = "50%";
+        avatar.style.objectFit = "cover";
+
+        // Username link
+        const link = document.createElement("a");
+        link.href = `/auth/profile/${user.id}/`;
+        link.innerHTML = `<strong>@${user.username}</strong>`;
+        link.style.textDecoration = "none";
+        link.style.color = "#007bff";
+        link.style.flex = "1";
+
+        link.addEventListener("click", (ev) => {
+          ev.preventDefault();
+          const cursorPos = textarea.selectionStart;
+          textarea.value = textarea.value.slice(0, atIndex + 1) + user.username + " " + textarea.value.slice(cursorPos);
+          textarea.focus();
+          suggestionBox.style.display = "none";
+        });
+
+        li.appendChild(avatar);
+        li.appendChild(link);
+        suggestionBox.appendChild(li);
+      });
+
+      suggestionBox.style.display = users.length ? "block" : "none";
+    };
+
+    textarea.addEventListener("input", async () => {
+      const value = textarea.value;
+      const cursorPos = textarea.selectionStart;
+
+      atIndex = value.lastIndexOf("@", cursorPos - 1);
+      if (atIndex === -1) {
+        suggestionBox.style.display = "none";
+        return;
+      }
+
+      const query = value.slice(atIndex + 1, cursorPos).trim();
+      if (!query) {
+        suggestionBox.style.display = "none";
+        return;
+      }
+
+      updatePosition();
+
+      try {
+        const res = await fetch(`/api/user_suggest/?q=${encodeURIComponent(query)}`);
+        const data = await res.json();
+        renderSuggestions(data.users);
+      } catch (err) {
+        console.error("Failed to fetch mentions:", err);
+        suggestionBox.style.display = "none";
+      }
+    });
+
+    textarea.addEventListener("blur", () => {
+      setTimeout(() => suggestionBox.style.display = "none", 200);
+    });
+
+    // Adjust position on window resize or scroll
+    window.addEventListener("resize", updatePosition);
+    window.addEventListener("scroll", updatePosition);
+
+  });
+});
+</script>
+
+
+<!-- Initialize Bootstrap Popovers -->
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'));
+  let activePopover = null;
+
+  popoverTriggerList.forEach(function (el) {
+    const popover = new bootstrap.Popover(el, {
+      trigger: 'click',
+      placement: 'top'
+    });
+
+    el.addEventListener('click', function (e) {
+      // Close previously opened popover if it exists and is not this one
+      if (activePopover && activePopover !== popover) {
+        activePopover.hide();
+      }
+      activePopover = popover;
+    });
+  });
+
+  // Optional: close popover if clicking outside
+  document.addEventListener('click', function (e) {
+    if (activePopover && !e.target.closest('[data-bs-toggle="popover"]')) {
+      activePopover.hide();
+      activePopover = null;
+    }
+  });
+});
+</script>
+
+<style>
+
+.inline-editor {
+  position: relative;
+  min-height: 150px;
+  overflow: auto;
+  padding: 10px;
+  border-radius: 10px;
+  background: #f9f9f9;
+}
+
+.inline-editor img {
+  max-width: 200px;
+  border-radius: 10px;
+  cursor: grab;
+  position: relative;
+  transition: box-shadow 0.2s;
+}
+
+.inline-editor img.selected {
+  outline: 2px dashed #0d6efd;
+}
+
+.inline-editor img.resizing {
+  cursor: se-resize;
+}
+
+.inline-editor img.dragging {
+  opacity: 0.8;
+  z-index: 1000;
+}
+
+/* ======================
+DESKTOP STICKY SIDEBAR
+====================== */
+#problemSidebar {
+  position: sticky;
+  top: 80px; /* adjust for navbar height */
+  align-self: flex-start;
+  max-height: calc(100vh - 80px); /* fill remaining viewport height */
+  overflow: hidden; /* prevent inner scroll if not needed */
+  z-index: 1000;
+}
+
+/* ======================
+MOBILE SIDEBAR SLIDE-IN
+====================== */
+@media (max-width: 991px) {
+  #problemSidebar {
+    position: fixed;
+    top: 150px; /* adjust for navbar height */
+    right: -100%; /* hidden off-screen by default */
+    width: 70%;
+    max-width: 300px;
+    max-height: 90vh; /* limit height */
+    background-color: var(--card);
+    border-left: 1px solid #ddd;
+    box-shadow: -3px 0 12px rgba(0,0,0,0.15); /* slightly softer shadow */
+    z-index: 2000;
+    transition: right 0.3s ease-in-out;
+    padding: clamp(12px, 2vw, 20px); /* responsive padding */
+    overflow-y: auto; /* scroll if content exceeds height */
+    display: flex;
+    flex-direction: column;
+    gap: clamp(8px, 1.5vw, 16px);
+  }
+
+  #problemSidebar.open {
+    right: 0;
+  }
+
+  /* Text scaling inside sidebar */
+  #problemSidebar h5 {
+    font-size: clamp(1rem, 2vw, 1.2rem);
+    margin-bottom: 0.5rem;
+  }
+  #problemSidebar p {
+    font-size: clamp(0.85rem, 1.5vw, 1rem);
+    margin-bottom: 0.5rem;
+  }
+  #problemSidebar .badge {
+    font-size: clamp(0.65rem, 1.2vw, 0.8rem);
+    margin-right: 0.3rem;
+    margin-bottom: 0.3rem;
+  }
+}
+.comment-content{
+  color: var(--text);
+}
+.comment-content{
+  color: var(--text);
+}
+
+.comment-time{
+  color: var(--muted);
+}
+
+.comment-item{
+  background: var(--card);
+  border-color: var(--border);
+}
+/* Wrapper */
+.answer-form-wrapper {
+  max-width: 700px;
+  margin: auto;
+  padding: 16px;
+}
+
+/* Card */
+.answer-form-card {
+  border-radius: 18px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  padding: 18px;
+  border: 1px solid rgba(0,0,0,0.1);
+}
+
+/* Title */
+.answer-form-title {
+  margin-bottom: 16px;
+  font-weight: 600;
+}
+
+/* Rows */
+.form-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+/* Textarea */
+.answer-textarea {
+  flex: 1 1 100%;
+  width: 100%;
+  padding: 10px 12px;
+  font-size: 14px;
+  border-radius: 10px;
+  border: none;
+  outline: none;
+  background: #f9f9f9;
+  resize: vertical;
+}
+
+/* Required star */
+.required-star {
+  color: #d9534f;
+  font-weight: 600;
+}
+
+/* Upload label */
+.upload-label {
+  border-radius: 10px;
+  padding: 6px 12px;
+  cursor: pointer;
+  font-size: 13px;
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
+  background: #f1f1f1;
+}
+
+/* Preview */
+.file-preview {
+  margin-top: 8px;
+  width: 100%;
+}
+
+/* Actions */
+.answer-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
+
+/* Buttons take equal space on small screens */
+.answer-actions .btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+/* Mentions */
+.mention-list {
+  list-style: none;
+  padding: 0;
+  margin-top: 8px;
+}
+
+/* =========================
+   📱 RESPONSIVE
+========================= */
+
+/* Tablets */
+@media (max-width: 768px) {
+  .answer-form-card {
+    padding: 14px;
+  }
+
+  .answer-textarea {
+    font-size: 13px;
+  }
+}
+
+/* Phones */
+@media (max-width: 576px) {
+
+  .answer-actions {
+    flex-direction: column; /* stack buttons */
+  }
+
+  .answer-actions .btn {
+    width: 100%;
+  }
+
+  .btn-text {
+    font-size: 0.85rem;
+  }
+
+  .answer-textarea {
+    font-size: 13px;
+    padding: 8px;
+  }
+}
+
+/* Very small screens */
+@media (max-width: 400px) {
+
+  .btn-text {
+    display: none; /* icon-only buttons */
+  }
+
+  .answer-actions .btn {
+    padding: 6px;
+  }
+}
+</style>
+{% endblock %}

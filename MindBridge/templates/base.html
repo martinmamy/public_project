@@ -1,0 +1,778 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Fancylearn{% endblock %}</title>
+
+  <meta name="csrf-token" content="{{ csrf_token }}">
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Bootstrap -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <!-- FontAwesome -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" rel="stylesheet">
+
+  <!-- Main CSS -->
+  <link rel="stylesheet" href="{% static 'css/main.css' %}">
+
+  <link rel="icon" type="image/x-icon" href="{% static 'logo/favicon.ico' %}">
+  <link rel="icon" type="image/x-icon" href="{% static 'logo/favicon.png' %}">
+  <link rel="apple-touch-icon" href="{% static 'logo/apple-touch-icon.png' %}">
+
+  <!-- iOS support -->
+  <link rel="apple-touch-icon" href="{% static 'pwa/icons/icon-192.png' %}">
+  <link rel="apple-touch-icon" href="{% static 'pwa/icons/icon-512.png' %}">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+
+  <!-- Main CSS -->
+  <link rel="stylesheet" href="{% static 'css/list_problem.css' %}">
+  <link rel="stylesheet" href="{% static 'css/problem_detail.css' %}">
+
+   <!-- PWA Meta -->
+  <link rel="manifest" href="{% static 'pwa/manifest.json' %}">
+  <meta id="theme-color" name="theme-color" content="#1877f2">
+
+<script>
+  function updateThemeColor(theme) {
+    const metaTheme = document.getElementById('theme-color');
+    if(theme === 'dark') {
+      metaTheme.setAttribute('content', '#1d9bf0'); // dark mode blue
+    } else {
+      metaTheme.setAttribute('content', '#1877f2'); // light mode blue
+    }
+  }
+
+  // Example: switch on page load
+  const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+  updateThemeColor(currentTheme);
+</script>
+
+
+  {% block extra_head %}{% endblock %}
+
+<style>
+
+
+/* MOBILE SIDEBAR TOGGLE - SMALLER VERSION */
+.sidebar-toggle-btn{
+    position:fixed;
+    top:420px;       /* slightly higher */
+    right:0px;
+    z-index:6000;
+    width:32px;
+    height:32px;
+    border-radius:50%;
+    background:var(--primary);
+    color:white;
+    display:flex;
+    color:white;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:14px;      /* smaller icon size */
+    cursor:pointer;
+    padding:0;
+}
+.sidebar-toggle-btn:hover{ background:#1e40af; transform:scale(1.1); }
+
+/* ===== Brand Container ===== */
+.brand-responsive {
+    gap: 8px;
+    flex-wrap: nowrap;
+    max-width: 100%;
+    overflow: hidden;
+}
+
+/* ===== Logo ===== */
+.brand-logo {
+    height: clamp(36px, 5vw, 40px); /* 🔥 responsive scaling */
+    width: auto;
+    object-fit: contain;
+    transition: all 0.3s ease;
+}
+
+/* ===== Text ===== */
+.fancylearn-text {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 700;
+    font-size: clamp(1rem, 2vw, 1.8rem); /* 🔥 scales with screen */
+    white-space: nowrap;
+}
+
+/* Fancy (blue) */
+.fancy-part {
+    color: #0d6efd;
+}
+
+/* Learn (green) */
+.learn-part {
+    color: #20c997;
+    margin-left: 2px;
+}
+
+/* ===== Extra small screens ===== */
+@media (max-width: 576px) {
+    .brand-responsive {
+        gap: 4px;
+    }
+
+    .fancylearn-text {
+        font-size: 1rem;
+    }
+
+    .brand-logo {
+        height: 32px;
+    }
+}
+
+/* ===== Very tiny screens (optional) ===== */
+@media (max-width: 350px) {
+    .fancylearn-text {
+        display: none; /* hide text, show only logo */
+    }
+}
+
+</style>
+
+</head>
+<body class="bg-gradient-to-b from-bg to-gray-200 dark:from-bg-dark dark:to-black text-text dark:text-text-dark min-h-screen flex flex-col">
+
+<div class="navbar navbar-glass sticky-top">
+  <div class="container navbar-wrapper">
+
+    <!-- BRAND -->
+    {% if user.is_authenticated %}
+      <a class="navbar-brand text-decoration-none" href="{% url 'list_problems' %}" title="Home" data-bs-toggle="tooltip">
+         <!-- Logo -->
+          <!-- Logo -->
+          <img src="{% static 'logo/favicon.ico' %}" 
+              alt="Fancylearn Logo"
+              class="brand-logo">
+
+          <!-- Fancy Text -->
+          <span class="fancylearn-text">
+              <span class="fancy-part">Fancy</span><span class="learn-part">learn</span>
+          </span>
+      </a>
+    {% else %}
+      <a class="navbar-brand brand-responsive text-decoration-none d-flex align-items-center"
+        href="{% url 'home' %}"
+        title="Home"
+        data-bs-toggle="tooltip">
+
+          <!-- Logo -->
+          <img src="{% static 'logo/favicon.ico' %}" 
+              alt="Fancylearn Logo"
+              class="brand-logo">
+
+          <!-- Fancy Text -->
+          <span class="fancylearn-text">
+              <span class="fancy-part">Fancy</span><span class="learn-part">learn</span>
+          </span>
+      </a>
+    {% endif %}
+
+    <!-- NAV LINKS + ICONS -->
+    <div class="navbar-tab-row">
+      {% if user.is_authenticated %}
+        <!-- NAV LINKS -->
+        <a class="nav-link" href="{% url 'list_problems' %}" title="Home">
+          <i class="fa-solid fa-house"></i>
+        </a>
+        <a class="nav-link" href="{% url 'talenthub' %}" title="TalentHub">
+          <i class="fa-solid fa-heart"></i>
+        </a>
+        <a class="nav-link" href="{% url 'feeds' %}" title="Feeds">
+          <i class="fa-solid fa-rss"></i>
+        </a>
+        <a class="nav-link" href="{% url 'knowledge_base' %}" title="Knowledge Base">
+          <i class="fa-solid fa-clipboard-list"></i>
+        </a>
+
+        <!-- Notifications -->
+      <div class="dropdown">
+        <a class="nav-icon dropdown-toggle position-relative" href="#" data-bs-toggle="dropdown" title="Notifications">
+          <i class="fa-solid fa-bell"></i>
+          <span id="notifCount" class="badge bg-danger position-absolute top-0 start-100 translate-middle"></span>
+        </a>
+        <ul class="dropdown-menu dropdown-menu-end p-0" id="notificationList" style="width:320px;">
+
+          <!-- HEADER -->
+          <li class="d-flex justify-content-between align-items-center px-3 py-2 border-bottom">
+            <span class="fw-bold">Notifications</span>
+            <button id="markAllRead" class="btn btn-sm btn-outline-primary">
+              <span class="full-text">Mark all</span>
+              <span class="icon-only" style="display:none;">✅</span>
+            </button>
+          </li>
+
+          <!-- BODY -->
+          <li id="notificationItems" style="max-height:300px; overflow-y:auto;">
+            <div class="text-center text-muted p-3">Loading...</div>
+          </li>
+
+          <!-- FOOTER -->
+          <li class="border-top text-center">
+            <a href="/notifications-page/" class="dropdown-item text-primary fw-semibold">
+              See all notifications
+            </a>
+          </li>
+
+        </ul>
+      </div>
+      <div class="dropdown">
+        <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown"  title="Settings">
+        <i class="fa-solid fa-gear"></i>
+        </a>
+        <div class="dropdown-menu dropdown-menu-end">
+            <button id="theme-toggle" class="dropdown-item" data-bs-toggle="tooltip" title="Toggle theme">🌙 Theme</button>
+            <a class="dropdown-item" href="{% url 'ads_dashboard' %}"><i class="fa-solid fa-bullhorn me-2"></i> Ads</a>
+            <a class="dropdown-item" href="{% url 'event_list' %}" title="Live Events">
+              <i class="fa fa-video-camera"></i>Live Events
+            </a>
+            <a class="dropdown-item" href="{% url 'live_events' %}" title="Events List">
+              <i class="fa fa-broadcast-tower"></i>Events
+            </a>
+            {% if user.is_superuser %}
+              <a class="dropdown-item" href="{% url 'payment_report' %}"><i class="fa-solid fa-gauge-high me-2"></i> Analytics</a>
+              <a class="dropdown-item" href="{% url 'admin:index' %}"><i class="fas fa-user-circle" style="color: orange;"></i> Admin
+            {% endif %}
+            <a class="dropdown-item" href="{% url 'terms' %}"><i class="fa-solid fa-file-contract me-2"></i> Terms</a>
+            <a class="dropdown-item" href="{% url 'privacy' %}" title="Privacy Policy">
+              <i class="fa-solid fa-shield-halved me-2"></i> Privacy Policy
+            </a>
+            <a class="dropdown-item" href="{% url 'logout' %}"><i class="fa-solid fa-right-from-bracket me-2"></i> Logout</a>
+        </div>
+      </div>
+      {% else %}
+        <!-- Login/Register -->
+        <a class="nav-icon" href="{% url 'login' %}" data-bs-toggle="tooltip" title="Login">
+          <i class="fa-solid fa-right-to-bracket"></i>
+        </a>
+        <a class="nav-icon" href="{% url 'register' %}" data-bs-toggle="tooltip" title="Register">
+          <i class="fa-solid fa-user-plus"></i>
+        </a>
+      {% endif %}
+      
+    </div>
+    <!-- Profile -->
+    {% if user.is_authenticated %}
+    <a class="nav-avatar" href="{% url 'profile' user.id %}" title="Account">
+        {% if user.avatar and user.avatar.name %}
+            <img src="{{ user.avatar.url }}" class="avatar-img">
+        {% else %}
+            {% with first=user.username|slice:":1"|upper %}
+                <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40'%3E%3Crect width='40' height='40' fill='%23dee2e6'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='central' text-anchor='middle' font-family='Arial, sans-serif' font-size='20' fill='%23343a40'%3E{{ first }}%3C/text%3E%3C/svg%3E" class="avatar-img">
+            {% endwith %}
+        {% endif %}
+    </a>
+  {% endif %}
+  </div>
+</div>
+<!-- =========================
+MAIN CONTENT
+========================= -->
+
+<main class="mt-4">
+  <div class="row justify-content-center g-4">
+
+    <!-- MAIN CONTENT -->
+    <div class="col-12 col-md-10 col-lg-7">
+      {% if messages %}
+        <div class="container mt-3">
+
+          {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show shadow-sm rounded-4 border-0 d-flex align-items-center justify-content-between"
+                role="alert"
+                style="backdrop-filter: blur(6px);">
+
+              <div class="d-flex align-items-center gap-2">
+                <!-- Icon based on message type -->
+                {% if message.tags == "success" %}
+                  <span class="fs-5">✅</span>
+                {% elif message.tags == "error" %}
+                  <span class="fs-5">❌</span>
+                {% elif message.tags == "warning" %}
+                  <span class="fs-5">⚠️</span>
+                {% else %}
+                  <span class="fs-5">ℹ️</span>
+                {% endif %}
+
+                <div class="fw-medium">
+                  {{ message }}
+                </div>
+              </div>
+
+              <button type="button"
+                      class="btn-close ms-3"
+                      data-bs-dismiss="alert"
+                      aria-label="Close"></button>
+            </div>
+          {% endfor %}
+
+        </div>
+      {% endif %}
+      {% block content %}{% endblock %}
+    </div>
+
+    <!-- DESKTOP SIDEBAR (normal) -->
+    <div class="col-lg-4 d-none d-lg-block sb-card">
+      <div class="fixed-sidebar">
+        {% include "partials/sidebar_content.html" %}
+      </div>
+    </div>
+
+  </div>
+
+  {% block main_content %}{% endblock %}
+</main>
+
+<!-- =========================
+MOBILE SIDEBAR (OUTSIDE GRID)
+========================= -->
+
+<!-- Toggle Button -->
+<button id="sidebarToggles" class="sidebar-toggle d-lg-none" title="Open SideBar">
+  SB
+</button>
+
+<!-- Sidebar Drawer -->
+<div id="mobileSidebar" class="mobile-sidebar d-lg-none">
+  <div>
+    {% include "partials/sidebar_content.html" %}
+  </div>
+</div>
+
+<!-- =========================
+FOOTER
+========================= -->
+<footer class="text-center py-3 mt-5 border-top">
+  &copy; {% now "Y" %} Fancylearn •
+  <a href="#" class="text-decoration-none me-2"><i class="fa-brands fa-facebook"></i></a>
+  <a href="#" class="text-decoration-none me-2"><i class="fa-brands fa-twitter"></i></a>
+  <a href="#" class="text-decoration-none me-2"><i class="fa-brands fa-linkedin"></i></a>
+  <a href="#" class="text-decoration-none m-2"><i class="fa-brands fa-github"></i></a>
+  <a class="text-decoration-none me-2" href="{% url 'terms' %}"><i class="fa-solid fa-file-contract"></i> Terms</a>
+  <a class="text-decoration-none me-2" href="{% url 'privacy' %}" title="Privacy Policy"><i class="fa-solid fa-shield-halved"></i> Privacy Policy</a>
+</footer>
+
+
+<div id="cookie-consent" class="consent-lock">
+
+  <div class="consent-card">
+
+    <h5 class="fw-bold mb-3">Privacy, Cookies & Age Consent</h5>
+
+    <p class="small">
+      You must accept to continue using the platform.
+    </p>
+
+    <div class="d-flex gap-2 mb-3">
+      <a href="{% url 'privacy' %}" class="btn btn-sm btn-outline-primary">
+        Privacy
+      </a>
+      <a href="{% url 'terms' %}" class="btn btn-sm btn-outline-secondary">
+        Terms
+      </a>
+    </div>
+
+    <div class="form-check small">
+      <input class="form-check-input" type="checkbox" id="age-13-plus">
+      <label class="form-check-label">I am 13+</label>
+    </div>
+
+    <div class="form-check small mt-2">
+      <input class="form-check-input" type="checkbox" id="under-13">
+      <label class="form-check-label">Under 13 with supervision</label>
+    </div>
+
+    <div id="parent-confirmation" class="form-check small mt-2" style="display:none;">
+      <input class="form-check-input" type="checkbox" id="parent-approved">
+      <label class="form-check-label">Parent approved</label>
+    </div>
+
+    <button id="accept-cookies" class="btn btn-success btn-sm mt-3" disabled>
+      Accept & Continue
+    </button>
+
+  </div>
+
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+  const box = document.getElementById("cookie-consent");
+  const acceptBtn = document.getElementById("accept-cookies");
+
+  const age13 = document.getElementById("age-13-plus");
+  const under13 = document.getElementById("under-13");
+  const parent = document.getElementById("parent-approved");
+  const parentSection = document.getElementById("parent-confirmation");
+
+  // ------------------------
+  // CHECK IF ALREADY ACCEPTED
+  // ------------------------
+  const saved = localStorage.getItem("cookieConsent");
+
+  if (saved) {
+    box.style.display = "none";
+    document.body.classList.remove("locked");
+    return;
+  }
+
+  // LOCK PAGE IMMEDIATELY
+  document.body.classList.add("locked");
+
+  function updateState() {
+
+    if (age13.checked) {
+      under13.checked = false;
+      parent.checked = false;
+      parentSection.style.display = "none";
+    }
+
+    if (under13.checked) {
+      age13.checked = false;
+      parentSection.style.display = "block";
+    } else {
+      parentSection.style.display = "none";
+    }
+
+    acceptBtn.disabled = !(age13.checked || (under13.checked && parent.checked));
+  }
+
+  age13.addEventListener("change", updateState);
+  under13.addEventListener("change", updateState);
+  parent.addEventListener("change", updateState);
+
+  updateState();
+
+  // ------------------------
+  // ACCEPT = UNLOCK SITE
+  // ------------------------
+  acceptBtn.addEventListener("click", function () {
+
+    localStorage.setItem("cookieConsent", JSON.stringify({
+      accepted: true,
+      time: new Date().toISOString()
+    }));
+
+    // unlock everything
+    document.body.classList.remove("locked");
+    box.style.display = "none";
+  });
+
+});
+</script>
+
+
+<!-- =========================
+SCRIPTS
+========================= -->
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="{% static 'js/main.js' %}"></script>
+<script src="{% static 'js/theme.js' %}"></script>
+<script src="{% static 'js/notification.js' %}"></script>
+<script src="{% static 'js/tips.js' %}"></script>
+<script>
+  function updateNavbarHeight() {
+    const navbar = document.querySelector('.navbar');
+    if (navbar) {
+      const height = navbar.offsetHeight;
+      document.documentElement.style.setProperty('--navbar-height', `${height}px`);
+      document.body.style.paddingTop = `${height}px`; // ensure immediate effect
+    }
+  }
+
+  window.addEventListener('load', updateNavbarHeight);
+  window.addEventListener('resize', updateNavbarHeight);
+
+  document.addEventListener("DOMContentLoaded", () => {
+  const dropdowns = document.querySelectorAll('.dropdown-toggle');
+
+  dropdowns.forEach(toggle => {
+    toggle.addEventListener('show.bs.dropdown', function () {
+      const menu = this.nextElementSibling;
+      if (!menu) return;
+
+      const rect = menu.getBoundingClientRect();
+      const overFlowRight = rect.right - window.innerWidth;
+      const overFlowBottom = rect.bottom - window.innerHeight;
+
+      if (overFlowRight > 0) {
+        menu.style.left = `-${overFlowRight + 10}px`; // shift left
+      }
+
+      if (overFlowBottom > 0) {
+        menu.style.top = `calc(100% - ${overFlowBottom + 10}px)`; // shift up
+      }
+    });
+  });
+});
+</script>
+
+<style>
+
+.cookie-box {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    max-width: 380px;
+    width: 90%;
+    background: #fff;
+    color: #111;
+    padding: 16px;
+    border-radius: 12px;
+    z-index: 9999;
+}
+
+@media (prefers-color-scheme: dark) {
+    .cookie-box {
+        background: #111827;
+        color: #fff;
+    }
+}
+
+
+/* ===== Notification Dropdown ===== */
+#notificationList {
+  width: auto;       /* allow dropdown to size to content */
+  max-width: 320px;  /* reasonable desktop max */
+}
+
+/* Desktop: single-line cards */
+#notificationItems .notification-card {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: nowrap;
+  width: 100%;
+}
+
+#notificationItems .notification-card a {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1 1 auto;
+  min-width: 0;       /* allow shrinking for ellipsis */
+}
+
+/* Mobile: wrap text and stack avatar + text */
+@media (max-width: 576px) {
+  #notificationList {
+    width: 90vw;
+    max-width: 90vw;
+  }
+
+  #notificationItems .notification-card {
+    flex-direction: column;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+  }
+
+  #notificationItems .notification-card a {
+    white-space: normal;
+    overflow: visible;
+    text-overflow: unset;
+    word-break: break-word;
+  }
+
+  #notificationItems .notification-card img,
+  #notificationItems .notification-card div.avatar-placeholder {
+    margin-bottom: 0.5rem;
+  }
+
+  /* Mark all button icon-only */
+  #markAllRead span.full-text {
+    display: none;
+  }
+  #markAllRead span.icon-only {
+    display: inline;
+  }
+}
+</style>
+
+<script>
+// Dynamically toggle icon-only mode on small screens
+function updateIcons() {
+  const width = window.innerWidth;
+
+  const markAllBtn = document.getElementById('markAllRead');
+  if (markAllBtn) {
+    if (width <= 576) {
+      markAllBtn.querySelector('.full-text').style.display = 'none';
+      markAllBtn.querySelector('.icon-only').style.display = 'inline';
+    } else {
+      markAllBtn.querySelector('.full-text').style.display = 'inline';
+      markAllBtn.querySelector('.icon-only').style.display = 'none';
+    }
+  }
+}
+
+window.addEventListener('resize', updateIcons);
+window.addEventListener('load', updateIcons);
+</script>
+
+<style>
+/* ======================
+MOBILE BOOKMARK PANEL
+====================== */
+@media (max-width: 992px){
+
+  .mobile-sidebar{
+    position: fixed;
+    top: 150px;
+    right: -100%;
+
+    width: 92%;              /* slightly wider */
+    max-width: 520px;        /* more breathing space */
+    max-height: 90vh;
+
+    background: var(--card);
+    border-left: 1px solid #ddd;
+
+    box-shadow: -4px 0 15px rgba(0,0,0,0.15);
+
+    z-index: 2000;
+
+    transition: right .35s ease;
+    padding: clamp(12px,2vw,20px);
+
+    overflow-y: auto;
+
+    display:flex;
+    flex-direction:column;
+    gap:14px;
+
+    font-size: clamp(0.9rem,2vw,1.05rem);
+  }
+
+  .mobile-sidebar.open{
+    right: 0;
+  }
+
+  /* ✅ FORCE CARDS TO USE FULL WIDTH */
+  .mobile-sidebar .card{
+    width: 100%;
+  }
+
+  /* ✅ REMOVE INNER CARD CONSTRAINTS */
+  .mobile-sidebar .list-group{
+    width: 100%;
+  }
+
+  /* HEADERS */
+  .mobile-sidebar .card-header{
+    font-size: clamp(1.05rem,2.5vw,1.25rem);
+  }
+
+  /* LIST ITEMS */
+  .mobile-sidebar .list-group-item{
+    padding: clamp(10px,2vw,14px);
+
+    display: flex;
+    align-items: flex-start;   /* ⬅️ better for multi-line text */
+    gap: 10px;
+
+    /* ✅ WRAP FIX */
+    white-space: normal;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+  }
+
+  /* LINKS (TRENDING TITLES FIX) */
+  .mobile-sidebar .list-group-item a{
+    flex: 1;                 /* ⬅️ TAKE FULL SPACE */
+    min-width: 0;
+
+    display: block;
+
+    white-space: normal;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+
+    line-height: 1.4;
+  }
+
+  /* EXPERT ROW FIX */
+  .mobile-sidebar .list-group-item.d-flex{
+    align-items: center;
+  }
+
+  /* AVATAR */
+  .mobile-sidebar .avatar-img{
+    flex-shrink: 0;
+  }
+
+  /* BADGE FIX */
+  .mobile-sidebar .badge{
+    flex-shrink: 0;
+    margin-left: 10px;
+  }
+}
+
+/* Toggle button */
+.sidebar-toggle {
+  position:fixed;
+    top:460px;       /* slightly higher */
+    right:0px;
+    z-index:6000;
+    width:32px;
+    height:32px;
+    border-radius:50%;
+    background:var(--primary);
+    color:white;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:14px;      /* smaller icon size */
+    cursor:pointer;
+    padding:0;
+}
+.sidebar-toggle:hover{ background:#1e40af; transform:scale(1.1); }
+/* Rotate arrow when open */
+.sidebar-toggle.open i {
+  transform: rotate(180deg);
+}
+</style>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const sidebar = document.getElementById("mobileSidebar");
+  const toggleBtn = document.getElementById("sidebarToggles");
+
+  if (!sidebar || !toggleBtn) return;
+
+  toggleBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    sidebar.classList.toggle("open");
+    toggleBtn.classList.toggle("open");
+  });
+
+  // Click outside = close
+  document.addEventListener("click", (e) => {
+    if (
+      sidebar.classList.contains("open") &&
+      !sidebar.contains(e.target) &&
+      !toggleBtn.contains(e.target)
+    ) {
+      sidebar.classList.remove("open");
+      toggleBtn.classList.remove("open");
+    }
+  });
+});
+</script>
+{% block extra_scripts %}{% endblock %}
+</body>
+</html>

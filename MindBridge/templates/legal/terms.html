@@ -1,0 +1,664 @@
+{% extends "base.html" %}
+{% block title %}Terms & Services | FancyLearn{% endblock %}
+
+{% block content %}
+
+<div class="container-fluid">
+    <div class="row">
+
+        <!-- SIDEBAR -->
+        <div class="col-md-3 d-none d-md-block sidebar">
+            <div class="sticky-top pt-4">
+                <h6 class="text-muted">Contents</h6>
+                <ul class="nav flex-column small">
+                    {% for i in "1234567891011121314151617181930" %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="#section{{ forloop.counter }}">
+                                {{ forloop.counter }}. Section
+                            </a>
+                        </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+
+        <!-- MAIN CONTENT -->
+        <div class="col-md-9 col-12">
+            <div class="card p-4 shadow-sm border-0">
+
+                <h2 class="fw-bold mb-3">Terms and Services for FancyLearn</h2>
+                <p class="text-muted">Effective Date: {% now "F j, Y" %} </p>
+
+                <p>
+                    Welcome to <strong>FancyLearn</strong> ("we," "our," or "us"). 
+                    These Terms and Services ("Terms") govern your access to and use of the FancyLearn platform, 
+                    including all features, content, and services across our web and mobile applications.
+                </p>
+
+                <p>
+                    FancyLearn is a multi-feature learning and problem-solving platform that includes user profiles, 
+                    problem posting, answers, discussions, monetization, and analytics tools. 
+                    By accessing or using FancyLearn, you agree to these Terms.
+                </p>
+
+                <!-- ========================= -->
+                <!-- 1 -->
+                <!-- ========================= -->
+                <section id="section1">
+                    <h4>1. Platform Overview</h4>
+
+                    <p>
+                        FancyLearn operates as a modular platform composed of interconnected services, including but not limited to:
+                    </p>
+
+                    <ul>
+                        <li><strong>Users Module:</strong> authentication, profiles, followers, reputation, subscriptions</li>
+                        <li><strong>Problems Module:</strong> posting problems, tags, categories, media, SEO pages, view tracking</li>
+                        <li><strong>Answers Module:</strong> answers, accepted answers, ranking, statistics</li>
+                        <li><strong>Comments Module:</strong> threaded discussions</li>
+                        <li><strong>Voting Module:</strong> upvotes, downvotes, score calculation</li>
+                        <li><strong>Monetization Module:</strong> tips, bounties, subscriptions, payments, ads</li>
+                        <li><strong>Notifications Module:</strong> mentions, replies, followers</li>
+                        <li><strong>Moderation Module:</strong> reports, bans, flags</li>
+                        <li><strong>Search Module:</strong> search + autocomplete</li>
+                        <li><strong>Analytics Module:</strong> engagement tracking</li>
+                    </ul>
+
+                    <p>
+                        By using FancyLearn, you acknowledge that these modules work together 
+                        to provide a dynamic, community-driven experience.
+                    </p>
+                </section>
+
+                <!-- ========================= -->
+                <!-- 2 -->
+                <!-- ========================= -->
+                <section id="section2">
+                    <h4>2. Eligibility and Account Registration</h4>
+
+                    <p>You must be at least 13 years old to use FancyLearn.</p>
+
+                    <ul>
+                        <li>Provide accurate and complete information</li>
+                        <li>Maintain confidentiality of your credentials</li>
+                        <li>Be responsible for all account activity</li>
+                    </ul>
+
+                    <p>
+                        We reserve the right to suspend or terminate accounts that violate these Terms.
+                    </p>
+                </section>
+
+                <!-- ========================= -->
+                <!-- 3 -->
+                <!-- ========================= -->
+                <section id="section3">
+                    <h4>3. User Responsibilities and Conduct</h4>
+
+                    <p>FancyLearn is a community-driven platform. You agree to use it responsibly.</p>
+
+                    <ul>
+                        <li>Do not post false or harmful content</li>
+                        <li>Do not harass or abuse users</li>
+                        <li>Do not attempt unauthorized system access</li>
+                        <li>Do not manipulate voting or monetization systems</li>
+                    </ul>
+
+                    <p>
+                        You are solely responsible for the content you post.
+                    </p>
+                </section>
+
+                <!-- ========================= -->
+                <!-- 4 -->
+                <!-- ========================= -->
+                <section id="section4">
+                    <h4>4. Content Ownership and Licensing</h4>
+
+                    <p>
+                        All platform content (excluding user-generated content) is owned by FancyLearn.
+                    </p>
+
+                    <p>When you submit content, you:</p>
+
+                    <ul>
+                        <li>Retain ownership</li>
+                        <li>Grant FancyLearn a worldwide, non-exclusive, royalty-free license</li>
+                    </ul>
+
+                    <p>We may use content for:</p>
+
+                    <ul>
+                        <li>SEO and discovery</li>
+                        <li>Recommendations</li>
+                        <li>Analytics and improvement</li>
+                    </ul>
+                </section>
+
+                <!-- ========================= -->
+                <!-- 5 -->
+                <!-- ========================= -->
+                <section id="section5">
+                    <h4>5. Reputation, Voting, and Ranking Systems</h4>
+
+                    <p>FancyLearn uses reputation systems based on:</p>
+
+                    <ul>
+                        <li>Upvotes and downvotes</li>
+                        <li>Accepted answers</li>
+                        <li>Engagement metrics</li>
+                    </ul>
+
+                    <p>You must not manipulate the system using:</p>
+
+                    <ul>
+                        <li>Fake accounts</li>
+                        <li>Coordinated voting</li>
+                        <li>Automation/scripts</li>
+                    </ul>
+
+                    <p>
+                        We reserve the right to adjust scores or suspend accounts involved in abuse.
+                    </p>
+                </section>
+
+                <section id="section6">
+                    <h4>6. Monetization and Payments</h4>
+                    <p>FancyLearn offers monetization features, including:</p>
+                    <ul>
+                        <li>Tips</li>
+                        <li>Bounties on problems</li>
+                        <li>Creator subscriptions</li>
+                        <li>Advertising participation</li>
+                    </ul>
+
+                    <p>By using these features, you agree that:</p>
+                    <ul>
+                        <li>Payments may be processed through third-party providers</li>
+                        <li>Fees may apply to transactions</li>
+                        <li>Earnings may be subject to taxes based on your jurisdiction</li>
+                    </ul>
+
+                    <p>All payments are non-refundable unless explicitly stated.</p>
+                </section>
+
+                <section id="section7">
+                    <h4>7. Notifications and Communication</h4>
+                    <p>FancyLearn may send in-app notifications related to:</p>
+                    <ul>
+                        <li>Posts, answers, and comments</li>
+                        <li>Mentions and followers</li>
+                        <li>Tips and monetization activity</li>
+                        <li>Other platform-related events</li>
+                    </ul>
+
+                    <p>You may not be able to manage all notification preferences within your account settings.</p>
+                </section>
+
+                <section id="section8">
+                    <h4>8. Moderation and Enforcement</h4>
+                    <p>FancyLearn enforces community standards through moderation tools. We may:</p>
+                    <ul>
+                        <li>Remove or restrict content</li>
+                        <li>Suspend or ban users</li>
+                        <li>Review reports and flagged content</li>
+                    </ul>
+
+                    <p>Violations include, but are not limited to:</p>
+                    <ul>
+                        <li>Spam or scams</li>
+                        <li>Hate speech or abusive behavior</li>
+                        <li>Intellectual property violations</li>
+                    </ul>
+                </section>
+
+                <section id="section9">
+                    <h4>9. Search and Discoverability</h4>
+                    <p>Content posted on FancyLearn may be:</p>
+                    <ul>
+                        <li>Indexed in search engines</li>
+                        <li>Included in platform search results</li>
+                        <li>Used for autocomplete and recommendations</li>
+                    </ul>
+
+                    <p>You acknowledge that public content may be visible globally.</p>
+                </section>
+
+                <section id="section10">
+                    <h4>10. Analytics and Data Usage</h4>
+                    <p>We collect and analyze usage data to improve the platform, including:</p>
+                    <ul>
+                        <li>Problem views</li>
+                        <li>Engagement metrics</li>
+                        <li>Growth analytics</li>
+                    </ul>
+
+                    <p>This data may be used internally to optimize features and user experience.</p>
+                </section>
+
+                <section id="section11">
+                    <h4>11. Privacy</h4>
+                    <p>Your use of FancyLearn is also governed by our Privacy Policy. We are committed to protecting your personal data in compliance with applicable laws.</p>
+                </section>
+
+                <section id="section12">
+                    <h4>12. Disclaimer of Warranties</h4>
+                    <p>FancyLearn is provided "as is" and "as available." We do not guarantee:</p>
+                    <ul>
+                        <li>Continuous uptime</li>
+                        <li>Accuracy of user-generated content</li>
+                        <li>That features will meet your expectations</li>
+                    </ul>
+                </section>
+
+                <section id="section13">
+                    <h4>13. Limitation of Liability</h4>
+                    <p>To the fullest extent permitted by law, FancyLearn is not liable for indirect, incidental, or consequential damages arising from your use of the platform.</p>
+                </section>
+
+                <section id="section14">
+                    <h4>14. Termination</h4>
+                    <p>We may suspend or terminate access if you violate these Terms. You may also delete your account at any time.</p>
+                </section>
+
+                <section id="section15">
+                    <h4>15. Changes to Terms</h4>
+                    <p>We may update these Terms periodically. Continued use of FancyLearn means you accept the revised Terms.</p>
+                </section>
+
+                <section id="section16">
+                    <h4>16. Governing Law</h4>
+                    <p>
+                        These Terms shall be governed by and interpreted in accordance with the
+                        applicable laws in the jurisdiction where FancyLearn operates, without
+                        regard to conflict of law principles.
+                    </p>
+                </section>
+
+                <section id="section17">
+                    <h4>17. Contact Information</h4>
+                    <p>For questions regarding these Terms, you may contact us at:</p>
+                    <ul>
+                        <li>Email: support@fancylearn.com</li>
+                    </ul>
+                </section>
+
+                <section id="section18">
+                    <h4>18. GDPR and Data Protection (EU Compliance)</h4>
+
+                    <p>
+                        If you are located in the European Economic Area (EEA), FancyLearn processes
+                        your personal data in accordance with the General Data Protection Regulation (GDPR).
+                    </p>
+
+                    <p>We commit to:</p>
+                    <ul>
+                        <li>Processing data lawfully, fairly, and transparently</li>
+                        <li>Collecting only necessary data for platform functionality</li>
+                        <li>Allowing users to access, correct, or delete their data</li>
+                        <li>Providing data portability upon request</li>
+                    </ul>
+
+                    <p><strong>Legal bases for processing include:</strong></p>
+                    <ul>
+                        <li>Performance of a contract (account services)</li>
+                        <li>Legitimate interests (platform improvement, fraud prevention)</li>
+                        <li>Consent (marketing and optional features)</li>
+                    </ul>
+
+                    <p><strong>Your rights include:</strong></p>
+                    <ul>
+                        <li>Access your personal data</li>
+                        <li>Request correction or deletion</li>
+                        <li>Restrict or object to processing</li>
+                        <li>Lodge a complaint with a supervisory authority</li>
+                    </ul>
+                </section>
+
+                <section id="section19">
+                    <h4>19. Creator Earnings and Withdrawal Policy</h4>
+
+                    <p>
+                        FancyLearn enables creators to receive earnings through tips, bounties,
+                        and other monetization features facilitated via third-party payment providers
+                        (e.g., PayPal).
+                    </p>
+
+                    <p>
+                        FancyLearn does not store, hold, or manage user funds. All payments are
+                        processed directly between users and the applicable payment provider.
+                    </p>
+
+                    <p><strong>By using monetization features, you agree that:</strong></p>
+                    <ul>
+                        <li>Payments are sent directly to your linked third-party account</li>
+                        <li>You must provide and maintain accurate payout details</li>
+                        <li>You are responsible for complying with payment provider policies</li>
+                        <li>Identity verification (KYC) may be required</li>
+                        <li>Processing times vary depending on provider and region</li>
+                        <li>Transaction and currency fees may apply</li>
+                    </ul>
+
+                    <p><strong>FancyLearn reserves the right to:</strong></p>
+                    <ul>
+                        <li>Restrict or disable monetization features in case of abuse</li>
+                        <li>Block or cancel suspicious transactions</li>
+                        <li>Suspend accounts involved in disputes or violations</li>
+                    </ul>
+
+                    <p>
+                        Because FancyLearn is not a financial institution or escrow service:
+                    </p>
+                    <ul>
+                        <li>We are not responsible for payment delays or failures</li>
+                        <li>We do not guarantee successful receipt of funds</li>
+                    </ul>
+
+                    <p><strong>Creators are responsible for:</strong></p>
+                    <ul>
+                        <li>Reporting earnings to tax authorities</li>
+                        <li>Complying with local financial regulations</li>
+                        <li>Maintaining valid payout accounts</li>
+                    </ul>
+                </section>
+
+                <section id="section20">
+                    <h4>20. Schools and Organizational (Multi-Tenant) Use</h4>
+
+                    <p>
+                        FancyLearn supports organizations such as schools, institutions, and teams
+                        through a multi-tenant architecture.
+                    </p>
+
+                    <p>If you register an organization:</p>
+                    <ul>
+                        <li>You act as the primary administrator</li>
+                        <li>You may assign roles and permissions to users</li>
+                        <li>You are responsible for all activity under your organization</li>
+                    </ul>
+
+                    <p>We may provide:</p>
+                    <ul>
+                        <li>Dedicated environments (subdomains, tokens, API keys)</li>
+                        <li>Administrative controls for managing users and content</li>
+                    </ul>
+
+                    <p>
+                        Organizations must ensure compliance with applicable laws, including
+                        data protection regulations for users and members.
+                    </p>
+                </section>
+
+                <section id="section21">
+                    <h4>21. API Usage and Integration Terms</h4>
+
+                    <p>
+                        FancyLearn may provide APIs for integration with external systems.
+                    </p>
+
+                    <p>By using our APIs, you agree to:</p>
+                    <ul>
+                        <li>Use API keys securely and never expose them publicly</li>
+                        <li>Respect rate limits and usage quotas</li>
+                        <li>Not abuse, reverse engineer, or disrupt API services</li>
+                    </ul>
+
+                    <p><strong>We reserve the right to:</strong></p>
+                    <ul>
+                        <li>Revoke API access at any time</li>
+                        <li>Modify or deprecate endpoints without prior notice</li>
+                        <li>Monitor usage for security and performance reasons</li>
+                    </ul>
+
+                    <p>
+                        You are fully responsible for all activity conducted using your API credentials.
+                    </p>
+                </section>
+
+                <section id="section22">
+                    <h4>22. Abuse Prevention, Rate Limiting, and Bot Protection</h4>
+                    <p>
+                        To maintain platform integrity, FancyLearn implements safeguards including:
+                    </p>
+                    <ul>
+                        <li>Rate limiting of requests</li>
+                        <li>Automated abuse detection systems</li>
+                        <li>CAPTCHA and bot protection mechanisms</li>
+                    </ul>
+                    <p>You agree not to:</p>
+                    <ul>
+                        <li>Use bots, scripts, or automation to manipulate the platform</li>
+                        <li>Attempt to bypass security or rate limits</li>
+                        <li>Overload or disrupt platform services</li>
+                    </ul>
+                    <p>Violations may result in:</p>
+                    <ul>
+                        <li>Temporary or permanent suspension</li>
+                        <li>Loss of monetization privileges</li>
+                        <li>Legal action where applicable</li>
+                    </ul>
+                </section>
+
+                <section id="section23">
+                    <h4>23. Data Processing Agreement (DPA) for Organizations</h4>
+                    <p>
+                        If you use FancyLearn as an organization (e.g., school, company, or institution),
+                        this section constitutes a Data Processing Agreement (DPA) between you
+                        ("Data Controller") and FancyLearn ("Data Processor").
+                    </p>
+                    <p>We agree to:</p>
+                    <ul>
+                        <li>Process personal data only on your documented instructions</li>
+                        <li>Ensure confidentiality of all processed data</li>
+                        <li>Implement appropriate technical and organizational security measures</li>
+                        <li>Assist with data subject rights requests (access, deletion, portability)</li>
+                        <li>Notify you of data breaches without undue delay</li>
+                    </ul>
+                    <p>You agree to:</p>
+                    <ul>
+                        <li>Ensure lawful basis for collecting and sharing personal data</li>
+                        <li>Inform your users about data processing practices</li>
+                        <li>Not submit unlawful or sensitive data without proper authorization</li>
+                    </ul>
+                    <p><strong>Data processing details:</strong></p>
+                    <ul>
+                        <li><strong>Subject matter:</strong> Provision of FancyLearn services</li>
+                        <li><strong>Duration:</strong> For the duration of service use</li>
+                        <li><strong>Nature:</strong> Storage, analysis, and transmission of user-generated content</li>
+                        <li><strong>Categories:</strong> User profiles, educational content, engagement data</li>
+                    </ul>
+                </section>
+
+                <section id="section24">
+                    <h4>24. Service Level Agreement (SLA)</h4>
+                    <p>
+                        FancyLearn aims to provide reliable and high-quality services. We target:
+                    </p>
+                    <ul>
+                        <li><strong>Uptime:</strong> 99.5% monthly availability (excluding scheduled maintenance)</li>
+                    </ul>
+                    <p><strong>Support Response Times:</strong></p>
+                    <ul>
+                        <li>Critical issues: within 24 hours</li>
+                        <li>Standard issues: within 72 hours</li>
+                    </ul>
+                    <p><strong>Scheduled maintenance:</strong></p>
+                    <ul>
+                        <li>May occur with prior notice where possible</li>
+                        <li>May temporarily affect availability</li>
+                    </ul>
+                    <p>
+                        We do not guarantee uninterrupted service but commit to reasonable efforts
+                        to maintain stability and performance.
+                    </p>
+                </section>
+
+                <section id="section25">
+                    <h4>25. Enterprise Content Ownership</h4>
+                    <p>
+                        For organizational (multi-tenant) accounts:
+                    </p>
+                    <ul>
+                        <li>The organization retains ownership of all content created within its environment</li>
+                        <li>FancyLearn acts only as a service provider hosting such content</li>
+                        <li>Administrators may control, modify, or delete content within their organization</li>
+                    </ul>
+                    <p>FancyLearn may:</p>
+                    <ul>
+                        <li>Store and process content for platform functionality</li>
+                        <li>Use anonymized data for analytics and improvement</li>
+                    </ul>
+                    <p>
+                        We do not claim ownership over enterprise data.
+                    </p>
+                </section>
+
+                <!-- SECTION 26 -->
+                <section id="section26">
+                    <h4>26. Dispute Resolution and Arbitration</h4>
+                    <p>
+                        In the event of a dispute arising from these Terms:
+                    </p>
+                    <ul>
+                        <li>Parties agree to first attempt resolution through good-faith negotiations</li>
+                        <li>If unresolved, disputes may proceed to mediation</li>
+                        <li>If mediation fails, disputes shall be resolved through binding arbitration</li>
+                        <li>Arbitration will be conducted in a mutually agreed jurisdiction</li>
+                        <li>Each party shall bear its own legal costs unless otherwise decided</li>
+                    </ul>
+                    <p>
+                        Nothing in this section limits either party’s right to seek injunctive relief in a court of law where necessary.
+                    </p>
+                </section>
+
+                <!-- SECTION 27 -->
+                <section id="section27">
+                    <h4>27. Security and Compliance (SOC 2-Aligned Practices)</h4>
+                    <p>
+                        FancyLearn implements security practices aligned with industry standards, including principles derived from SOC 2 (Security, Availability, Confidentiality). We maintain:
+                    </p>
+                    <ul>
+                        <li>Access controls and authentication safeguards</li>
+                        <li>Encryption of data in transit (TLS) and at rest where applicable</li>
+                        <li>Monitoring, logging, and anomaly detection systems</li>
+                        <li>Regular security reviews and vulnerability management</li>
+                        <li>Security training and operational best practices</li>
+                    </ul>
+                    <p>
+                        While we strive to follow best practices, FancyLearn does not guarantee formal SOC 2 certification unless explicitly stated in a separate agreement.
+                    </p>
+                </section>
+
+                <!-- SECTION 28 -->
+                <section id="section28">
+                    <h4>28. Data Residency and Cross-Border Transfers</h4>
+                    <p>
+                        FancyLearn may store and process data in multiple geographic regions to ensure performance and reliability. By using the platform, you acknowledge that:
+                    </p>
+                    <ul>
+                        <li>Data may be transferred outside your country of residence</li>
+                        <li>Such transfers may involve jurisdictions with different data protection laws</li>
+                    </ul>
+                    <p>
+                        Where required, we implement safeguards such as:
+                    </p>
+                    <ul>
+                        <li>Standard Contractual Clauses (SCCs)</li>
+                        <li>Binding Corporate Rules (BCRs)</li>
+                        <li>Data Processing Agreements (DPA)</li>
+                        <li>Security and encryption measures</li>
+                        <li>Other legally recognized transfer mechanisms</li>
+                    </ul>
+                    <p>
+                        Users may request information about data transfers where applicable. Organizations may request region-specific data handling subject to availability.
+                    </p>
+                </section>
+
+                <!-- SECTION 29 -->
+                <section id="section29">
+                    <h4>29. Taxation and Marketplace Compliance</h4>
+                    <p>
+                        FancyLearn operates as a digital marketplace enabling transactions between users (e.g., tips, subscriptions, bounties). By using monetization features, you agree that:
+                    </p>
+                    <ul>
+                        <li>You are responsible for reporting and paying all applicable taxes on earnings</li>
+                        <li>You will maintain accurate financial and transaction records</li>
+                        <li>Tax obligations vary by jurisdiction and are your responsibility</li>
+                        <li>FancyLearn may provide transaction summaries or tax-related documents where required by law</li>
+                        <li>Transaction data may be shared with tax authorities if legally required</li>
+                    </ul>
+                    <p>
+                        We may also:
+                    </p>
+                    <ul>
+                        <li>Issue earnings or transaction reports</li>
+                        <li>Integrate third-party payment processors</li>
+                        <li>Apply required withholding taxes where applicable</li>
+                    </ul>
+                    <p>
+                        FancyLearn is not responsible for individual tax compliance or filings.
+                    </p>
+                </section>
+
+                <!-- SECTION 30 -->
+                <section id="section30">
+                    <h4>30. White-Label and Reseller Licensing</h4>
+                    <p>
+                        FancyLearn may offer white-label or reseller solutions for partners and organizations. Under such arrangements:
+                    </p>
+                    <ul>
+                        <li>Partners may rebrand the platform subject to agreed licensing terms</li>
+                        <li>FancyLearn retains ownership of the underlying technology</li>
+                        <li>Resellers are responsible for compliance and end-user management</li>
+                    </ul>
+                    <p>
+                        You agree not to:
+                    </p>
+                    <ul>
+                        <li>Reverse engineer, copy, or replicate the platform</li>
+                        <li>Use the platform in violation of intellectual property laws</li>
+                        <li>Misrepresent ownership of FancyLearn technology</li>
+                        <li>Bypass usage limits, restrictions, or security systems</li>
+                        <li>Use the platform for unlawful or unauthorized purposes</li>
+                    </ul>
+                    <p>
+                        Additional terms may apply under separate agreements.
+                    </p>
+                </section>
+
+                <hr>
+                <p class="text-muted small">End of Terms and Services</p>
+
+            </div>
+        </div>
+
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_scripts %}
+<style>
+.sidebar {
+    border-right: 1px solid #eee;
+    height: 100vh;
+    overflow-y: auto;
+}
+.sidebar .nav-link {
+    color: #666;
+    padding: 4px 0;
+}
+.sidebar .nav-link:hover {
+    color: var(--primary);
+}
+section {
+    margin-bottom: 40px;
+}
+section h4 {
+    margin-bottom: 10px;
+}
+html {
+    scroll-behavior: smooth;
+}
+</style>
+{% endblock %}

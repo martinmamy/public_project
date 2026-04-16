@@ -1,0 +1,6 @@
+User-agent: *
+Disallow: /admin/
+Disallow: /static/
+Disallow: /media/
+
+Sitemap: https://www.studies-buddy.com/sitemap.xml

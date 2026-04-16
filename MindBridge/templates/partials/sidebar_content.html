@@ -1,0 +1,214 @@
+{% load custom_tags %}
+{% load mention_tags %}
+
+<!-- =========================
+TRENDING PROBLEMS (MODERN)
+========================= -->
+{% if trendings_problems and trendings_problems|length > 0 %}
+<div class="card modern-card mb-3">
+
+  <div class="card-header modern-header">
+    <i class="fa-solid fa-fire me-2 text-danger"></i>
+    <span>Trending</span>
+  </div>
+
+  <div class="modern-list">
+    {% for trending in trendings_problems %}
+      {% if trending.title %}
+
+        {% if user.is_authenticated %}
+
+          {% if trending.post_type == "information" %}
+            <a class="modern-item"
+               href="{% url 'talenthub' %}#problem-{{ trending.id }}">
+              <span class="title">
+                {{ trending.title|convert_mentions|truncatechars:60|safe }}
+              </span>
+            </a>
+          {% else %}
+            <a class="modern-item"
+               href="{% url 'problem_detail' trending.id %}">
+              <span class="title">
+                {{ trending.title|convert_mentions|truncatechars:60|safe }}
+              </span>
+            </a>
+          {% endif %}
+
+        {% else %}
+          <a class="modern-item" href="{% url 'login' %}">
+            <span class="title">
+              {{ trending.title|convert_mentions|truncatechars:60|safe }}
+            </span>
+          </a>
+        {% endif %}
+
+      {% endif %}
+    {% endfor %}
+  </div>
+
+</div>
+{% endif %}
+
+<!-- =========================
+SUGGESTED EXPERTS (MODERN)
+========================= -->
+{% if user.is_authenticated and suggested_experts and suggested_experts|length > 0 %}
+<div class="card modern-card">
+
+  <div class="card-header modern-header">
+    <i class="fa-solid fa-star me-2 text-warning"></i>
+    <span>Experts</span>
+  </div>
+
+  <div class="modern-list">
+    {% for expert in suggested_experts %}
+      {% if expert.username %}
+
+      <div class="modern-expert-item">
+
+        <a href="{% url 'profile' expert.id %}" class="expert-left">
+          {% if expert.avatar and expert.avatar.name %}
+            <img src="{{ expert.avatar.url }}" class="avatar-img modern-avatar">
+          {% else %}
+            {% with first=expert.username|slice:":1"|upper %}
+              <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40'%3E%3Crect width='40' height='40' fill='%23e2e8f0'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='central' text-anchor='middle' font-size='18'%3E{{ first }}%3C/text%3E%3C/svg%3E"
+                   class="avatar-img modern-avatar">
+            {% endwith %}
+          {% endif %}
+
+          <div class="expert-info">
+            <span class="name">{{ expert.username }}</span>
+          </div>
+        </a>
+
+        <span class="modern-badge">
+          ⭐ {{ expert.reputation_score|abbreviate_number|default:"0" }}
+        </span>
+
+      </div>
+
+      {% endif %}
+    {% endfor %}
+  </div>
+
+</div>
+{% endif %}
+
+<style>
+  /* =========================
+MODERN SIDEBAR CARDS
+========================= */
+.modern-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+}
+
+/* HEADER */
+.modern-header {
+  padding: 12px 14px;
+  font-weight: 600;
+  font-size: 0.95rem;
+
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  border-bottom: 1px solid var(--border);
+  background: transparent;
+}
+
+/* LIST */
+.modern-list {
+  display: flex;
+  flex-direction: column;
+}
+
+/* TRENDING ITEM */
+.modern-item {
+  padding: 10px 14px;
+  text-decoration: none;
+  color: var(--text);
+
+  display: block;
+
+  transition: all 0.2s ease;
+  border-bottom: 1px solid var(--border);
+}
+
+.modern-item:last-child {
+  border-bottom: none;
+}
+
+.modern-item:hover {
+  background: var(--hover);
+  padding-left: 16px;
+}
+
+.modern-item .title {
+  font-size: 0.9rem;
+  line-height: 1.3;
+  color: var(--text);
+}
+
+/* EXPERT ITEM */
+.modern-expert-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+
+  transition: all 0.2s ease;
+}
+
+.modern-expert-item:last-child {
+  border-bottom: none;
+}
+
+.modern-expert-item:hover {
+  background: var(--hover);
+}
+
+/* LEFT SIDE */
+.expert-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  color: var(--text);
+}
+
+.modern-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+
+  object-fit: cover;
+  box-shadow: var(--shadow-sm);
+}
+
+/* NAME */
+.expert-info .name {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--text);
+}
+
+/* BADGE */
+.modern-badge {
+  font-size: 0.8rem;
+  padding: 4px 8px;
+
+  border-radius: 999px;
+
+  background: var(--primary-soft);
+  color: var(--primary);
+
+  font-weight: 600;
+}
+</style>

@@ -1,0 +1,261 @@
+{% extends "base.html" %}
+{% block title %}Live Events | Fancylearn{% endblock %}
+{% block content %}
+<div class="container py-5">
+
+  <!-- HEADER -->
+  <div class="d-flex align-items-center mb-4">
+    <i class="fa fa-broadcast-tower fa-2x text-danger me-2"></i>
+    <h3 class="mb-0">Events</h3>
+  </div>
+
+  <!-- =============================
+       TABS
+  ============================= -->
+  <ul class="nav nav-tabs mb-4" id="eventTabs">
+    <li class="nav-item">
+      <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#liveTab">
+        <i class="fa fa-broadcast-tower me-1"></i> Live Events
+      </button>
+    </li>
+    <li class="nav-item">
+      <button class="nav-link" data-bs-toggle="tab" data-bs-target="#recordedTab">
+        <i class="fa fa-video me-1"></i> Recorded Events
+      </button>
+    </li>
+  </ul>
+
+  <div class="tab-content">
+
+    <!-- =====================================
+         LIVE EVENTS TAB
+    ===================================== -->
+    <div class="tab-pane fade show active" id="liveTab">
+      <div id="events-container">
+        {% if events %}
+          {% for event in events %}
+          <div class="card shadow-sm mb-3 event-card">
+            <div class="card-body">
+              <div class="d-flex justify-content-between align-items-start mb-2">
+                <div>
+                  <h4 class="mb-1">{{ event.title }}</h4>
+                  <p class="mb-1">Hosted by {{ event.host.username }}</p>
+                </div>
+                {% if event.is_live %}
+                <span class="badge bg-danger">
+                  <i class="fa fa-circle me-1"></i> LIVE
+                </span>
+                {% endif %}
+              </div>
+
+              <p>{{ event.description }}</p>
+
+              <div class="d-flex justify-content-end gap-2">
+                {% if request.user == event.host %}
+                <a href="{% url 'event_detail' event.id %}" class="btn btn-sm btn-warning" title="Manage Live">
+                  <i class="fa fa-video"></i>
+                </a>
+                {% elif request.user in event.participants.all or event.is_public %}
+                <button class="btn btn-sm btn-success joinLiveBtn" data-event-id="{{ event.id }}">
+                  <i class="fa fa-sign-in-alt"></i>
+                </button>
+                {% else %}
+                  {% if event.user_invited %}
+                  <p class="mb-0">Invite pending – waiting for host</p>
+                  {% else %}
+                  <span class="badge bg-secondary">Private Event</span>
+                  {% endif %}
+                {% endif %}
+              </div>
+
+              <!-- LIVE VIDEO PREVIEW -->
+              <div id="liveVideoContainer-{{ event.id }}" class="mt-3 card card-body bg-dark p-2" style="display:none;border-radius:8px">
+                <video id="liveVideo-{{ event.id }}" controls autoplay
+                       style="width:100%;max-height:360px;border-radius:8px"
+                       controlsList="nodownload" oncontextmenu="return false"></video>
+              </div>
+
+            </div>
+          </div>
+          {% endfor %}
+        {% else %}
+          <div class="text-center py-5">
+            <i class="fa fa-video fa-3x mb-3"></i>
+            <h5>No Live Events Right Now</h5>
+            <p>Check back later for upcoming live webinars.</p>
+          </div>
+        {% endif %}
+      </div>
+
+      <div id="scrollLoader" class="text-center py-4" style="display:none;">
+        <i class="fa fa-spinner fa-spin fa-2x"></i>
+      </div>
+    </div>
+
+    <!-- ====================================================
+RECORDED EVENTS (VIDEO GRID)
+==================================================== -->
+
+<div class="tab-pane fade" id="recordedTab">
+
+<div class="row g-4">
+
+{% for event in recordings_prefetch %}
+{% for recording in event.recordings.all %}
+
+<div class="col-lg-6 col-xl-4">
+
+<div class="card border-0 shadow-sm rounded-4 h-100">
+
+<video
+autoplay
+controls
+class="card-img-top rounded-top-4"
+style="aspect-ratio:16/9;object-fit:cover;background:black;">
+<source src="{{ recording.file.url }}">
+</video>
+
+<div class="card-body">
+
+<h6 class="fw-semibold mb-1">
+{{ event.title }}
+</h6>
+
+<p class="text-muted small mb-0">
+Hosted by {{ event.host.username }}
+</p>
+
+</div>
+
+</div>
+
+</div>
+
+{% endfor %}
+{% endfor %}
+
+</div>
+
+
+{% if not events %}
+
+<div class="text-center py-5 text-muted">
+<i class="fa fa-video fa-2x mb-2"></i>
+<p>No recorded events yet</p>
+</div>
+
+{% endif %}
+
+</div>
+
+  </div>
+</div>
+
+<script>
+const csrfToken = "{{ csrf_token }}";
+
+// ==========================
+// JOIN / LEAVE LIVE
+// ==========================
+document.addEventListener("click", async (e) => {
+  const btn = e.target.closest(".joinLiveBtn");
+  if(!btn) return;
+
+  const eventId = btn.dataset.eventId;
+  const container = document.getElementById(`liveVideoContainer-${eventId}`);
+  const videoEl = document.getElementById(`liveVideo-${eventId}`);
+  const isJoining = btn.classList.contains("btn-success");
+
+  btn.disabled = true;
+
+  try{
+    const url = isJoining
+      ? `/events/${eventId}/join/`
+      : `/events/${eventId}/leave/`;
+
+    const res = await fetch(url, { method:"POST", headers:{ "X-CSRFToken": csrfToken } });
+    const data = await res.json();
+
+    if(data.status === "joined" || data.status === "already_joined"){
+      container.style.display = "block";
+      videoEl.src = `/events/${eventId}/live/?preview=5`;
+      videoEl.play();
+      btn.classList.replace("btn-success","btn-danger");
+      btn.innerHTML = '<i class="fa fa-sign-out-alt"></i>';
+    } else if(data.status === "left"){
+      container.style.display = "none";
+      videoEl.pause();
+      videoEl.src = "";
+      btn.classList.replace("btn-danger","btn-success");
+      btn.innerHTML = '<i class="fa fa-sign-in-alt"></i>';
+    }
+  }catch(err){ console.error(err); alert("Server error"); }
+
+  btn.disabled = false;
+});
+
+// ==========================
+// INFINITE SCROLL LIVE EVENTS
+// ==========================
+let livePage = 1, liveLoading = false, liveHasNext = true;
+const liveContainer = document.getElementById("events-container");
+const liveLoader = document.getElementById("scrollLoader");
+
+async function loadMoreLiveEvents(){
+  if(liveLoading || !liveHasNext) return;
+  liveLoading = true;
+  liveLoader.style.display = "block";
+  livePage++;
+
+  try{
+    const res = await fetch(`/events/live?page=${livePage}`);
+    if(!res.ok){ liveHasNext = false; return; }
+
+    const html = await res.text();
+    const temp = document.createElement("div");
+    temp.innerHTML = html;
+    temp.querySelectorAll(".event-card").forEach(card => liveContainer.appendChild(card));
+  }catch(err){ console.error("Failed loading live events", err); }
+
+  liveLoader.style.display = "none";
+  liveLoading = false;
+}
+
+// ==========================
+// INFINITE SCROLL RECORDED EVENTS
+// ==========================
+let recordedPage = 1, recordedLoading = false, recordedHasNext = true;
+const recordedContainer = document.getElementById("recorded-container");
+const recordedLoader = document.getElementById("recordedLoader");
+
+async function loadMoreRecordedEvents(){
+  if(recordedLoading || !recordedHasNext) return;
+  recordedLoading = true;
+  recordedLoader.style.display = "block";
+  recordedPage++;
+
+  try{
+    const res = await fetch(`/events/recorded?page=${recordedPage}`);
+    if(!res.ok){ recordedHasNext = false; return; }
+
+    const html = await res.text();
+    const temp = document.createElement("div");
+    temp.innerHTML = html;
+    temp.querySelectorAll(".recorded-card").forEach(card => recordedContainer.appendChild(card));
+  }catch(err){ console.error("Failed loading recorded events", err); }
+
+  recordedLoader.style.display = "none";
+  recordedLoading = false;
+}
+
+// ==========================
+// SCROLL DETECTION
+// ==========================
+window.addEventListener("scroll", () => {
+  if(window.innerHeight + window.scrollY >= document.body.offsetHeight - 300){
+    loadMoreLiveEvents();
+    loadMoreRecordedEvents();
+  }
+});
+</script>
+{% endblock %}

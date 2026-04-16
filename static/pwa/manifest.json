@@ -1,0 +1,26 @@
+{
+  "name": "Fancylearn",
+  "short_name": "Fancylearn",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#0d6efd",
+  "description": "Learn, solve problems, and grow your skills.",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/static/pwa/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/static/pwa/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["education", "learning", "social media"],
+  "related_applications": []
+}

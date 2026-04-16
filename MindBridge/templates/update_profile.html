@@ -1,0 +1,311 @@
+{% extends "base.html" %}
+{% load static %}
+{% load custom_tags %}
+
+{% block title %}Update Profile | Fancylearn{% endblock %}
+
+
+<style>
+/* ===== Layout ===== */
+.profile-container {
+    max-width: 680px;
+    margin: auto;
+}
+
+/* ===== Card ===== */
+.profile-card {
+    border-radius: 18px;
+    background: #fff;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.06);
+}
+
+/* ===== Avatar Section ===== */
+.fb-action-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    margin-bottom: 25px;
+}
+
+/* Small avatar preview */
+.avatar-preview {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid #e9ecef;
+    cursor: pointer;
+    flex-shrink: 0;
+    -webkit-user-drag: none;
+    user-drag: none;
+    pointer-events: auto;
+}
+
+/* Make upload button a rectangular shape */
+.fb-action-btn-alt {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px; /* spacing between icon and text */
+    width: 200px;       /* larger clickable area */
+    height: 50px;       /* taller rectangle */
+    border-radius: 12px;
+    background: #198754; /* green */
+    color: #fff;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 600;
+    transition: 0.2s;
+}
+
+.fb-action-btn-alt:hover {
+    background: #157347; /* darker green on hover */
+    transform: scale(1.05);
+}
+
+.fb-action-btn-alt input[type="file"] {
+    display: none;
+}
+
+/* Optional: style inner icon */
+.camera-icon {
+    font-size: 1.3rem;
+}
+
+/* Optional: style inner text */
+.camera-text {
+    font-size: 1rem;
+}
+
+.fb-action-btn-alt:hover {
+    transform: scale(1.1);
+    background: #157347;
+}
+
+.fb-action-btn-alt:hover::after {
+    content: "Upload new profile";
+    position: absolute;
+    bottom: -28px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #000;
+    color: #fff;
+    font-size: 11px;
+    padding: 3px 7px;
+    border-radius: 5px;
+    white-space: nowrap;
+}
+
+/* Hide file input */
+.fb-action-btn-alt input[type="file"] {
+    display: none;
+}
+
+/* Info Tooltip */
+.info-icon {
+    position: relative;
+    font-size: 0.9rem;
+}
+
+.info-icon .info-tooltip {
+    visibility: hidden;
+    opacity: 0;
+    position: absolute;
+    bottom: -28px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #000;
+    color: #fff;
+    font-size: 11px;
+    padding: 3px 7px;
+    border-radius: 5px;
+    white-space: nowrap;
+    transition: 0.2s;
+}
+
+.info-icon:hover .info-tooltip {
+    visibility: visible;
+    opacity: 1;
+}
+
+/* Inputs */
+.form-control {
+    border-radius: 10px;
+    padding: 10px;
+    font-size: 0.95rem;
+}
+
+/* Button */
+.btn-save {
+    border-radius: 10px;
+    padding: 12px;
+    font-weight: 600;
+}
+
+/* Errors */
+.field-error {
+    font-size: 0.8rem;
+}
+
+/* ===== Modal ===== */
+#avatarModal {
+    display: none;
+    position: fixed;
+    z-index: 1050;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0,0,0,0.7);
+}
+
+#avatarModal img {
+    display: block;
+    margin: 10% auto;
+    max-width: 90%;
+    max-height: 80%;
+    border-radius: 12px;
+}
+.camera-icon {
+    font-size: 1.3rem;
+    color: #fff; /* make sure it's visible */
+}
+</style>
+
+
+{% block content %}
+<div class="container py-4">
+    <div class="profile-container">
+        <div class="card profile-card border-0">
+            <div class="card-body p-4">
+
+                <h4 class="text-center fw-bold mb-4">Update Profile</h4>
+
+                <!-- ===== Form ===== -->
+                <form method="post" enctype="multipart/form-data" novalidate>
+                    {% csrf_token %}
+
+                    <!-- ===== Top Avatar (existing profile) ===== -->
+                    <div class="fb-action-wrapper">
+                        {% if user.avatar %}
+                            <img src="{{ user.avatar.url }}" 
+                                 id="avatarPreview" 
+                                 class="avatar-preview"
+                                 style="width: 120px; height: 120px;"
+                                 onerror="this.src='{% static 'images/default-avatar.png' %}'">
+                        {% else %}
+                            <img src="{% static 'images/default-avatar.png' %}" 
+                                 id="avatarPreview" 
+                                 class="avatar-preview"
+                                 style="width: 120px; height: 120px;">
+                        {% endif %}
+                    </div>
+
+                    <!-- ===== Other Fields ===== -->
+                    {% for field in form %}
+                        {% if field.name != "avatar" %}
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">
+                                {{ field.label }}
+                                {% if field.field.required %}
+                                    <span class="text-danger">*</span>
+                                {% endif %}
+                            </label>
+                            {{ field|add_class:"form-control" }}
+                            {% if field.errors %}
+                                <div class="text-danger field-error mt-1">
+                                    {{ field.errors|striptags }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+                    {% endfor %}
+
+                    <!-- ===== Camera + New Avatar Preview ===== -->
+                    <div class="fb-action-wrapper">
+                        <!-- Camera Upload Button -->
+                        <label class="fb-action-btn-alt">
+                            <i class="fas fa-camera camera-icon"></i>
+                            <span class="camera-text">Upload New Avatar</span>
+                            {{ form.avatar|add_class:"d-none" }}
+                        </label>
+
+                        <!-- New Avatar Preview (hidden by default) -->
+                        <img id="newAvatarPreview" 
+                             src="" 
+                             class="avatar-preview" 
+                             style="display: none; margin-left: 10px;">
+
+                        <!-- Info tooltip -->
+                        <span class="info-icon">
+                            <i class="fas fa-circle-info"></i>
+                            <span class="info-tooltip">Optional: select a new profile picture.</span>
+                        </span>
+                    </div>
+
+                    <!-- ===== Submit ===== -->
+                    <div class="d-flex gap-2 mt-4">
+                        <a href="{% url 'profile' user_id=request.user.id %}" class="btn btn btn-cancel">
+                            <i class="fas fa-times me-1"></i> Cancel
+                        </a>
+                        <button type="submit" class="btn btn btn-save">
+                            <i class="fas fa-save me-1"></i> Save Changes
+                        </button>
+                    </div>
+                </form>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ===== Avatar Modal ===== -->
+<div id="avatarModal">
+    <img id="modalImg" src="">
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const input = document.querySelector('input[name="avatar"]');
+    const newPreview = document.getElementById("newAvatarPreview");
+    const modal = document.getElementById("avatarModal");
+    const modalImg = document.getElementById("modalImg");
+
+    if (input) {
+        input.id = "avatarInput";
+        input.setAttribute("accept", "image/*");
+
+        input.addEventListener("change", function () {
+            const file = this.files[0];
+
+            if (file && file.type.startsWith("image/")) {
+                const url = URL.createObjectURL(file);
+
+                // Show the new avatar preview instantly
+                newPreview.src = url;
+                newPreview.style.display = "inline-block";
+
+                // Optional: adjust styling dynamically if needed
+                newPreview.style.width = "80px";
+                newPreview.style.height = "80px";
+            }
+        });
+    }
+
+    // Open modal for new avatar
+    newPreview.addEventListener("click", () => {
+        if (newPreview.src) {
+            modal.style.display = "block";
+            modalImg.src = newPreview.src;
+        }
+    });
+
+    // Close modal on click
+    modal.addEventListener("click", () => modal.style.display = "none");
+
+    // Disable right-click on previews
+    newPreview.addEventListener("contextmenu", e => e.preventDefault());
+});
+</script>
+{% endblock %}
