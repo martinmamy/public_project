@@ -9,7 +9,8 @@ from django.core.files.storage import FileSystemStorage
 from Crypto.Util.Padding import pad, unpad
 from io import BytesIO
 from django.core.files.uploadedfile import InMemoryUploadedFile
-import re
+import re, base64
+from dotenv import load_dotenv
 
 
 def is_valid_email(email):
@@ -17,9 +18,9 @@ def is_valid_email(email):
     email_regex = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
     return re.match(email_regex, email) is not None
 
-SECRET_KEY = b'2\t\xfc0\xf4\x10\x7f\xd7\xe5(\x14;\xf8\xf4\xfc\x8dw\xa1\x15\xd3\xfb\x13\\\x0cf\xb8%K&\x95\x99\x05'
 
-
+SECRET_KEY = os.getenv("SECRET_KEY_ENC").encode('utf-8')  # Ensure the secret key is bytes for AES
+#SECRET_KEY = base64.urlsafe_b64decode(os.getenv("SECRET_KEY_ENC"))
 class BaseEncryptedField(models.Field):
     def __init__(self, *args, **kwargs):
         cipher_name = kwargs.pop('cipher', 'AES')
