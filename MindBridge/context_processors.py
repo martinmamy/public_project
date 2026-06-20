@@ -8,7 +8,9 @@ from django.db.models import (
 )
 from django.utils import timezone
 
-from MindBridge.models import Problem, User
+from MindBridge.models import Problem, User, CreatorsSubscription, Advertisement
+from MindBridge.services.reputation_service import ReputationService
+
 
 
 def sidebar_data(request):
@@ -80,7 +82,51 @@ def sidebar_data(request):
         .order_by("-reputation_score")[:10]
     )
 
+    for expert in suggested_experts:
+        expert.tier = ReputationService.calculate_tier(
+            expert.reputation_score or 0
+        )
+
     return {
         "trendings_problems": trending_problems,
         "suggested_experts": suggested_experts,
+    }
+    
+    
+
+
+def subscription_status(request):
+
+    has_active_subscription = False
+
+    if request.user.is_authenticated:
+
+        has_active_subscription = (
+            request.user.is_superuser
+            or
+            CreatorsSubscription.objects.filter(
+                user=request.user,
+                active=True,
+                status=CreatorsSubscription.Status.ACTIVE,
+            ).exists()
+        )
+
+    return {
+        "has_active_subscription": has_active_subscription
+    }
+    
+
+
+def ads_context(request):
+    now = timezone.now()
+
+    active_problem_ids = Advertisement.objects.filter(
+        status="active",
+        is_deleted=False,
+        expires_at__gt=now,
+        related_problem__isnull=False
+    ).values_list("related_problem_id", flat=True).distinct()
+
+    return {
+        "ACTIVE_AD_PROBLEM_IDS": set(str(i) for i in active_problem_ids)
     }

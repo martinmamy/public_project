@@ -1,0 +1,445 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Fancylearn{% endblock %}</title>
+
+  <meta name="csrf-token" content="{{ csrf_token }}">
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Bootstrap -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <!-- FontAwesome -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" rel="stylesheet">
+
+  <!-- Main CSS -->
+  <link rel="stylesheet" href="{% static 'css/main.css' %}">
+
+  <link rel="icon" type="image/x-icon" href="{% static 'logo/favicon.ico' %}">
+  <link rel="icon" type="image/x-icon" href="{% static 'logo/favicon.png' %}">
+  <link rel="apple-touch-icon" href="{% static 'logo/apple-touch-icon.png' %}">
+
+  <!-- iOS support -->
+  <link rel="apple-touch-icon" href="{% static 'pwa/icons/icon-192.png' %}">
+  <link rel="apple-touch-icon" href="{% static 'pwa/icons/icon-512.png' %}">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+
+  <!-- Main CSS -->
+  <link rel="stylesheet" href="{% static 'css/list_problem.css' %}">
+  <link rel="stylesheet" href="{% static 'css/problem_detail.css' %}">
+
+   <!-- PWA Meta -->
+  <link rel="manifest" href="{% static 'pwa/manifest.json' %}">
+  <meta id="theme-color" name="theme-color" content="#1877f2">
+
+<!-- Global Page Loader -->
+<div id="page-loader" class="page-loader d-none">
+    <div class="spinner-border text-primary" role="status"></div>
+</div>
+
+<style>
+/* ======================================================
+   PAGE LOADER
+====================================================== */
+.page-loader {
+  position: fixed;
+  inset: 0;
+  background: rgba(255,255,255,.6);
+  backdrop-filter: blur(2px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+}
+
+[data-theme="dark"] .page-loader {
+  background: rgba(15,23,42,.75);
+}
+
+/* ======================================================
+   SCROLLBAR
+====================================================== */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--text-main), transparent 75%);
+  border-radius: 8px;
+}
+</style>
+</head>
+<body class="bg-gradient-to-b from-bg to-gray-200 dark:from-bg-dark dark:to-black text-text dark:text-text-dark min-h-screen flex flex-col">
+
+
+<!-- =========================
+MAIN CONTENT
+========================= -->
+<!-- =========================
+MAIN CONTENT
+========================= -->
+
+<main class="mt-4">
+  <div class="row justify-content-center g-4">
+
+    <!-- MAIN CONTENT -->
+    <div class="col-12 col-md-10 col-lg-7">
+      {% if messages %}
+        <div class="container mt-3">
+
+          {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show rounded-4 border-0 d-flex align-items-center justify-content-between"
+                role="alert"
+                style="backdrop-filter: blur(6px);">
+
+              <div class="d-flex align-items-center gap-2">
+                <!-- Icon based on message type -->
+                {% if message.tags == "success" %}
+                  <span class="fs-5">✅</span>
+                {% elif message.tags == "error" %}
+                  <span class="fs-5">❌</span>
+                {% elif message.tags == "warning" %}
+                  <span class="fs-5">⚠️</span>
+                {% else %}
+                  <span class="fs-5">ℹ️</span>
+                {% endif %}
+
+                <div class="fw-medium">
+                  {{ message }}
+                </div>
+              </div>
+
+              <button type="button"
+                      class="btn-close ms-3"
+                      data-bs-dismiss="alert"
+                      aria-label="Close"></button>
+            </div>
+          {% endfor %}
+
+        </div>
+      {% endif %}
+      {% block content %}{% endblock %}
+    </div>
+
+    <!-- DESKTOP SIDEBAR (normal) -->
+    <div class="col-lg-4 d-none d-lg-block sb-card">
+      <div class="fixed-sidebar">
+        {% include "partials/sidebar_content.html" %}
+      </div>
+    </div>
+
+  </div>
+
+  {% block main_content %}{% endblock %}
+</main>
+
+<div class="modal fade" id="linkWarningModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content rounded-4">
+
+      <div class="modal-header">
+        <h5 class="modal-title text-warning">⚠️ External Link Warning</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+
+      <div class="modal-body">
+        <p class="text-black">You are about to open an external link:</p>
+        <p class="text-break text-black" id="warn-url"></p>
+        <p class="text-danger small">
+          Be careful — this link is outside the platform. Make sure you trust the source before proceeding.
+        </p>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-bs-dismiss="modal">
+          Cancel
+        </button>
+        <a id="confirmLink" class="btn btn-danger" target="_blank">
+          Proceed
+        </a>
+      </div>
+
+    </div>
+  </div>
+</div>
+<script>
+  function showLinkWarning(url) {
+  document.getElementById("warn-url").innerText = url;
+  document.getElementById("confirmLink").href = url;
+
+  const modal = new bootstrap.Modal(
+    document.getElementById("linkWarningModal")
+  );
+
+  modal.show();
+}
+
+function initSafeLinks() {
+  document.querySelectorAll(".safe-link").forEach(link => {
+    link.addEventListener("click", function (e) {
+      e.preventDefault();
+      showLinkWarning(this.href);
+    });
+  });
+}
+
+document.addEventListener("DOMContentLoaded", initSafeLinks);
+</script>
+
+<script>
+/* ============================================================
+   ELEMENT REFERENCES
+============================================================ */
+const loader     = document.getElementById("page-loader");
+const appContent = document.getElementById("app-content");
+const footer     = document.getElementById("footer");
+const sidebar    = document.getElementById("sidebar");
+
+/* ============================================================
+   STATE
+============================================================ */
+const pageCache = new Map();
+
+let loaderTimeout = null;
+let maxLoaderTimeout = null;
+
+let isNavigating = false;
+let currentRequestController = null;
+let activeUrl = null;
+
+/* ============================================================
+   LOADER
+============================================================ */
+function showLoaderDelayed() {
+    if (loaderTimeout) return;
+
+    loaderTimeout = setTimeout(() => {
+        loader.classList.remove("d-none");
+
+        maxLoaderTimeout = setTimeout(() => {
+            hideLoader();
+        }, 3000);
+
+    }, 120);
+}
+
+function hideLoader() {
+    clearTimeout(loaderTimeout);
+    clearTimeout(maxLoaderTimeout);
+    loaderTimeout = null;
+    maxLoaderTimeout = null;
+    loader.classList.add("d-none");
+}
+
+/* ============================================================
+   HTML PARSING
+============================================================ */
+function extract(html, selector) {
+    const tpl = document.createElement("template");
+    tpl.innerHTML = html;
+    return tpl.content.querySelector(selector);
+}
+
+/* ============================================================
+   SCRIPT EXECUTION (SAFE)
+============================================================ */
+function runScripts(container) {
+    if (!container) return;
+
+    container.querySelectorAll("script[data-page-script]").forEach(old => {
+        const s = document.createElement("script");
+
+        if (old.src) {
+            s.src = old.src;
+        } else {
+            s.textContent = old.textContent;
+        }
+
+        document.body.appendChild(s);
+        old.remove();
+    });
+}
+
+/* ============================================================
+   APPLY PAGE
+============================================================ */
+function applyPage(html, url, pushState = true) {
+
+    if (url !== activeUrl) return;
+
+    const content = extract(html, "#app-content");
+    if (!content) {
+        window.location.href = url;
+        return;
+    }
+
+    const newSidebar = extract(html, "#sidebar");
+    const newFooter  = extract(html, "#footer");
+
+    appContent.replaceChildren(...content.childNodes);
+
+    if (sidebar && newSidebar) {
+        sidebar.replaceChildren(...newSidebar.childNodes);
+    }
+
+    if (footer && newFooter) {
+        footer.replaceChildren(...newFooter.childNodes);
+    }
+
+    runScripts(appContent);
+    runScripts(sidebar);
+    runScripts(footer);
+
+    const title = html.match(/<title>(.*?)<\/title>/i);
+    if (title) document.title = title[1];
+
+    if (pushState) {
+        history.pushState({ url }, "", url);
+    }
+
+    hideLoader();
+}
+
+/* ============================================================
+   LOAD PAGE (SPA CORE)
+============================================================ */
+async function loadPage(url, pushState = true) {
+
+    if (isNavigating && url === activeUrl) return;
+
+    isNavigating = true;
+    activeUrl = url;
+
+    if (currentRequestController) {
+        currentRequestController.abort();
+    }
+
+    currentRequestController = new AbortController();
+
+    try {
+
+        if (pageCache.has(url)) {
+            applyPage(pageCache.get(url), url, pushState);
+            return;
+        }
+
+        showLoaderDelayed();
+
+        const res = await fetch(url, {
+            headers: {
+                "X-Requested-With": "XMLHttpRequest"
+            },
+            signal: currentRequestController.signal
+        });
+
+        if (!res.ok) {
+            window.location.href = url;
+            return;
+        }
+
+        const html = await res.text();
+
+        pageCache.set(url, html);
+
+        applyPage(html, url, pushState);
+
+    } catch (err) {
+
+        if (err.name === "AbortError") return;
+
+        console.error("SPA Error:", err);
+        window.location.href = url;
+
+    } finally {
+        isNavigating = false;
+    }
+}
+
+/* ============================================================
+   🔥 SPA LINK INTERCEPTION (FIXED)
+============================================================ */
+document.addEventListener("click", (e) => {
+
+    const link = e.target.closest("a[data-spa-link]");
+    if (!link) return;
+
+    const url = link.getAttribute("href");
+
+    if (
+        !url ||
+        url.startsWith("http") ||
+        url.startsWith("#") ||
+        link.target === "_blank" ||
+        link.hasAttribute("download")
+    ) return;
+
+    e.preventDefault();
+    loadPage(url);
+});
+
+/* ============================================================
+   PREFETCH
+============================================================ */
+document.addEventListener("mouseover", (e) => {
+    const link = e.target.closest("a[data-spa-link]");
+    if (!link) return;
+
+    const url = link.getAttribute("href");
+    if (!url || pageCache.has(url)) return;
+
+    fetch(url, {
+        headers: { "X-Requested-With": "XMLHttpRequest" }
+    })
+    .then(r => r.ok ? r.text() : null)
+    .then(html => {
+        if (html) pageCache.set(url, html);
+    })
+    .catch(() => {});
+});
+
+/* ============================================================
+   BACK / FORWARD
+============================================================ */
+window.addEventListener("popstate", (e) => {
+    if (e.state?.url) {
+        loadPage(e.state.url, false);
+    }
+});
+
+/* ============================================================
+   INITIAL HYDRATION (FIXED - NO DOUBLE LOAD)
+============================================================ */
+function hydrateInitialPage() {
+
+    const url = window.location.pathname + window.location.search;
+
+    activeUrl = url;
+
+    history.replaceState({ url }, "", url);
+
+    // IMPORTANT: DO NOT fetch again
+    runScripts(appContent);
+    runScripts(sidebar);
+    runScripts(footer);
+}
+
+/* ============================================================
+   START
+============================================================ */
+document.addEventListener("DOMContentLoaded", hydrateInitialPage);
+</script>
+
+<!-- PAGE SCRIPT -->
+<script data-page-script>
+    initReportBuilder();
+</script>
+{% block extra_scripts %}{% endblock %}
+</body>
+</html>

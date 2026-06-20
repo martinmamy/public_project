@@ -1,606 +1,688 @@
-/* =====================================
-GLOBAL VARIABLES
-===================================== */
-:root{
-  --radius:10px;
-  --radius-sm:6px;
-  --card-padding:16px;
-  --avatar-size:36px;
-  --username-size:14px;
-  --text-size:14px;
-  --comment-max-height:280px;
-  --card-max-width:720px; /* max width for desktop */
+
+/* =========================================================
+   FANCYLEARN — GLACIER DESIGN TOKENS
+   Flat / Premium / Apple x Linear Style
+========================================================= */
+
+:root {
+
+
+  /* =====================================================
+     TEXT SYSTEM
+  ===================================================== */
+
+  --text: #0f172a;
+
+  --muted: #64748b;
+
+  --faint: #94a3b8;
+
+
+  /* =====================================================
+     BORDERS
+  ===================================================== */
+
+  --border: rgba(15,23,42,0.04);
+
+  --border-soft: rgba(15,23,42,0.03);
+
+
+  /* =====================================================
+     INTERACTIONS
+  ===================================================== */
+
+  --hover: #ffffff;
+
+  --active: rgba(15,23,42,0.06);
+
+
+  /* =====================================================
+     SHADOWS (VERY SOFT)
+  ===================================================== */
+
+  --shadow-sm: 0 1px 2px rgba(15,23,42,0.02);
+
+  --shadow-md: 0 2px 8px rgba(15,23,42,0.04);
+
+  --shadow-lg: 0 8px 24px rgba(15,23,42,0.05);
+
+
+  /* =====================================================
+     RADII
+  ===================================================== */
+
+  --radius-xs: 8px;
+
+  --radius-sm: 12px;
+
+  --radius: 18px;
+
+  --radius-lg: 24px;
+
+  --radius-xl: 30px;
+
+
+  /* =====================================================
+     LAYOUT
+  ===================================================== */
+
+  --card-padding: 18px;
+
+  --avatar: 40px;
+
+  --max-width: 740px;
+
+
+  /* =====================================================
+     TYPOGRAPHY
+  ===================================================== */
+
+  --text-xs: 11px;
+
+  --text-sm: 13px;
+
+  --text-md: 14px;
+
+  --text-lg: 16px;
+
+  --text-xl: 20px;
+
+
+  /* =====================================================
+     TRANSITIONS
+  ===================================================== */
+
+  --transition-fast: 0.16s ease;
+
+  --transition: 0.22s ease;
+
+  --transition-slow: 0.32s ease;
+
+
+  /* =====================================================
+     SCROLLBAR
+  ===================================================== */
+
+  --scrollbar: rgba(15,23,42,0.10);
 }
 
-/* =====================================
-CARDS / PROBLEMS / ANSWERS
-===================================== */
+
+
+/* =========================================================
+   DARK MODE — GLACIER NIGHT
+========================================================= */
+
+
+
+/* =========================================================
+   GLOBAL LINKS
+========================================================= */
+
+a {
+
+  color: var(--primary);
+
+  text-decoration: none;
+
+  transition:
+    color var(--transition-fast),
+    opacity var(--transition-fast);
+}
+
+
+a:hover {
+
+  color: var(--primary-hover);
+
+  opacity: 0.92;
+}
+
+
+
+/* =========================================================
+   GLOBAL BUTTONS
+========================================================= */
+
+button,
+.btn {
+
+  transition:
+    background var(--transition-fast),
+    color var(--transition-fast),
+    transform var(--transition-fast),
+    opacity var(--transition-fast);
+}
+
+
+button:active,
+.btn:active {
+
+  transform: scale(0.97);
+}
+
+
+
+/* =========================================================
+   FLAT CARD SYSTEM
+========================================================= */
+
 .card,
 .problem-card,
-.answer-card{
-  background:var(--card);
-  border-radius:var(--radius);
-  padding:clamp(8px,2vw,var(--card-padding));
-  font-size:clamp(12px,1vw,var(--text-size));
-  word-break:break-word;
-  display:flex;
-  flex-direction:column;
-  gap:clamp(6px,1vw,12px);
-  box-shadow:0 4px 12px rgba(0,0,0,0.06),0 2px 6px rgba(0,0,0,0.04);
-  transition: transform .2s ease, box-shadow .2s ease, background .2s ease;
-  overflow:hidden;
-  width:100%;             /* Full width by default */
-  max-width:var(--card-max-width); /* Restrict width on large screens */
-  margin:0 auto;          /* Center on larger screens */
+.answer-card {
+
+
+  padding: var(--card-padding);
+
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 12px;
+
+  width: 100%;
+
+  max-width: var(--max-width);
+
+  margin: 0 auto 18px;
+
+  box-shadow: none;
+
+  overflow: hidden;
+
+  transition:
+    transform var(--transition),
+    background var(--transition);
 }
 
-/* Hover effect */
-.card:hover,
-.problem-card:hover,
-.answer-card:hover{
-  transform:translateY(-2px);
-  box-shadow:0 8px 20px rgba(0,0,0,0.08);
-  background:var(--hover);
+
+
+/* =========================================================
+   POST HEADER
+========================================================= */
+
+.post-header {
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: space-between;
+
+  gap: 12px;
 }
 
-/* =====================================
-CARD HEADER (AVATAR + NAME)
-===================================== */
-.post-header,
-.card-body .d-flex.align-items-center{
-  display:flex;
-  align-items:center;
-  gap:clamp(6px,1vw,12px);
-  flex-wrap:wrap;
+
+.header-left {
+
+  display: flex;
+
+  align-items: center;
+
+  gap: 12px;
+
+  min-width: 0;
+
+  flex: 1;
 }
 
-/* =====================================
-AVATARS
-===================================== */
+
+.header-right {
+
+  display: flex;
+
+  align-items: center;
+
+  gap: 8px;
+}
+
+
+
+/* =========================================================
+   AVATAR
+========================================================= */
+
 .avatar-img,
-.comment-avatar,
-.comment-user-avatar{
-  width:clamp(24px,8vw,var(--avatar-size));
-  height:clamp(24px,8vw,var(--avatar-size));
-  border-radius:50%;
-  object-fit:cover;
-  flex-shrink:0;
-  border:2px solid var(--primary-soft);
-  transition:transform .2s ease, box-shadow .2s ease;
+.avatar {
+
+  width: var(--avatar);
+
+  height: var(--avatar);
+
+  border-radius: 50%;
+
+  object-fit: cover;
+
+  flex-shrink: 0;
+
+  background: var(--primary-soft);
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  color: var(--primary);
+
+  font-size: 13px;
+
+  font-weight: 600;
+
+  transition:
+    transform var(--transition-fast),
+    opacity var(--transition-fast);
 }
+
 
 .avatar-img:hover,
-.comment-avatar:hover{
-  transform:scale(1.05);
-  box-shadow:0 3px 8px rgba(0,0,0,.1);
+.avatar:hover {
+
+  transform: scale(1.04);
 }
 
-/* =====================================
-USERNAME + META
-===================================== */
-.comment-user strong,
-.comment-header strong,
-.answer-meta strong,
-.problem-meta strong{
-  font-size:clamp(11px,2vw,var(--username-size));
-  font-weight:600;
-  white-space:nowrap;
-  overflow:hidden;
-  text-overflow:ellipsis;
-}
 
-.comment-user span,
-.answer-meta span{
-  font-size:clamp(9px,1.5vw,12px);
-  opacity:.7;
-}
 
-/* =====================================
-CARD TITLE + DESCRIPTION
-===================================== */
-.card-title,
-.problem-title{
-  font-size:clamp(14px,1.5vw,18px);
-  font-weight:600;
-  color:var(--text);
-  line-height:1.35;
-  word-break:break-word;
-}
+/* =========================================================
+   TITLES
+========================================================= */
 
-.card-body p,
-.problem-description{
-  font-size:clamp(12px,1.1vw,16px);
-  line-height:1.5;
+.problem-title {
+
+  font-size: var(--text-lg);
+
+  font-weight: 700;
+
+  line-height: 1.45;
+
+  letter-spacing: -0.02em;
+
   color: var(--text);
-  margin-top: clamp(4px,0.8vw,8px);
-  word-break:break-word;
 }
 
-/* =====================================
-VOTES
-===================================== */
-.vote-box,
-.answer-vote-box{
-  display:flex;
-  align-items:center;
-  gap:6px;
-  flex-wrap:wrap;
+
+
+/* =========================================================
+   CONTENT
+========================================================= */
+
+.problem-content,
+.answer-content {
+
+  font-size: var(--text-md);
+
+  line-height: 1.75;
+
+  color: var(--muted);
 }
 
-.vote-btn{
-  padding:3px 6px;
-  border-radius:5px;
-  font-size:clamp(10px,.8vw,12px);
-  cursor:pointer;
-  transition:all .15s ease;
+
+
+/* =========================================================
+   BADGES
+========================================================= */
+
+.badge,
+.category-badge {
+
+  display: inline-flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  padding: 5px 11px;
+
+  border-radius: 999px;
+
+  background: var(--primary-soft);
+
+  color: var(--primary);
+
+  font-size: 11px;
+
+  font-weight: 600;
+
+  white-space: nowrap;
 }
 
-.vote-btn:hover{
-  background:var(--hover);
-  transform:translateY(-1px);
+
+
+/* =========================================================
+   ACTION BUTTONS
+========================================================= */
+
+.vote-btn {
+
+  border: none;
+
+  background: transparent;
+
+  width: 36px;
+
+  height: 36px;
+
+  border-radius: 14px;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  color: var(--muted);
+
+  cursor: pointer;
+
+  transition:
+    background var(--transition-fast),
+    color var(--transition-fast),
+    transform var(--transition-fast);
 }
 
-/* =====================================
-PROMOTION BUTTONS
-===================================== */
-.promotion-feature {
-    display: flex;
-    flex-wrap: wrap;
-    gap: clamp(8px, 2vw, 16px); /* responsive spacing */
-    justify-content: center;
-    margin: 16px 0;
+
+.vote-btn:hover {
+
+  background: var(--hover);
+
+  color: var(--primary);
 }
 
-.promotion-feature button {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.4em; /* space between icon and text */
-    padding: clamp(6px, 1.5vw, 12px) clamp(12px, 3vw, 20px); /* responsive padding */
-    font-size: clamp(14px, 1.5vw, 18px); /* responsive text size */
-    border-radius: 8px;
-    border: none;
-    cursor: pointer;
-    transition: transform 0.15s ease, background-color 0.2s ease;
-    color: var(--text);
+
+
+/* =========================================================
+   MEDIA
+========================================================= */
+
+.media-container {
+
+  overflow: hidden;
+
+  border-radius: var(--radius);
 }
 
-.promotion-feature button:hover {
-    transform: scale(1.05);
-    background-color: #0056b3;
+
+.media-container img,
+.media-container video {
+
+  width: 100%;
+
+  max-height: 340px;
+
+  object-fit: cover;
+
+  display: block;
 }
 
-/* Icons inside button */
-.promotion-feature button::before {
-    content: '';
+
+
+/* =========================================================
+   COMMENTS
+========================================================= */
+
+.comment-card {
+
+  background: var(--surface-2);
+
+  border-radius: var(--radius-sm);
+
+  padding: 10px 12px;
+
+  transition:
+    background var(--transition-fast),
+    transform var(--transition-fast);
 }
 
-/* Optional: smaller screens adjustments */
+
+.comment-card:hover {
+
+  background: var(--hover);
+}
+
+
+.comment-content {
+
+  font-size: 13px;
+
+  line-height: 1.6;
+}
+
+
+.comment-time {
+
+  font-size: 11px;
+
+  color: var(--muted);
+}
+
+
+
+/* =========================================================
+   ANSWER FORM
+========================================================= */
+
+.answer-form-wrapper {
+
+  max-width: 720px;
+
+  margin: auto;
+}
+
+
+.answer-form-card {
+
+  background: var(--card);
+
+  border: none;
+
+  border-radius: var(--radius-lg);
+
+  padding: 18px;
+
+  box-shadow: none;
+}
+
+
+.answer-textarea {
+
+  width: 100%;
+
+  padding: 14px 16px;
+
+  border: none;
+
+  border-radius: var(--radius);
+
+  background: var(--surface-2);
+
+  color: var(--text);
+
+  font-size: 14px;
+
+  line-height: 1.6;
+
+  resize: vertical;
+
+  outline: none;
+
+  transition:
+    background var(--transition-fast),
+    box-shadow var(--transition-fast);
+}
+
+
+.answer-textarea:focus {
+
+  box-shadow:
+    inset 0 0 0 1px var(--primary);
+}
+
+
+
+/* =========================================================
+   ACTION GROUPS
+========================================================= */
+
+.answer-actions {
+
+  display: flex;
+
+  gap: 10px;
+
+  flex-wrap: wrap;
+}
+
+
+.answer-actions .btn {
+
+  display: inline-flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  gap: 6px;
+}
+
+
+
+/* =========================================================
+   STORIES
+========================================================= */
+
+.trending-stories {
+
+  display: flex;
+
+  gap: 12px;
+
+  overflow-x: auto;
+
+  scrollbar-width: none;
+}
+
+.trending-stories::-webkit-scrollbar {
+  display: none;
+}
+
+
+.story-card {
+
+  flex: 0 0 auto;
+
+  width: 150px;
+
+  background: var(--surface-1);
+
+  border-radius: var(--radius-lg);
+
+  padding: 10px;
+
+  transition:
+    transform var(--transition-fast),
+    background var(--transition-fast);
+}
+
+
+.story-card:hover {
+
+  transform: translateY(-2px);
+
+  background: var(--surface-2);
+}
+
+
+
+/* =========================================================
+   SIDEBAR
+========================================================= */
+
+.sidebar-panel {
+
+  position: sticky;
+
+  top: 14px;
+}
+
+
+
+/* =========================================================
+   SCROLLBAR
+========================================================= */
+
+::-webkit-scrollbar {
+  width: 7px;
+}
+
+::-webkit-scrollbar-thumb {
+
+  background: var(--scrollbar);
+
+  border-radius: 999px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+
+
+/* =========================================================
+   RESPONSIVE
+========================================================= */
+
 @media (max-width: 768px) {
-    .promotion-feature {
-        flex-direction: column;
-        gap: 12px;
-    }
-    .promotion-feature button {
-        font-size: clamp(12px, 3vw, 16px);
-        padding: clamp(4px, 2vw, 10px) clamp(8px, 4vw, 16px);
-    }
+
+  :root {
+
+    --card-padding: 14px;
+
+    --avatar: 34px;
+  }
+
+  .problem-title {
+
+    font-size: 15px;
+  }
+
+  .problem-content {
+
+    font-size: 13px;
+  }
+
+  .story-card {
+
+    width: 132px;
+  }
 }
+
+
 
 @media (max-width: 480px) {
-    .promotion-feature button {
-        font-size: clamp(10px, 4vw, 14px);
-        padding: clamp(3px, 2.5vw, 8px) clamp(6px, 4vw, 12px);
-    }
-}
-/* =====================================
-MEDIA (IMAGE / VIDEO / AUDIO)
-===================================== */
-.media-container img,
-.media-container video,
-.media-container audio,
-.answer-media{
-  width:100%;
-  max-width:100%;
-  border-radius:6px;
-  cursor:pointer;
-}
 
-.media-container img:hover,
-.media-container video:hover{
-  transform:scale(1.02);
-  box-shadow:0 6px 15px rgba(0,0,0,0.07);
-}
+  :root {
 
-/* =====================================
-ACCEPTED ANSWER
-===================================== */
-.accepted-answer{
-  border:2px solid #28a745;
-  position:relative;
-}
+    --card-padding: 12px;
 
-.accepted-answer::before{
-  content:"✔";
-  position:absolute;
-  left:-8px;
-  top:-8px;
-  font-size:16px;
-  color:#28a745;
-}
-
-/* =====================================
-BADGES (CATEGORY / TAGS)
-===================================== */
-.badge, .category-badge{
-  display:inline-block;
-  max-width:120px;
-  white-space:nowrap;
-  overflow:hidden;
-  text-overflow:ellipsis;
-  font-size:clamp(8px,0.7vw,12px);
-  padding:2px 6px;
-  border-radius:6px;
-  font-weight:500;
-  flex-shrink:0;
-  transition:transform .2s ease;
-}
-
-.badge:hover, .category-badge:hover{
-  transform:scale(1.05);
-}
-
-/* =====================================
-SIDEBAR
-===================================== */
-.sidebar-panel{
-  position:sticky;
-  top:10px;
-}
-
-/* =====================================
-BUTTONS
-===================================== */
-.btn-icon i{
-  margin-right:4px;
-}
-
-/* =====================================
-RESPONSIVE MEDIA QUERIES
-===================================== */
-
-/* Large screens: centered, max-width already applied */
-@media(max-width:1200px){
-  .card,
-  .problem-card,
-  .answer-card{
-    max-width:100%;
-    margin:0 auto;
-  }
-}
-
-/* Tablets */
-@media(max-width:992px){
-  .sidebar-panel{
-    position:relative;
-    top:auto;
-  }
-  .card{
-    padding:14px;
-    width:100%;
-  }
-}
-
-/* Phones */
-@media(max-width:768px){
-  .card{
-    padding:12px;
-    width:100%;
-  }
-  .avatar-img{
-    width:28px;
-    height:28px;
-  }
-  .comment-user strong{
-    font-size:12px;
-  }
-  .vote-btn{
-    font-size:11px;
-    padding:2px 5px;
-  }
-  .badge, .category-badge{
-    max-width:90px;
-    font-size:10px;
-  }
-}
-
-/* Small Phones */
-@media(max-width:480px){
-  .card{
-    padding:10px;
-    width:100%;
-  }
-  .avatar-img{
-    width:24px;
-    height:24px;
-  }
-  .comment-user strong{
-    font-size:11px;
-  }
-  .problem-content,
-  .answer-content{
-    font-size:12px;
-  }
-  .vote-btn{
-    font-size:10px;
-  }
-  .comment-form textarea,
-  .answer-form textarea{
-    font-size:11px;
-  }
-  .badge, .category-badge{
-    max-width:70px;
-    font-size:9px;
-  }
-}
-
-/* Ultra small devices (<360px) */
-@media(max-width:360px){
-  .card{
-    padding:6px;
-    width:100%;
-  }
-  .avatar-img{
-    width:20px;
-    height:20px;
-  }
-  .comment-user strong{
-    font-size:10px;
-  }
-  .problem-content,
-  .answer-content{
-    font-size:11px;
-  }
-  .vote-btn{
-    font-size:9px;
-    padding:2px 4px;
-  }
-  .vote-box,
-  .answer-vote-box{
-    gap:4px;
-  }
-  .badge, .category-badge{
-    max-width:50px;
-    font-size:8px;
-  }
-  .comment-form textarea,
-  .answer-form textarea{
-    font-size:10px;
-  }
-}
-
-.suggestion-list {
-    position: absolute;
-    border: 1px solid #ccc;
-    max-height: 150px;
-    overflow-y: auto;
-    background: #fff;
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    z-index: 1000;
-    width: 100%;
-}
-.suggestion-list li {
-    padding: 6px 12px;
-    cursor: pointer;
-}
-.suggestion-list li:hover {
-    background: #eee;
-}
-
-/* Fix flex alignment when avatar missing */
-.post-header,
-.card-body .d-flex.align-items-center {
-    display: flex;
-    align-items: center; /* vertical center */
-    gap: clamp(6px, 1vw, 12px);
-    flex-wrap: nowrap;   /* prevent wrapping */
-}
-
-.avatar-img {
-    width: 35px;
-    height: 35px;
-    flex-shrink: 0;
-}
-
-.card-body .d-flex.flex-column {
-    min-width: 0; /* allow text truncation if needed */
-}
-.post-header .d-flex.flex-column strong {
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    display: block;
-}
-
-/* Base style (desktop/tablet) */
-.comment-toggle-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  white-space: nowrap;
-}
-
-/* Medium screens */
-@media (max-width: 768px) {
-  .comment-toggle-btn {
-    padding: 4px 8px;
-    font-size: 0.85rem;
-  }
-}
-
-/* Small screens (phones) */
-@media (max-width: 576px) {
-  .comment-toggle-btn {
-    padding: 3px 6px;
-    font-size: 0.75rem;
+    --avatar: 30px;
   }
 
-  .comment-toggle-btn i {
-    font-size: 0.85rem;
+  .problem-title {
+
+    font-size: 14px;
   }
-}
-
-/* Extra small screens */
-@media (max-width: 400px) {
-  /* Optional: hide text, keep only icon + count */
-  .comment-text {
-    font-size: 0.7rem;
-  }
-}
-
-/* Ultra small (optional aggressive mode) */
-@media (max-width: 350px) {
-  .comment-text {
-    display: none; /* show only icon */
-  }
-}
-
-/* Wrapper */
-.answer-form-wrapper {
-  max-width: 700px;
-  margin: auto;
-  padding: 16px;
-}
-
-/* Card */
-.answer-form-card {
-  border-radius: 18px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-  padding: 18px;
-  border: 1px solid rgba(0,0,0,0.1);
-}
-
-/* Title */
-.answer-form-title {
-  margin-bottom: 16px;
-  font-weight: 600;
-}
-
-/* Rows */
-.form-row {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-start;
-  gap: 6px;
-  margin-bottom: 12px;
-}
-
-/* Textarea */
-.answer-textarea {
-  flex: 1 1 100%;
-  width: 100%;
-  padding: 10px 12px;
-  font-size: 14px;
-  border-radius: 10px;
-  border: none;
-  outline: none;
-  background: #f9f9f9;
-  resize: vertical;
-}
-
-/* Required star */
-.required-star {
-  color: #d9534f;
-  font-weight: 600;
-}
-
-/* Upload label */
-.upload-label {
-  border-radius: 10px;
-  padding: 6px 12px;
-  cursor: pointer;
-  font-size: 13px;
-  display: inline-flex;
-  align-items: center;
-  white-space: nowrap;
-  background: #f1f1f1;
-}
-
-/* Preview */
-.file-preview {
-  margin-top: 8px;
-  width: 100%;
-}
-
-/* Actions */
-.answer-actions {
-  display: flex;
-  gap: 8px;
-  margin-top: 12px;
-  flex-wrap: wrap;
-}
-
-/* Buttons take equal space on small screens */
-.answer-actions .btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-}
-
-/* Mentions */
-.mention-list {
-  list-style: none;
-  padding: 0;
-  margin-top: 8px;
-}
-
-/* =========================
-   📱 RESPONSIVE
-========================= */
-
-/* Tablets */
-@media (max-width: 768px) {
-  .answer-form-card {
-    padding: 14px;
-  }
-
-  .answer-textarea {
-    font-size: 13px;
-  }
-}
-
-/* Phones */
-@media (max-width: 576px) {
 
   .answer-actions {
-    flex-direction: column; /* stack buttons */
+
+    flex-direction: column;
   }
 
   .answer-actions .btn {
+
     width: 100%;
   }
 
-  .btn-text {
-    font-size: 0.85rem;
-  }
+  .story-card {
 
-  .answer-textarea {
-    font-size: 13px;
-    padding: 8px;
-  }
-}
-
-/* Very small screens */
-@media (max-width: 400px) {
-
-  .btn-text {
-    display: none; /* icon-only buttons */
-  }
-
-  .answer-actions .btn {
-    padding: 6px;
+    width: 116px;
   }
 }

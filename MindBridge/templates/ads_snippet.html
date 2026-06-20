@@ -1,44 +1,173 @@
-<div class="problem-ads position-relative">
+<div class="problem-ads-wrapper ads-carousel" data-carousel>
 
   {% if ads %}
-    {% for ad in ads %}
-      <a href="{{ ad.target_url }}"
-         target="_blank"
-         onclick="trackAdClick('{{ ad.id }}')"
-         class="d-block position-relative mb-2">
-        <img src="{{ ad.image.url }}"
-             class="img-fluid rounded shadow-sm"
-             alt="ad">
-        {% if user_has_created_ads %}
-          <!-- Floating Premium badge -->
-          <span class="premium-badge">Premium</span>
-        {% endif %}
-      </a>
-    {% endfor %}
+    <!-- INTERNAL ADS CAROUSEL -->
+    <div class="problem-ads internal-ads">
+      {% for ad in ads %}
+        <a href="{% url 'ad_click' ad.id %}" target="_blank" rel="noopener" class="ad-horizontal">
+          <div class="ad-thumb">
+            {% if ad.ads_file %}
+              <img src="{{ ad.ads_file.url }}" alt="ad">
+            {% endif %}
+          </div>
+          <div class="ad-body">
+            <div class="ad-title">{{ ad.title|truncatechars:50 }}</div>
+            <div class="ad-desc">{{ ad.description|truncatewords:10 }}</div>
+            <div class="ad-url">{{ ad.target_url|truncatechars:40 }}</div>
+          </div>
+          {% if user_has_created_ads %}
+            <span class="premium-badge">Ad</span>
+          {% endif %}
+        </a>
+      {% endfor %}
+    </div>
   {% else %}
-    <!-- Fallback AdSense without Premium label -->
-    <ins class="adsbygoogle"
-         style="display:block"
-         data-ad-client="ca-pub-XXXXXX"
-         data-ad-slot="YYYYYY"
-         data-ad-format="auto"></ins>
+    <!-- GOOGLE ADS CAROUSEL -->
+    <div class="problem-ads google-ads">
+      <div class="ad-horizontal google-ad">
+        <ins class="adsbygoogle"
+             style="display:block"
+             data-ad-client="ca-pub-XXXXXXXXXXXX"
+             data-ad-slot="XXXXXXXXXX"
+             data-ad-format="auto"
+             data-full-width-responsive="true"></ins>
+        <script>
+          (adsbygoogle = window.adsbygoogle || []).push({});
+        </script>
+      </div>
+    </div>
   {% endif %}
 
 </div>
 
 <style>
-.problem-ads .premium-badge {
+  .problem-ads-wrapper {
+    width: 100%;
+    overflow: hidden;
+    position: relative;
+}
+
+/* TRACK */
+.problem-ads {
+    display: flex;
+    flex-wrap: nowrap;
+    transition: transform 0.5s ease-in-out;
+}
+
+/* SLIDE = MUST BE EXACT WIDTH OF WRAPPER */
+.ad-horizontal {
+    flex: 0 0 100%;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+
+    height: 80px;
+    padding: 8px;
+
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+
+    text-decoration: none;
+    color: inherit;
+
+    position: relative;
+    box-sizing: border-box;
+}
+
+/* IMAGE */
+.ad-thumb {
+    flex: 0 0 70px;
+    height: 60px;
+    border-radius: 8px;
+    overflow: hidden;
+    background: #f3f4f6;
+}
+
+.ad-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* TEXT */
+.ad-body {
+    flex: 1;
+    min-width: 0;
+}
+
+.ad-title { font-size: 13px; font-weight: 600; }
+.ad-desc  { font-size: 11px; color: #6b7280; }
+.ad-url   { font-size: 10px; color: #9ca3af; }
+
+/* BADGE */
+.premium-badge {
     position: absolute;
-    top: 8px;
-    left: 8px;
-    background-color: #ffce00;
+    top: 6px;
+    right: 6px;
+    background: #ffce00;
     color: #000;
-    font-size: 0.75rem;
+    font-size: 9px;
     font-weight: bold;
     padding: 2px 6px;
-    border-radius: 12px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
-    z-index: 10;
-    text-transform: uppercase;
+    border-radius: 8px;
 }
 </style>
+
+<script>
+function initAdsCarousels(root = document) {
+
+    root.querySelectorAll(".problem-ads-wrapper").forEach(wrapper => {
+
+        const container = wrapper.querySelector(".problem-ads");
+        if (!container) return;
+
+        // prevent double init
+        if (wrapper.dataset.loaded === "1") return;
+        wrapper.dataset.loaded = "1";
+
+        let slides = Array.from(container.querySelectorAll(".ad-horizontal"));
+        if (slides.length <= 1) return;
+
+        let index = 0;
+
+        function shuffle(arr) {
+            for (let i = arr.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [arr[i], arr[j]] = [arr[j], arr[i]];
+            }
+            return arr;
+        }
+
+        function render() {
+            container.innerHTML = "";
+            slides.forEach(s => container.appendChild(s));
+        }
+
+        function slide() {
+            index++;
+
+            if (index >= slides.length) {
+                index = 0;
+                slides = shuffle(slides);
+                render();
+            }
+
+            const width = slides[0].offsetWidth;
+            container.style.transform = `translateX(-${index * width}px)`;
+        }
+
+        slides = shuffle(slides);
+        render();
+
+        let interval = setInterval(slide, 4000);
+
+        wrapper.addEventListener("mouseenter", () => clearInterval(interval));
+
+        wrapper.addEventListener("mouseleave", () => {
+            interval = setInterval(slide, 4000);
+        });
+
+    });
+}
+</script>

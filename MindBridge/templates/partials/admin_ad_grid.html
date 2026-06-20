@@ -1,0 +1,195 @@
+{% load static %}
+{% load mention_tags %}
+
+<div class="card border-0 rounded-4">
+<div class="table-responsive">
+
+<table class="table table-hover align-middle mb-0">
+
+<thead class="table-light">
+<tr>
+    <th>Ad</th>
+    <th>Advertiser</th>
+    <th>Status</th>
+    <th>Clicks</th>
+    <th>Impressions</th>
+    <th>CTR</th>
+    <th>Revenue</th>
+    <th>Date</th>
+</tr>
+</thead>
+
+<tbody>
+
+{% for ad in ads %}
+
+{% if ad.impressions > 0 %}
+    {% widthratio ad.clicks ad.impressions 100 as ctr %}
+{% else %}
+    {% widthratio 0 1 1 as ctr %}
+{% endif %}
+
+<tr style="cursor:pointer"
+    data-bs-toggle="offcanvas"
+    data-bs-target="#adModal{{ ad.id }}">
+
+    <td>
+        <div class="fw-semibold">
+            {{ ad.title|truncatechars:40 }}
+        </div>
+    </td>
+
+    <td>{{ ad.advertiser.username }}</td>
+
+    <td>
+        <span class="badge
+            {% if ad.status == 'active' %} bg-success text-dark
+            {% elif ad.status == 'pending' %} bg-warning text-dark
+            {% elif ad.status == 'draft' %} bg-secondary text-dark
+            {% elif ad.status == 'expired' %} bg-dark text-light
+            {% else %} bg-danger {% endif %}">
+            {{ ad.status|title }}
+        </span>
+    </td>
+
+    <td>{{ ad.clicks|abbreviate_number }}</td>
+    <td>{{ ad.impressions|abbreviate_number }}</td>
+
+    <td>{{ ad.ctr }}%</td>
+
+    <td>${{ ad.price|abbreviate_number }}</td>
+
+    <td>{{ ad.created_at|date:"M d, Y" }}</td>
+
+</tr>
+
+{% endfor %}
+
+</tbody>
+
+</table>
+
+</div>
+</div>
+
+{% for ad in ads %}
+
+<div class="offcanvas offcanvas-end ad-offcanvas"
+     tabindex="-1"
+     id="adModal{{ ad.id }}">
+
+    <!-- HEADER -->
+    <div class="offcanvas-header">
+
+        <h5 class="offcanvas-title fw-bold mb-0">
+            {{ ad.title }}
+        </h5>
+
+        <!-- ALWAYS VISIBLE CLOSE BUTTON -->
+        <button type="button"
+                class="btn-close"
+                data-bs-dismiss="offcanvas"
+                aria-label="Close"></button>
+
+    </div>
+
+    <!-- BODY -->
+    <div class="offcanvas-body">
+
+        <p class="text-muted small mb-3">
+            {{ ad.description|default:"No description provided" }}
+        </p>
+
+        <hr>
+
+        <div><strong>Advertiser:</strong> {{ ad.advertiser.username }}</div>
+        <div><strong>Status:</strong> {{ ad.status|title }}</div>
+        <div><strong>Clicks:</strong> {{ ad.clicks|abbreviate_number }}</div>
+        <div><strong>Impressions:</strong> {{ ad.impressions|abbreviate_number }}</div>
+        <div><strong>Revenue:</strong> ${{ ad.price|abbreviate_number }}</div>
+        <div><strong>Date:</strong> {{ ad.created_at|date:"M d, Y" }}</div>
+
+        <hr>
+
+        <div class="alert alert-info py-2">
+            CTR: <strong>{{ ad.ctr }}%</strong>
+        </div>
+
+    </div>
+
+</div>
+
+{% endfor %}
+
+<style>
+    /* ===============================
+   OFFCANVAS GLOBAL FIX
+================================ */
+
+.offcanvas {
+    position: fixed !important;
+    top: 0 !important;
+    height: 100vh !important;
+    z-index: 9999 !important;
+    display: flex;
+    flex-direction: column;
+}
+
+/* BACKDROP */
+.offcanvas-backdrop {
+    z-index: 9998 !important;
+}
+
+/* ===============================
+   SIDE WIDTH
+================================ */
+
+.ad-offcanvas {
+    width: 420px;
+}
+
+@media (max-width: 768px) {
+    .ad-offcanvas {
+        width: 100% !important;
+    }
+}
+
+/* ===============================
+   HEADER (FIX CLOSE BUTTON ISSUE)
+================================ */
+
+.offcanvas-header {
+    position: sticky;
+    top: 0;
+    z-index: 10000 !important;
+    border-bottom: 1px solid #eee;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    min-height: 60px;
+}
+
+/* FORCE CLOSE BUTTON ALWAYS ON TOP */
+.offcanvas-header .btn-close {
+    z-index: 10001 !important;
+    opacity: 1 !important;
+    margin-left: auto;
+}
+
+/* ===============================
+   BODY SCROLL AREA
+================================ */
+
+.offcanvas-body {
+    overflow-y: auto;
+    padding: 16px;
+    height: calc(100vh - 60px);
+}
+
+/* prevent weird bootstrap shift */
+.offcanvas.show {
+    transform: none !important;
+}
+</style>

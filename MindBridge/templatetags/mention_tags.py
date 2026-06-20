@@ -33,7 +33,7 @@ def convert_mentions(text):
                         font-family='Arial, sans-serif' font-size='10' fill='#343a40'>{first_letter}</text>
                 </svg>
                 """
-                avatar_url = "data:image/svg+xml," + urllib.parse.quote(svg)
+                avatar_url = "data:image/svg+xml,%3Csvg," + urllib.parse.quote(svg)
 
             # Inline link with avatar and username nudged slightly downward
             return (

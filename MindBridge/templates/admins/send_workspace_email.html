@@ -1,0 +1,447 @@
+{% extends "base.html" %}
+{% load static %}
+{% load custom_tags %}
+
+{% block title %}Admin Send Email{% endblock %}
+
+{% block content %}
+
+<link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+<script src="https://cdn.quilljs.com/1.3.7/quill.js"></script>
+
+<style>
+.page-wrapper {
+    width: 100%;
+    padding: 30px;
+    background: #f4f6fb;
+}
+
+.email-container {
+    max-width: 1400px;
+    margin: auto;
+}
+
+.email-card {
+    background: #fff;
+    border-radius: 18px;
+    padding: 30px;
+    box-shadow: 0 15px 40px rgba(0,0,0,0.08);
+}
+
+.email-header {
+    font-size: 22px;
+    font-weight: 700;
+    margin-bottom: 20px;
+}
+
+#quill-editor, #email-preview {
+    height: 380px;
+    border-radius: 12px;
+}
+
+#email-preview {
+    background: #f8f9fb;
+    padding: 18px;
+    overflow-y: auto;
+    border: 1px solid #e5e7eb;
+}
+
+.email-chip {
+    display: inline-flex;
+    align-items: center;
+    background: #eef4ff;
+    border: 1px solid #dbeafe;
+    padding: 6px 10px;
+    border-radius: 999px;
+    margin: 4px;
+    font-size: 13px;
+}
+
+.email-chip button {
+    border: none;
+    background: none;
+    margin-left: 8px;
+    color: #dc2626;
+    cursor: pointer;
+}
+
+#search-results {
+    position: absolute;
+    background: white;
+    width: 100%;
+    max-height: 280px;
+    overflow-y: auto;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    z-index: 999;
+}
+
+.search-item {
+    padding: 10px;
+    cursor: pointer;
+}
+
+.search-item:hover {
+    background: #f3f4f6;
+}
+</style>
+
+<div class="page-wrapper">
+<div class="email-container">
+<div class="email-card">
+
+<div class="email-header">✉️ Admin Email Composer</div>
+
+<form method="POST" id="email-form">
+    {% csrf_token %}
+
+    <!-- SEND TO ALL -->
+    <div class="form-check mb-3">
+        {{ form.send_to_all }}
+        <label class="form-check-label fw-semibold">
+            Send to all users
+        </label>
+    </div>
+
+    <!-- SEARCH -->
+    <div class="mb-3 position-relative">
+        <label class="form-label fw-semibold">Search Users</label>
+        <input type="text" id="search-box" class="form-control"
+               placeholder="Search name or email...">
+        <div id="search-results"></div>
+    </div>
+
+    <!-- RECIPIENTS -->
+    <div class="mb-3">
+        <label class="form-label fw-semibold">Recipients</label>
+        <div id="email-container"></div>
+        {{ form.recipient }}
+    </div>
+
+    <!-- SUBJECT -->
+    <div class="mb-3">
+        {{ form.subject }}
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-6">
+            <label class="fw-semibold">Compose</label>
+            <div id="quill-editor"></div>
+            {{ form.body }}
+        </div>
+
+        <div class="col-lg-6">
+            <label class="fw-semibold">Preview</label>
+            <div id="email-preview"></div>
+        </div>
+    </div>
+
+    <div class="text-end mt-4">
+        <button class="btn btn-primary">Send Email</button>
+    </div>
+</form>
+
+</div>
+</div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+    /* =========================================================
+       DATA
+    ========================================================= */
+    const allEmails = JSON.parse('{{ all_emails|escapejs }}');
+    const users = JSON.parse('{{ users_data|escapejs }}');
+
+    let emails = [];
+
+    const sendAll = document.querySelector('[name="send_to_all"]');
+    const container = document.getElementById("email-container");
+    const hidden = document.querySelector('[name="recipient"]');
+    const searchBox = document.getElementById("search-box");
+    const searchResults = document.getElementById("search-results");
+    const preview = document.getElementById("email-preview");
+
+    /* =========================================================
+       QUILL EDITOR
+    ========================================================= */
+    const quill = new Quill("#quill-editor", {
+        theme: "snow",
+        placeholder: "Write your email here..."
+    });
+
+    /* =========================================================
+       GLOBAL STYLES (CLEAN UI)
+    ========================================================= */
+    const style = document.createElement("style");
+    style.innerHTML = `
+        .ql-editor p { margin: 4px 0 !important; }
+
+        .email-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            color: #1e3a8a;
+            padding: 6px 10px;
+            border-radius: 999px;
+            font-size: 13px;
+            margin: 4px;
+        }
+
+        .email-chip button {
+            border: none;
+            background: transparent;
+            color: #dc2626;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        #search-results {
+            position: absolute;
+            width: 100%;
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 10px;
+            max-height: 250px;
+            overflow-y: auto;
+            z-index: 999;
+        }
+
+        .search-item {
+            padding: 10px;
+            cursor: pointer;
+        }
+
+        .search-item:hover {
+            background: #f3f4f6;
+        }
+
+        #email-preview {
+            background: #f8fafc;
+            padding: 18px;
+            border-radius: 12px;
+            border: 1px solid #e5e7eb;
+            overflow-y: auto;
+        }
+    `;
+    document.head.appendChild(style);
+
+    /* =========================================================
+       SIGNATURE BLOCK (FULL DESIGN)
+    ========================================================= */
+    function buildSignature() {
+        return `
+        <div style="
+            margin-top:40px;
+            padding-top:25px;
+            border-top:1px solid #e5e7eb;
+            font-family:Arial;
+        ">
+
+            <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+
+                    <td width="60" valign="top">
+                        <img src="http://127.0.0.1:9000/static/logo/favicon-32.png"
+                             style="
+                                width:50px;
+                                height:50px;
+                                border-radius:12px;
+                                background:white;
+                                padding:6px;
+                                border:1px solid #e5e7eb;
+                             ">
+                    </td>
+
+                    <td style="padding-left:12px;">
+                        <div style="font-size:15px;font-weight:700;color:#111827;">
+                            FancyLearn Team
+                        </div>
+
+                        <div style="font-size:13px;color:#6b7280;line-height:1.6;">
+                            This message was automatically generated.<br>
+                            Please do not reply to this email.
+                        </div>
+                    </td>
+
+                </tr>
+            </table>
+
+            <!-- FOOTER LINKS -->
+            <div style="
+                margin-top:20px;
+                background:#0f172a;
+                padding:18px;
+                border-radius:12px;
+                color:#cbd5e1;
+                font-size:12px;
+            ">
+
+                <table width="100%">
+                    <tr>
+                        <td style="text-align:center; padding:10px 0;">
+
+                            <!-- TOP: LINKS -->
+                            <div style="margin-bottom:10px;">
+                                <a href="/privacy/"
+                                style="color:#93c5fd;margin:0 10px;text-decoration:none;">
+                                    Privacy
+                                </a>
+
+                                <a href="/terms/"
+                                style="color:#93c5fd;margin:0 10px;text-decoration:none;">
+                                    Terms
+                                </a>
+
+                                <a href="/auth/faq/"
+                                style="color:#93c5fd;margin:0 10px;text-decoration:none;">
+                                    FAQ
+                                </a>
+
+                                <a href="/"
+                                style="color:#93c5fd;margin:0 10px;text-decoration:none;">
+                                    Home
+                                </a>
+                            </div>
+
+                            <!-- BOTTOM: COPYRIGHT -->
+                            <div style="color:#cbd5e1; font-size:12px;">
+                                © ${new Date().getFullYear()} FancyLearn
+                            </div>
+
+                        </td>
+                    </tr>
+                </table>
+
+            </div>
+
+        </div>`;
+    }
+
+    /* =========================================================
+       EMAIL WRAPPER
+    ========================================================= */
+    function buildEmail(html) {
+        return `
+        <div style="
+            font-family:Arial,sans-serif;
+            font-size:14px;
+            line-height:1.7;
+            color:#111827;
+        ">
+            ${html}
+            ${buildSignature()}
+        </div>`;
+    }
+
+    /* =========================================================
+       RENDER EMAIL CHIPS
+    ========================================================= */
+    function render() {
+        container.innerHTML = "";
+
+        emails.forEach((email, i) => {
+            const chip = document.createElement("div");
+            chip.className = "email-chip";
+
+            chip.innerHTML = `<span>${email}</span>`;
+
+            if (!sendAll.checked) {
+                const btn = document.createElement("button");
+                btn.innerHTML = "&times;";
+                btn.onclick = () => {
+                    emails.splice(i, 1);
+                    render();
+                };
+                chip.appendChild(btn);
+            }
+
+            container.appendChild(chip);
+        });
+
+        hidden.value = emails.join(",");
+    }
+
+    /* =========================================================
+       SEND TO ALL
+    ========================================================= */
+    sendAll.addEventListener("change", () => {
+
+        if (sendAll.checked) {
+            emails = [...allEmails];
+            searchBox.disabled = true;
+            searchResults.innerHTML = "";
+        } else {
+            emails = [];
+            searchBox.disabled = false;
+        }
+
+        render();
+    });
+
+    /* =========================================================
+       USER SEARCH
+    ========================================================= */
+    searchBox.addEventListener("input", () => {
+
+        const val = searchBox.value.toLowerCase();
+        searchResults.innerHTML = "";
+
+        if (!val) return;
+
+        const filtered = users.filter(u =>
+            (u.email || "").toLowerCase().includes(val) ||
+            (u.first_name || "").toLowerCase().includes(val) ||
+            (u.last_name || "").toLowerCase().includes(val)
+        );
+
+        filtered.slice(0, 8).forEach(u => {
+            const div = document.createElement("div");
+            div.className = "search-item";
+
+            div.innerHTML = `
+                <strong>${u.first_name || ""} ${u.last_name || ""}</strong><br>
+                <small>${u.email}</small>
+            `;
+
+            div.onclick = () => {
+                if (!emails.includes(u.email)) {
+                    emails.push(u.email);
+                    render();
+                }
+                searchBox.value = "";
+                searchResults.innerHTML = "";
+            };
+
+            searchResults.appendChild(div);
+        });
+    });
+
+    /* =========================================================
+       LIVE PREVIEW
+    ========================================================= */
+    quill.on("text-change", () => {
+        preview.innerHTML = buildEmail(quill.root.innerHTML);
+    });
+
+    /* =========================================================
+       FORM SUBMIT
+    ========================================================= */
+    document.getElementById("email-form").addEventListener("submit", () => {
+        hidden.value = emails.join(",");
+        document.querySelector('[name="body"]').value =
+            buildEmail(quill.root.innerHTML);
+    });
+
+    /* =========================================================
+       INIT
+    ========================================================= */
+    render();
+    preview.innerHTML = buildEmail(quill.root.innerHTML);
+
+});
+</script>
+{% endblock %}

@@ -12,6 +12,7 @@ from django.core.files.uploadedfile import InMemoryUploadedFile
 import re, base64
 from dotenv import load_dotenv
 
+load_dotenv()
 
 def is_valid_email(email):
     """Validate email format."""
@@ -19,8 +20,8 @@ def is_valid_email(email):
     return re.match(email_regex, email) is not None
 
 
-SECRET_KEY = os.getenv("SECRET_KEY_ENC").encode('utf-8')  # Ensure the secret key is bytes for AES
-#SECRET_KEY = base64.urlsafe_b64decode(os.getenv("SECRET_KEY_ENC"))
+SECRET_KEY_ENC = os.getenv("SECRET_KEY_ENC").encode('utf-8')  # Ensure the secret key is bytes for AES
+#SECRET_KEY_ENC = base64.urlsafe_b64decode(os.getenv("SECRET_KEY_ENC"))
 class BaseEncryptedField(models.Field):
     def __init__(self, *args, **kwargs):
         cipher_name = kwargs.pop('cipher', 'AES')

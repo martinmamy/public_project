@@ -187,13 +187,25 @@
             id="cat-{{ forloop.counter }}">
 
           {% for entry_item in entries %}
-            <a href="?entry={{ entry_item.id }}"
+            <a href="?entry={{ entry_item.id }}" data-spa-link
               class="kb-link {% if selected_entry_id == entry_item.id|stringformat:'s' %}active{% endif %}">
               {{ entry_item.title|truncatechars:40 }}
             </a>
           {% endfor %}
 
         </div>
+        {% if google_ads_available %}
+          {% if forloop.counter|divisibleby:2 %}   {# adjust frequency #}
+            <div class="kb-google-ad">
+              <ins class="adsbygoogle"
+                  style="display:block"
+                  data-ad-client="ca-pub-XXXXXXXXXXXX"
+                  data-ad-slot="XXXXXXXXXX"
+                  data-ad-format="auto"
+                  data-full-width-responsive="true"></ins>
+            </div>
+          {% endif %}
+        {% endif %}
 
       {% endfor %}
     </div>
@@ -230,7 +242,11 @@
               {% endwith %}
             {% endif %}
           </div>
-
+          
+            <div id="adsPlaceholder-entry-{{ entry.id }}"
+                data-problem-id="{{ entry.problem.id }}">
+            </div>
+          
           <!-- Solution -->
           <div class="kb-section">
             <h5 class="kb-section-title">Solution</h5>
@@ -258,6 +274,11 @@
               {% endwith %}
             {% endif %}
           </div>
+          
+            <div id="adsPlaceholder-entry-{{ entry.id }}"
+                data-problem-id="{{ entry.problem.id }}">
+            </div>
+          
         </div>
       {% else %}
         <div class="kb-empty">
@@ -276,6 +297,202 @@
 </div>
 
 <div class="kb-toggle-arrow" onclick="toggleSidebar()" id="kbArrow">KB</div>
+
+<script>
+function isImage(url) {
+    if (!url) return false;
+
+    const cleanUrl = url.split("?")[0].toLowerCase();
+
+    const imageExts = [
+        ".jpg", ".jpeg", ".png", ".webp",
+        ".gif", ".bmp", ".svg", ".avif"
+    ];
+
+    // direct file match
+    if (imageExts.some(ext => cleanUrl.endsWith(ext))) return true;
+
+    // CDN / API hints
+    if (
+        cleanUrl.includes("image") ||
+        cleanUrl.includes("cdn") ||
+        cleanUrl.includes("media")
+    ) return true;
+
+    return false;
+}
+
+function initAdsCarousel(root) {
+
+    const container = root.querySelector(".problem-ads");
+    if (!container) return;
+
+    let slides = Array.from(container.querySelectorAll(".ad-horizontal"));
+
+    // =====================================================
+    // FILTER ONLY IMAGE ADS (IMPORTANT ADDITION)
+    // =====================================================
+    slides = slides.filter(slide => {
+        const img = slide.querySelector("img");
+        const src = img?.getAttribute("src") || "";
+        return isImage(src);
+    });
+
+    if (slides.length <= 1) return;
+
+    let index = 0;
+
+    function shuffle(arr) {
+        for (let i = arr.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [arr[i], arr[j]] = [arr[j], arr[i]];
+        }
+        return arr;
+    }
+
+    function render() {
+        container.innerHTML = "";
+        slides.forEach(s => container.appendChild(s));
+    }
+
+    slides = shuffle(slides);
+    render();
+
+    function slide() {
+
+        index++;
+
+        if (index >= slides.length) {
+            index = 0;
+            slides = shuffle(slides);
+            render();
+        }
+
+        const width = slides[0].offsetWidth;
+        container.style.transform = `translateX(-${index * width}px)`;
+    }
+
+    let interval = setInterval(slide, 4000);
+
+    root.addEventListener("mouseenter", () => clearInterval(interval));
+    root.addEventListener("mouseleave", () => {
+        interval = setInterval(slide, 4000);
+    });
+}
+
+
+// =====================================================
+// FETCH ADS + INIT PER BLOCK
+// =====================================================
+
+document.querySelectorAll("[id^='adsPlaceholder-']").forEach(el => {
+
+    const problemId = el.dataset.problemId;
+    if (!problemId) return;
+
+    fetch(`/ads/${problemId}/`)
+        .then(res => res.json())
+        .then(data => {
+
+            // ❌ no ads → remove placeholder completely
+            if (!data.success || !data.html || !data.html.trim()) {
+                el.remove();
+                return;
+            }
+
+            // ✅ ads exist → inject
+            el.innerHTML = data.html;
+
+            // init carousel
+            initAdsCarousel(el);
+        })
+        .catch(() => {
+            el.remove(); // fail-safe cleanup
+        });
+});
+</script>
+
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+    const searchInput = document.querySelector("input[name='search']");
+    const sidebar = document.getElementById("kbSidebar");
+
+    if (!searchInput || !sidebar) return;
+
+    const categories = sidebar.querySelectorAll(".kb-category-content");
+    const links = sidebar.querySelectorAll(".kb-link");
+    const headers = sidebar.querySelectorAll(".kb-category-toggle");
+
+    function normalize(text) {
+        return (text || "").toLowerCase().trim();
+    }
+
+    function filterSidebar(query) {
+
+        query = normalize(query);
+
+        let hasAnyMatch = false;
+
+        categories.forEach((cat, index) => {
+
+            const items = cat.querySelectorAll(".kb-link");
+            let categoryHasMatch = false;
+
+            items.forEach(link => {
+
+                const text = normalize(link.textContent);
+
+                const match = text.includes(query);
+
+                link.style.display = match ? "" : "none";
+
+                if (match) {
+                    categoryHasMatch = true;
+                    hasAnyMatch = true;
+                }
+            });
+
+            // show/hide category based on matches
+            cat.style.display = categoryHasMatch || query === "" ? "" : "none";
+
+            // auto open matching category
+            if (categoryHasMatch && query !== "") {
+                cat.classList.add("open");
+            }
+        });
+
+        // hide category headers if no match
+        headers.forEach((header, i) => {
+            const cat = categories[i];
+            if (cat && cat.style.display === "none") {
+                header.style.display = "none";
+            } else {
+                header.style.display = "";
+            }
+        });
+
+        // optional: collapse everything if empty search
+        if (query === "") {
+            categories.forEach(cat => cat.style.display = "");
+            links.forEach(link => link.style.display = "");
+            headers.forEach(h => h.style.display = "");
+        }
+    }
+
+    // debounce for performance
+    let timer;
+
+    searchInput.addEventListener("input", function (e) {
+        clearTimeout(timer);
+        timer = setTimeout(() => {
+            filterSidebar(e.target.value);
+        }, 150);
+    });
+
+});
+</script>
 
 <script>
 document.addEventListener("DOMContentLoaded", function() {
@@ -332,5 +549,88 @@ function toggleSidebar() {
   overlay.classList.toggle("show");
   arrow.innerHTML = sidebar.classList.contains("show") ? "KB" : "KB";
 }
+</script>
+
+<style>
+  /* =====================================================
+   KB GOOGLE ADS BLOCK
+===================================================== */
+
+.kb-google-ad {
+    margin: 12px 0;
+    padding: 12px;
+
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 14px;
+
+    text-align: center;
+
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* hover effect */
+.kb-google-ad:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0,0,0,0.08);
+}
+
+/* AdSense container */
+.kb-google-ad ins.adsbygoogle {
+    display: block !important;
+    width: 100% !important;
+    min-height: 120px;
+}
+
+/* label */
+.kb-google-ad::before {
+    content: "Sponsored";
+    position: absolute;
+    margin-top: -8px;
+    right: 18px;
+
+    font-size: 10px;
+    color: #6b7280;
+    background: #f3f4f6;
+    padding: 3px 8px;
+    border-radius: 999px;
+}
+</style>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+    function initAds() {
+
+        const ads = document.querySelectorAll(".kb-google-ad ins.adsbygoogle");
+
+        if (!ads.length) return;
+
+        ads.forEach(ad => {
+
+            try {
+
+                // prevent double init (important in SPA / re-renders)
+                if (!ad.dataset.loaded) {
+
+                    (window.adsbygoogle = window.adsbygoogle || []).push({});
+
+                    ad.dataset.loaded = "true";
+                }
+
+            } catch (e) {
+                console.error("AdSense init error:", e);
+            }
+
+        });
+    }
+
+    initAds();
+
+    // OPTIONAL: re-run after SPA navigation or dynamic updates
+    document.addEventListener("spa:content-loaded", initAds);
+
+});
 </script>
 {% endblock %}

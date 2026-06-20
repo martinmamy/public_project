@@ -39,6 +39,19 @@
   <link rel="manifest" href="{% static 'pwa/manifest.json' %}">
   <meta id="theme-color" name="theme-color" content="#1877f2">
 
+
+<script>
+const PageLifecycle = {
+  mount() {},
+  unmount() {}
+};
+
+function setPageLifecycle(fn) {
+  if (typeof fn === "function") {
+    PageLifecycle.mount = fn;
+  }
+}
+</script>
 <script>
   function updateThemeColor(theme) {
     const metaTheme = document.getElementById('theme-color');
@@ -54,9 +67,58 @@
   updateThemeColor(currentTheme);
 </script>
 
+<script>
+(function () {
+
+    let theme = localStorage.getItem('theme');
+
+    if (!theme) {
+        theme = window.matchMedia('(prefers-color-scheme: dark)').matches
+            ? 'dark'
+            : 'light';
+    }
+
+    document.documentElement.setAttribute('data-theme', theme);
+
+})();
+</script>
 
   {% block extra_head %}{% endblock %}
+<script>
+(function () {
 
+  const KEY = "cookieConsent";
+
+  let show = true;
+
+  try {
+    const raw = localStorage.getItem(KEY);
+    const data = raw ? JSON.parse(raw) : null;
+
+    if (data?.accepted && data?.expiresAt) {
+      if (new Date(data.expiresAt) > new Date()) {
+        show = false;
+      }
+    }
+
+  } catch (e) {}
+
+  if (show) {
+    document.documentElement.classList.add("show-cookie");
+  }
+
+})();
+</script>
+
+<style>
+#cookie-consent {
+  display: none !important;
+}
+
+html.show-cookie #cookie-consent {
+  display: flex !important;
+}
+</style>
 <style>
 
 
@@ -138,8 +200,50 @@
         display: none; /* hide text, show only logo */
     }
 }
-
+.filter-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: #666;
+}
 </style>
+
+<!-- Global Page Loader -->
+<div id="page-loader" class="page-loader d-none">
+    <div class="spinner-border text-primary" role="status"></div>
+</div>
+
+<style>
+/* ======================================================
+   PAGE LOADER
+====================================================== */
+.page-loader {
+  position: fixed;
+  inset: 0;
+  background: rgba(255,255,255,.6);
+  backdrop-filter: blur(2px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+}
+
+[data-theme="dark"] .page-loader {
+  background: rgba(15,23,42,.75);
+}
+
+/* ======================================================
+   SCROLLBAR
+====================================================== */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--text-main), transparent 75%);
+  border-radius: 8px;
+}
+</style>
+
 
 </head>
 <body class="bg-gradient-to-b from-bg to-gray-200 dark:from-bg-dark dark:to-black text-text dark:text-text-dark min-h-screen flex flex-col">
@@ -147,149 +251,348 @@
 <div class="navbar navbar-glass sticky-top">
   <div class="container navbar-wrapper">
 
+    <!-- ========================= -->
     <!-- BRAND -->
+    <!-- ========================= -->
     {% if user.is_authenticated %}
-      <a class="navbar-brand text-decoration-none" href="{% url 'list_problems' %}" title="Home" data-bs-toggle="tooltip">
-         <!-- Logo -->
-          <!-- Logo -->
-          <img src="{% static 'logo/favicon.ico' %}" 
-              alt="Fancylearn Logo"
-              class="brand-logo">
+      <a class="navbar-brand text-decoration-none"
+          data-spa-link data-cache
+          href="{% url 'home' %}"
+          data-bs-toggle="tooltip"
+          data-bs-placement="bottom">
 
-          <!-- Fancy Text -->
-          <span class="fancylearn-text">
-              <span class="fancy-part">Fancy</span><span class="learn-part">learn</span>
-          </span>
+        <img src="{% static 'logo/favicon.ico' %}" class="brand-logo">
+
+        <span class="fancylearn-text">
+          <span class="fancy-part">Fancy</span><span class="learn-part">learn</span>
+        </span>
       </a>
     {% else %}
       <a class="navbar-brand brand-responsive text-decoration-none d-flex align-items-center"
-        href="{% url 'home' %}"
-        title="Home"
-        data-bs-toggle="tooltip">
+         href="{% url 'home' %}"
+         data-bs-placement="bottom"
+         data-spa-link data-cache>
 
-          <!-- Logo -->
-          <img src="{% static 'logo/favicon.ico' %}" 
-              alt="Fancylearn Logo"
-              class="brand-logo">
+        <img src="{% static 'logo/favicon.ico' %}" class="brand-logo">
 
-          <!-- Fancy Text -->
-          <span class="fancylearn-text">
-              <span class="fancy-part">Fancy</span><span class="learn-part">learn</span>
-          </span>
+        <span class="fancylearn-text">
+          <span class="fancy-part">Fancy</span><span class="learn-part">learn</span>
+        </span>
       </a>
     {% endif %}
 
-    <!-- NAV LINKS + ICONS -->
-    <div class="navbar-tab-row">
+    <!-- ========================= -->
+    <!-- NAV LINKS -->
+    <!-- ========================= -->
+<div class="navbar-tab-row">
+
+  {% if user.is_authenticated %}
+
+    <a data-onboard="problempage"
+       data-spa-link data-cache
+       class="nav-link nav-item {% if request.resolver_match.url_name == 'list_problems' %}active-nav{% endif %}"
+       href="{% url 'list_problems' %}"
+       data-bs-toggle="tooltip"
+       data-bs-placement="bottom">
+
+      <i class="fa-solid fa-house"></i>
+      <span class="nav-label">Home</span>
+    </a>
+
+    <a data-onboard="talenthub"
+       data-spa-link data-cache
+       class="nav-link nav-item {% if request.resolver_match.url_name == 'talenthub' %}active-nav{% endif %} ms-4"
+       href="{% url 'talenthub' %}"
+       data-bs-toggle="tooltip"
+       data-bs-placement="bottom">
+
+      <i class="fa-solid fa-rocket"></i>
+      <span class="nav-label">TalentHub</span>
+    </a>
+
+    <a data-onboard="eventhub-list"
+       data-spa-link data-cache
+       class="nav-link nav-item {% if request.resolver_match.url_name == 'eventhub_list' %}active-nav{% endif %} ms-4"
+       href="{% url 'eventhub_list' %}"
+       data-bs-toggle="tooltip"
+       data-bs-placement="bottom">
+
+      <i class="fa-solid fa-broadcast-tower"></i>
+      <span class="nav-label">EventHub</span>
+    </a>
+
+    <a data-onboard="expert-search"
+       data-spa-link data-cache
+       class="nav-link nav-item {% if request.resolver_match.url_name == 'expert_search' %}active-nav{% endif %} ms-4"
+       href="{% url 'expert_search' %}"
+       data-bs-toggle="tooltip"
+       data-bs-placement="bottom">
+      <i class="fa-solid fa-user-tie"></i>
+      <span class="nav-label">Experts</span>
+    </a>
+
+    <!-- ========================= -->
+    <!-- SETTINGS -->
+    <!-- ========================= -->
+    <div class="dropdown gap-2 ms-4">
+
+      <a data-onboard="options"
+        id="settingsMenu"
+        class="nav-link dropdown-toggle nav-item"
+        href="#"
+        data-bs-toggle="dropdown"
+        data-bs-placement="bottom">
+
+          <i class="fa-solid fa-gear"></i>
+          <span class="nav-label">Settings</span>
+      </a>
+
+      <div class="dropdown-menu dropdown-menu-end mt-5">
+
+        <a class="dropdown-item"
+           href="{% url 'slot_create' %}"
+           data-cache
+           data-bs-toggle="tooltip"
+           title="Create availability slots">
+
+          <i class="fa fa-calendar"></i> Create Slot
+        </a>
+
+        <button id="theme-toggle"
+                class="dropdown-item"
+                data-bs-toggle="tooltip"
+                title="Switch light/dark mode">
+
+          🌙 Theme
+        </button>
+        <button id="translateToggle" class="btn dropdown-item btn-sm">
+            🌐 Translate
+        </button>
+
+        <a class="dropdown-item"
+           href="{% url 'settings_page' %}"
+            data-spa-link data-cache
+           data-bs-toggle="tooltip"
+           title="Find all that you need to know about your account and the platform">
+
+          <i class="fa-solid fa-gear"></i> Settings
+        </a>
+
+          </div>
+        </div>
+
+      {% else %}
+
+        <a data-onboard="login"
+          data-spa-link data-cache
+          class="nav-icon ms-4 nav-item"
+          href="{% url 'login' %}"
+          data-bs-toggle="tooltip"
+          title="Login to your account">
+
+            <i class="fa-solid fa-right-to-bracket"></i>
+            <span class="nav-label">Login</span>
+        </a>
+
+        <a data-onboard="register"
+          data-spa-link data-cache
+          class="nav-icon ms-4 nav-item"
+          href="{% url 'register' %}"
+          data-bs-toggle="tooltip"
+          title="Create a new account">
+
+            <i class="fa-solid fa-user-plus"></i>
+            <span class="nav-label">Register</span>
+        </a>
+
+        <a data-onboard="faq"
+          data-spa-link data-cache
+          class="nav-icon ms-4 nav-item"
+          href="{% url 'faq' %}"
+          data-bs-toggle="tooltip"
+          title="Visit FAQ page">
+
+            <i class="fa-solid fa-circle-question"></i>
+            <span class="nav-label">FAQ</span>
+        </a>
+
+      {% endif %}
+
+    </div>
+
+    <div class="navbar-tab-row bottom-nav">
+      <!-- ========================= -->
+      <!-- PROFILE + STATUS -->
+      <!-- ========================= -->
       {% if user.is_authenticated %}
-        <!-- NAV LINKS -->
-        <a class="nav-link" href="{% url 'list_problems' %}" title="Home">
-          <i class="fa-solid fa-house"></i>
-        </a>
-        <a class="nav-link" href="{% url 'talenthub' %}" title="TalentHub">
-          <i class="fa-solid fa-heart"></i>
-        </a>
-        <a class="nav-link" href="{% url 'feeds' %}" title="Feeds">
-          <i class="fa-solid fa-rss"></i>
-        </a>
-        <a class="nav-link" href="{% url 'knowledge_base' %}" title="Knowledge Base">
-          <i class="fa-solid fa-clipboard-list"></i>
-        </a>
-
-        <!-- Notifications -->
-      <div class="dropdown">
-        <a class="nav-icon dropdown-toggle position-relative" href="#" data-bs-toggle="dropdown" title="Notifications">
-          <i class="fa-solid fa-bell"></i>
-          <span id="notifCount" class="badge bg-danger position-absolute top-0 start-100 translate-middle"></span>
-        </a>
-        <ul class="dropdown-menu dropdown-menu-end p-0" id="notificationList" style="width:320px;">
-
-          <!-- HEADER -->
-          <li class="d-flex justify-content-between align-items-center px-3 py-2 border-bottom">
-            <span class="fw-bold">Notifications</span>
-            <button id="markAllRead" class="btn btn-sm btn-outline-primary">
-              <span class="full-text">Mark all</span>
-              <span class="icon-only" style="display:none;">✅</span>
+        <!-- INTERNAL REFRESH BUTTON -->
+        <div class="nav-item refresh-item">
+            <button
+                class="btn nav-icon p-0"
+                onclick="hardRefreshPage()">
+                <i class="fa-solid fa-rotate"></i>
             </button>
-          </li>
 
-          <!-- BODY -->
-          <li id="notificationItems" style="max-height:300px; overflow-y:auto;">
-            <div class="text-center text-muted p-3">Loading...</div>
-          </li>
+            <span class="nav-label">Refresh</span>
+        </div>
 
-          <!-- FOOTER -->
-          <li class="border-top text-center">
-            <a href="/notifications-page/" class="dropdown-item text-primary fw-semibold">
-              See all notifications
-            </a>
-          </li>
+        <div class="d-flex align-items-center gap-2 ms-4">
 
-        </ul>
-      </div>
-      <div class="dropdown">
-        <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown"  title="Settings">
-        <i class="fa-solid fa-gear"></i>
-        </a>
-        <div class="dropdown-menu dropdown-menu-end">
-            <button id="theme-toggle" class="dropdown-item" data-bs-toggle="tooltip" title="Toggle theme">🌙 Theme</button>
-            <a class="dropdown-item" href="{% url 'ads_dashboard' %}"><i class="fa-solid fa-bullhorn me-2"></i> Ads</a>
-            <a class="dropdown-item" href="{% url 'event_list' %}" title="Live Events">
-              <i class="fa fa-video-camera"></i>Live Events
-            </a>
-            <a class="dropdown-item" href="{% url 'live_events' %}" title="Events List">
-              <i class="fa fa-broadcast-tower"></i>Events
-            </a>
-            {% if user.is_superuser %}
-              <a class="dropdown-item" href="{% url 'payment_report' %}"><i class="fa-solid fa-gauge-high me-2"></i> Analytics</a>
-              <a class="dropdown-item" href="{% url 'admin:index' %}"><i class="fas fa-user-circle" style="color: orange;"></i> Admin
+          <a data-onboard="profile" class="nav-avatar position-relative nav-item"
+            href="{% url 'profile' user.id %}"
+            data-bs-toggle="tooltip"
+            data-spa-link data-cache
+            title="View your profile">
+
+            {% if user.avatar and user.avatar.name %}
+              <img src="{{ user.avatar.url }}" class="avatar-img">
+            {% else %}
+              {% with first=user.username|slice:":1"|upper %}
+              <img src="data:image/svg+xml,...{{ first }}..." class="avatar-img">
+              {% endwith %}
             {% endif %}
-            <a class="dropdown-item" href="{% url 'terms' %}"><i class="fa-solid fa-file-contract me-2"></i> Terms</a>
-            <a class="dropdown-item" href="{% url 'privacy' %}" title="Privacy Policy">
-              <i class="fa-solid fa-shield-halved me-2"></i> Privacy Policy
-            </a>
-            <a class="dropdown-item" href="{% url 'logout' %}"><i class="fa-solid fa-right-from-bracket me-2"></i> Logout</a>
+
+            <span class="status-dot status-{{ user.profile.availability_status|default:'offline' }}"></span>
+            <span class="nav-label">Profile</span>
+          </a>
+        </div>
+
+            <!-- ========================= -->
+            <!-- NOTIFICATIONS -->
+            <!-- ========================= -->
+            <div data-onboard="notifications" class="dropdown gap-2 ms-4">
+              <a class="nav-icon dropdown-toggle position-relative nav-item"
+                href="#"
+                data-bs-toggle="dropdown"
+                data-bs-placement="bottom"
+                title="🔔 Notifications — Updates & alerts">
+
+                <i class="fa-solid fa-bell"></i>
+                <span id="notifCount" class="badge bg-danger text-black position-absolute top-0 start-100 translate-middle"></span>
+                <span class="nav-label">Notifications</span>
+              </a>
+
+              <ul class="dropdown-menu dropdown-menu-end mt-5 p-0" id="notificationList" style="width:320px;">
+
+                <li class="d-flex justify-content-between align-items-center px-3 py-2 border-bottom">
+                  <span class="fw-bold">Notifications</span>
+                  <button id="markAllRead"
+                          class="btn btn-sm btn-outline-primary"
+                          data-bs-toggle="tooltip"
+                          title="Mark all notifications as read">
+                    Mark all
+                  </button>
+                </li>
+
+                <li id="notificationItems" style="max-height:300px; overflow-y:auto;">
+                  <div class="text-center text-muted p-3">Loading...</div>
+                </li>
+
+                <li class="border-top text-center">
+                  <a href="/notifications-page/"
+                    class="dropdown-item text-primary fw-semibold"
+                    data-bs-toggle="tooltip"
+                    title="View all notifications">
+                    See all notifications
+                  </a>
+                </li>
+
+              </ul>
+            </div>
+
+      <!-- STATUS DROPDOWN -->
+      <div class="dropdown nav-item gap-2 ms-4">
+
+        <a class="nav-icon dropdown-toggle modern-status-btn d-flex flex-column align-items-center"
+          href="#"
+          data-bs-toggle="dropdown"
+          title="Update your availability">
+            <i class="fa-solid fa-bolt"></i>
+            <span class="nav-label">Status</span>
+        </a>
+        
+        
+        <div class="dropdown-menu dropdown-menu-end mt-5 p-3 shadow-lg modern-dropdown"
+            style="width:280px; border-radius:12px;">
+
+          <form method="post" data-spa-link data-cache
+                action="{% url 'update_availability' user.profile.pk %}">
+            {% csrf_token %}
+
+            <label class="small fw-bold text-muted">Status</label>
+            <select name="availability_status" class="form-select form-select-sm mb-3">
+              <option value="online">🟢 Available now</option>
+              <option value="later">🟡 Available later</option>
+              <option value="offline">🔴 Offline</option>
+            </select>
+
+            <label class="small fw-bold text-muted">Mode</label>
+            <select name="availability_mode" class="form-select form-select-sm mb-3">
+              <option value="not determined">Not determined</option>
+              <option value="remote">💻 Remote</option>
+              <option value="onsite">📍 Onsite</option>
+            </select>
+
+            <input type="hidden" name="country" id="countryField">
+
+            <label class="small fw-bold text-muted">Activity</label>
+            <select name="availability_reason" class="form-select form-select-sm mb-3">
+              <option value="">No reason</option>
+              <option value="fix_bug">🐞 Fixing bugs</option>
+              <option value="consultation">💬 Consultation</option>
+              <option value="session">🎯 Session</option>
+              <option value="other">⚙️ Other</option>
+            </select>
+
+            <button class="btn btn-primary btn-sm w-100">
+              Update status
+            </button>
+          </form>
+
         </div>
       </div>
-      {% else %}
-        <!-- Login/Register -->
-        <a class="nav-icon" href="{% url 'login' %}" data-bs-toggle="tooltip" title="Login">
-          <i class="fa-solid fa-right-to-bracket"></i>
-        </a>
-        <a class="nav-icon" href="{% url 'register' %}" data-bs-toggle="tooltip" title="Register">
-          <i class="fa-solid fa-user-plus"></i>
-        </a>
       {% endif %}
-      
     </div>
-    <!-- Profile -->
-    {% if user.is_authenticated %}
-    <a class="nav-avatar" href="{% url 'profile' user.id %}" title="Account">
-        {% if user.avatar and user.avatar.name %}
-            <img src="{{ user.avatar.url }}" class="avatar-img">
-        {% else %}
-            {% with first=user.username|slice:":1"|upper %}
-                <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40'%3E%3Crect width='40' height='40' fill='%23dee2e6'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='central' text-anchor='middle' font-family='Arial, sans-serif' font-size='20' fill='%23343a40'%3E{{ first }}%3C/text%3E%3C/svg%3E" class="avatar-img">
-            {% endwith %}
-        {% endif %}
-    </a>
-  {% endif %}
   </div>
 </div>
+{% if user.is_authenticated %}
+  <!-- Create Problem Mobile -->
+  <a href="{% url 'create_problem' %}"
+    data-spa-link
+    id="createProblemBtn"
+    class="mobile-bottom-menu d-lg-none">
+
+      <i class="fas fa-plus"></i>
+      <span>Post Now</span>
+
+  </a>
+  <!-- Create Problem DESKTOP -->
+  <a href="{% url 'create_problem' %}"
+    data-spa-link
+    id="createProblemDesktopBtn"
+    class="desktop-create-btn d-none d-lg-inline-flex">
+
+      <i class="fas fa-plus"></i>
+      <span>Post Now</span>
+
+  </a>
+{% endif %}
+
 <!-- =========================
 MAIN CONTENT
 ========================= -->
 
-<main class="mt-4">
+<main class="mt-4 translatable" id="app-content">
+</main>
   <div class="row justify-content-center g-4">
 
     <!-- MAIN CONTENT -->
     <div class="col-12 col-md-10 col-lg-7">
       {% if messages %}
-        <div class="container mt-3">
+        <div class="containerx mt-3">
 
           {% for message in messages %}
-            <div class="alert alert-{{ message.tags }} alert-dismissible fade show shadow-sm rounded-4 border-0 d-flex align-items-center justify-content-between"
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show rounded-4 border-0 d-flex align-items-center justify-content-between"
                 role="alert"
                 style="backdrop-filter: blur(6px);">
 
@@ -331,8 +634,38 @@ MAIN CONTENT
 
   </div>
 
-  {% block main_content %}{% endblock %}
-</main>
+
+{% if user.is_authenticated %}
+  <!-- FULLSCREEN VIDEO AD MODAL -->
+  <div id="videoAdModal" class="video-ad-modal">
+
+      <div class="video-ad-container">
+
+          <!-- Google video/interstitial ad slot -->
+          <ins class="adsbygoogle"
+              style="display:block; width:100%; height:100%;"
+              data-ad-client="ca-pub-XXXXXXXXXXXX"
+              data-ad-slot="VIDEO_AD_SLOT"
+              data-ad-format="fluid"
+              data-ad-layout-key="-fb+5w+4e-db+86">
+          </ins>
+
+          <!-- countdown -->
+          <div class="video-ad-countdown">
+              Ad ends in <span id="adTimer">10</span>s
+          </div>
+
+          <!-- SKIP BUTTON -->
+          <button id="skipAdBtn"
+              class="btn btn-light btn-sm video-skip-btn"
+              style="display:none;">
+              Skip
+          </button>
+
+      </div>
+
+  </div>
+{% endif %}
 
 <!-- =========================
 MOBILE SIDEBAR (OUTSIDE GRID)
@@ -350,88 +683,1451 @@ MOBILE SIDEBAR (OUTSIDE GRID)
   </div>
 </div>
 
-<!-- =========================
-FOOTER
-========================= -->
-<footer class="text-center py-3 mt-5 border-top">
-  &copy; {% now "Y" %} Fancylearn •
-  <a href="#" class="text-decoration-none me-2"><i class="fa-brands fa-facebook"></i></a>
-  <a href="#" class="text-decoration-none me-2"><i class="fa-brands fa-twitter"></i></a>
-  <a href="#" class="text-decoration-none me-2"><i class="fa-brands fa-linkedin"></i></a>
-  <a href="#" class="text-decoration-none m-2"><i class="fa-brands fa-github"></i></a>
-  <a class="text-decoration-none me-2" href="{% url 'terms' %}"><i class="fa-solid fa-file-contract"></i> Terms</a>
-  <a class="text-decoration-none me-2" href="{% url 'privacy' %}" title="Privacy Policy"><i class="fa-solid fa-shield-halved"></i> Privacy Policy</a>
-</footer>
+<div class="modal fade" id="linkWarningModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content rounded-4">
 
+      <div class="modal-header">
+        <h5 class="modal-title text-warning">⚠️ External Link Warning</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
 
-<div id="cookie-consent" class="consent-lock">
+      <div class="modal-body">
+        <p class="text-black">You are about to open an external link:</p>
+        <p class="text-break text-black" id="warn-url"></p>
+        <p class="text-danger small">
+          Be careful — this link is outside the platform. Make sure you trust the source before proceeding.
+        </p>
+      </div>
 
-  <div class="consent-card">
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-bs-dismiss="modal">
+          Cancel
+        </button>
+        <a id="confirmLink" class="btn btn-danger" target="_blank">
+          Proceed
+        </a>
+      </div>
 
+    </div>
+  </div>
+</div>
+
+<div id="cookie-consent" class="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center bg-dark bg-opacity-75 text-white" style="display: none; z-index: 9999;">
+  <div class="bg-white text-dark p-4 rounded shadow" style="max-width: 600px; width: 90%;">
+    
     <h5 class="fw-bold mb-3">Privacy, Cookies & Age Consent</h5>
-
+    
     <p class="small">
-      You must accept to continue using the platform.
+      We use cookies and similar technologies to ensure security, enable core functionality, and improve your experience.
     </p>
 
-    <div class="d-flex gap-2 mb-3">
-      <a href="{% url 'privacy' %}" class="btn btn-sm btn-outline-primary">
-        Privacy
-      </a>
-      <a href="{% url 'terms' %}" class="btn btn-sm btn-outline-secondary">
-        Terms
-      </a>
-    </div>
+    <ul class="small">
+      <li><strong>Essential Cookies:</strong> Required for login and platform operation.</li>
+      <li><strong>Analytics:</strong> Help us improve performance and usability.</li>
+      <li><strong>Security:</strong> Protects your account and data.</li>
+    </ul>
+
+    <p class="small mb-2"><strong>Age Confirmation:</strong></p>
 
     <div class="form-check small">
       <input class="form-check-input" type="checkbox" id="age-13-plus">
-      <label class="form-check-label">I am 13+</label>
+      <label class="form-check-label" for="age-13-plus">
+        I confirm that I am 13 years or older.
+      </label>
     </div>
 
     <div class="form-check small mt-2">
       <input class="form-check-input" type="checkbox" id="under-13">
-      <label class="form-check-label">Under 13 with supervision</label>
+      <label class="form-check-label" for="under-13">
+        I am under 13 and using this platform under the supervision of a parent, guardian, or tutor.
+      </label>
     </div>
 
     <div id="parent-confirmation" class="form-check small mt-2" style="display:none;">
       <input class="form-check-input" type="checkbox" id="parent-approved">
-      <label class="form-check-label">Parent approved</label>
+      <label class="form-check-label" for="parent-approved">
+        A parent/guardian has reviewed and agreed to the Privacy Policy.
+      </label>
     </div>
 
-    <button id="accept-cookies" class="btn btn-success btn-sm mt-3" disabled>
-      Accept & Continue
-    </button>
+    <p class="small mt-3">
+      Read our full 
+      <a href="{% url 'privacy' %}">Privacy Policy</a>.
+    </p>
+
+    <div class="text-end mt-3">
+      <button id="accept-cookies" class="btn btn-success btn-sm" disabled>
+        Accept & Continue
+      </button>
+      <button id="close-consent" class="btn btn-secondary btn-sm me-2">
+          Close
+        </button>
+    </div>
 
   </div>
-
 </div>
+
+<!-- =========================
+FOOTER
+========================= -->
+<footer class="text-center text-info py-3 mt-5">
+  {% if not user.is_authenticated %}
+    &copy; {% now "Y" %} Fancylearn •
+  <!-- <a href="#" class="text-decoration-none me-2"><i class="fa-brands fa-facebook"></i></a>
+    <a href="#" class="text-decoration-none me-2"><i class="fa-brands fa-twitter"></i></a>
+    <a href="#" class="text-decoration-none me-2"><i class="fa-brands fa-linkedin"></i></a>
+    <a href="#" class="text-decoration-none m-2"><i class="fa-brands fa-github"></i></a>
+  --><a class="text-decoration-none me-2" href="{% url 'terms' %}"><i class="fa-solid fa-file-contract"></i> Terms</a>
+    <a class="text-decoration-none me-2" href="{% url 'privacy' %}" title="Privacy Policy"><i class="fa-solid fa-shield-halved"></i> Privacy</a>
+  {% endif %}
+</footer>
+
+
+<style>
+/* ==========================
+   DESKTOP CREATE BUTTON (FIXED WIDTH)
+========================== */
+.nav-item{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    text-decoration:none;
+    color:inherit;
+
+    min-width:60px;
+    padding:6px 10px;
+}
+
+/* icon */
+.nav-item i{
+    font-size:18px;
+    margin-bottom:4px;
+}
+
+/* label */
+.nav-label{
+    font-size:11px;
+    color:#6b7280;
+    line-height:1;
+    white-space:nowrap;
+}
+
+/* hover */
+.nav-item:hover .nav-label,
+.nav-item:hover i{
+    color:#2563eb;
+}
+
+/* =========================
+   TABLET / SMALL LAPTOP
+========================= */
+@media (max-width: 992px){
+
+    /* 🔥 reduce spacing between nav items */
+    .navbar-nav{
+        gap: 4px !important;
+        justify-content: center;
+    }
+
+    .nav-item{
+        min-width: 44px;
+        padding: 3px 4px;
+        margin: 0;
+    }
+
+    .nav-item i{
+        font-size: 15px;
+        margin-bottom: 2px;
+    }
+
+    .nav-label{
+        font-size: 9px;
+        line-height: 1;
+    }
+
+    /* 🔥 reduce navbar padding if Bootstrap is adding space */
+    .navbar{
+        padding-left: 8px;
+        padding-right: 8px;
+    }
+}
+
+/* =========================
+   SMALL MOBILE
+========================= */
+@media (max-width: 476px){
+
+    /* 🔥 reduce spacing between items in navbar */
+    .navbar-nav{
+        gap: 2px !important;
+    }
+
+    .nav-item{
+        min-width: 30px;
+        padding: 2px 2px;
+        margin: 0;
+    }
+
+    .nav-item i{
+        font-size: 14px;
+        margin-bottom: 2px;
+    }
+
+    .nav-label{
+        font-size: 8px;
+        line-height: 1;
+    }
+}
+/* ==========================
+   DESKTOP FLOATING BUTTON
+========================== */
+
+.desktop-create-btn{
+    display:none;
+}
+
+@media (min-width:992px){
+
+    .desktop-create-btn{
+        display:inline-flex !important;
+
+        position:fixed;
+        bottom:25px;
+        right:25px;
+
+        z-index:9999;
+
+        width:fit-content;
+        flex:0 0 auto;
+
+        align-items:center;
+        justify-content:center;
+        gap:10px;
+
+        padding:12px 18px;
+
+        border-radius:999px;
+
+        background:linear-gradient(135deg,#2563eb,#1d4ed8);
+
+        color:#fff !important;
+        text-decoration:none;
+
+        font-size:15px;
+        font-weight:600;
+
+        box-shadow:0 12px 30px rgba(37,99,235,.35);
+
+        transition:transform .2s ease, box-shadow .2s ease;
+    }
+
+    .desktop-create-btn:hover{
+        transform:translateY(-3px);
+        box-shadow:0 16px 40px rgba(37,99,235,.45);
+    }
+
+    .desktop-create-btn i{
+        font-size:16px;
+    }
+}
+/* ==========================
+   FLOATING POST BUTTON
+========================== */
+
+.mobile-bottom-menu{
+    display:none;
+}
+
+@media (max-width:991.98px){
+
+    .mobile-bottom-menu{
+        position:fixed;
+
+        bottom:20px;
+        right:20px;
+
+        width:auto;
+        min-width:56px;
+        height:56px;
+
+        padding:0 18px;
+
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        gap:8px;
+
+        border-radius:999px;
+
+        background:linear-gradient(
+            135deg,
+            #2563eb,
+            #1d4ed8
+        );
+
+        color:#fff !important;
+        text-decoration:none;
+
+        font-size:14px;
+        font-weight:600;
+
+        box-shadow:
+            0 10px 25px rgba(37,99,235,.35);
+
+        z-index:99999;
+
+        transition:
+            transform .2s ease,
+            box-shadow .2s ease;
+    }
+
+    .mobile-bottom-menu:hover,
+    .mobile-bottom-menu:active{
+        transform:translateY(-2px);
+        box-shadow:
+            0 14px 30px rgba(37,99,235,.45);
+    }
+
+    .mobile-bottom-menu i{
+        font-size:18px;
+    }
+
+    /* Small phones */
+    @media (max-width:480px){
+
+        .mobile-bottom-menu{
+            width:56px;
+            padding:0;
+            border-radius:50%;
+        }
+
+        .mobile-bottom-menu span{
+            display:none;
+        }
+    }
+}
+</style>
+<script>
+(function () {
+
+    const MOBILE_BREAKPOINT = 992;
+
+    function ensureBottomButton() {
+
+        const btn = document.getElementById("createProblemBtn");
+
+        if (!btn) return;
+
+        // Move button directly under body if needed
+        if (btn.parentElement !== document.body) {
+            document.body.appendChild(btn);
+        }
+
+        // Show only on mobile/tablet
+        if (window.innerWidth < MOBILE_BREAKPOINT) {
+            btn.style.display = "flex";
+        } else {
+            btn.style.display = "none";
+        }
+    }
+
+    // Initial load
+    ensureBottomButton();
+
+    // Window resize
+    window.addEventListener("resize", ensureBottomButton);
+
+    // SPA navigation support
+    window.addEventListener("spa:render", () => {
+        setTimeout(ensureBottomButton, 100);
+    });
+
+    // DOM changes support
+    const observer = new MutationObserver(() => {
+        ensureBottomButton();
+    });
+
+    observer.observe(document.body, {
+        childList: true,
+        subtree: true
+    });
+
+})();
+
+function hardRefreshPage() {
+
+    const btn = event?.target;
+
+    if (btn) {
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+        btn.disabled = true;
+    }
+
+    const url = new URL(window.location.href);
+    url.searchParams.set("_r", Date.now());
+
+    window.location.href = url.toString();
+}
+</script>
+
+<script>
+const toggleBtn = document.getElementById("translateToggle");
+
+let isTranslated = false;
+
+/* cache original text per element */
+const originalCache = new WeakMap();
+
+/* cache translations per language */
+const translatedCache = new Map();
+
+/* =========================
+   GET USER LANGUAGE (AUTO)
+========================= */
+function getBrowserLang() {
+    return (navigator.language || "en").split("-")[0];
+}
+
+/* =========================
+   GET ONLY TEXT ELEMENTS INSIDE MAIN
+========================= */
+function getTextElements(root) {
+
+    const elements = [];
+
+    root.querySelectorAll("*").forEach(el => {
+
+        const tag = el.tagName;
+
+        // ignore non-text elements
+        if (["SCRIPT", "STYLE", "INPUT", "TEXTAREA", "BUTTON", "NOSCRIPT"].includes(tag)) {
+            return;
+        }
+
+        // must contain direct text only
+        const hasText = el.childNodes.length === 1 &&
+                        el.childNodes[0].nodeType === 3 &&
+                        el.textContent.trim().length > 0;
+
+        if (hasText) {
+            elements.push(el);
+        }
+    });
+
+    return elements;
+}
+
+/* =========================
+   TRANSLATION API CALL
+========================= */
+async function translateText(text, lang) {
+
+    const res = await fetch("{% url 'translate_text' %}", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": "{{ csrf_token }}"
+        },
+        body: JSON.stringify({
+            text: text,
+            language: lang
+        })
+    });
+
+    const data = await res.json();
+    return data.translated;
+}
+
+/* =========================
+   MAIN TRANSLATION TOGGLE
+========================= */
+toggleBtn.addEventListener("click", async () => {
+
+    const main = document.getElementById("app-content");
+    const lang = getBrowserLang();
+
+    const elements = getTextElements(main);
+
+    toggleBtn.disabled = true;
+
+    /* =========================
+       TRANSLATE
+    ========================= */
+    if (!isTranslated) {
+
+        await Promise.all(elements.map(async (el) => {
+
+            // save original once
+            if (!originalCache.has(el)) {
+                originalCache.set(el, el.textContent);
+            }
+
+            const original = originalCache.get(el);
+
+            // cache per language + text
+            const cacheKey = `${lang}:${original}`;
+
+            if (!translatedCache.has(cacheKey)) {
+                const translated = await translateText(original, lang);
+                translatedCache.set(cacheKey, translated);
+            }
+
+            el.textContent = translatedCache.get(cacheKey);
+        }));
+
+        toggleBtn.innerText = "↩ Original";
+        isTranslated = true;
+
+    }
+
+    /* =========================
+       RESTORE ORIGINAL
+    ========================= */
+    else {
+
+        elements.forEach(el => {
+            const original = originalCache.get(el);
+            if (original) el.textContent = original;
+        });
+
+        toggleBtn.innerText = "🌐 Translate";
+        isTranslated = false;
+    }
+
+    toggleBtn.disabled = false;
+});
+
+
+/* =========================
+   AUTO TRANSLATE ON LOAD (OPTIONAL)
+========================= */
+document.addEventListener("DOMContentLoaded", () => {
+
+    const lang = getBrowserLang();
+
+    if (lang !== "en") {
+        toggleBtn.click(); // auto translate page
+    }
+});
+</script>
+
+<script>
+ (function () {
+
+    const STORAGE_KEY = "active_nav_item";
+
+    function clearActiveNav() {
+
+        document
+            .querySelectorAll(".navbar-tab-row .nav-item")
+            .forEach(item => {
+                item.classList.remove("active-nav");
+            });
+
+    }
+
+    function setActiveNav(element) {
+
+        if (!element) return;
+
+        clearActiveNav();
+
+        element.classList.add("active-nav");
+
+        const key =
+            element.dataset.onboard ||
+            element.id ||
+            element.getAttribute("href") ||
+            "";
+
+        localStorage.setItem(
+            STORAGE_KEY,
+            key
+        );
+
+    }
+
+    function restoreActiveNav() {
+
+        const saved =
+            localStorage.getItem(STORAGE_KEY);
+
+        if (!saved) return;
+
+        const items =
+            document.querySelectorAll(
+                ".navbar-tab-row .nav-item"
+            );
+
+        items.forEach(item => {
+
+            const key =
+                item.dataset.onboard ||
+                item.id ||
+                item.getAttribute("href") ||
+                "";
+
+            if (key === saved) {
+                item.classList.add("active-nav");
+            }
+
+        });
+
+    }
+
+    document.addEventListener(
+        "click",
+        function (e) {
+
+            const navItem =
+                e.target.closest(
+                    ".navbar-tab-row .nav-item"
+                );
+
+            if (!navItem) return;
+
+            setActiveNav(navItem);
+
+        }
+    );
+
+    document.addEventListener(
+        "DOMContentLoaded",
+        restoreActiveNav
+    );
+
+    window.addEventListener(
+        "spa:render",
+        restoreActiveNav
+    );
+
+})();
+</script>
+
+<style>
+  .active-nav{
+    position:relative;
+    color:#2563eb !important;
+}
+
+.active-nav i{
+    color:#2563eb !important;
+}
+
+.active-nav::before{
+    content:"";
+    position:absolute;
+    left:50%;
+    bottom:-6px;
+    transform:translateX(-50%);
+    width:50px;
+    height:4px;
+    border-radius:999px;
+    background:#2563eb;
+}
+</style>
+
+<script>
+
+/* =====================================================
+   VIDEO INTERSTITIAL AD SYSTEM (SAFE + AD CHECK)
+===================================================== */
+
+const VIDEO_AD_DURATION = 10;
+const SKIP_AFTER = 5;
+const COOLDOWN = 3 * 60 * 1000;
+
+const modal = document.getElementById("videoAdModal");
+const timerEl = document.getElementById("adTimer");
+const skipBtn = document.getElementById("skipAdBtn");
+
+const SESSION_KEY = "video_ad_shown";
+const LAST_TIME_KEY = "video_ad_last_time";
+
+let adRunning = false;
+let countdownInterval = null;
+
+/* =====================================================
+   CHECK IF AD CAN SHOW
+===================================================== */
+
+function canShowAd() {
+
+    const sessionShown = sessionStorage.getItem(SESSION_KEY);
+    const lastTime = localStorage.getItem(LAST_TIME_KEY);
+
+    const now = Date.now();
+
+    if (sessionShown) return false;
+
+    if (lastTime && (now - parseInt(lastTime)) < COOLDOWN) {
+        return false;
+    }
+
+    return true;
+}
+
+/* =====================================================
+   CHECK IF AD ACTUALLY LOADED
+===================================================== */
+
+function adExists() {
+
+    const adContainer = document.querySelector(".video-ad-container ins.adsbygoogle");
+
+    if (!adContainer) return false;
+
+    // AdSense usually injects iframe when filled
+    const iframe = adContainer.querySelector("iframe");
+
+    return !!iframe;
+}
+
+/* =====================================================
+   SHOW AD
+===================================================== */
+
+function showVideoAd() {
+
+    if (adRunning) return;
+    if (!canShowAd()) return;
+
+    adRunning = true;
+
+    sessionStorage.setItem(SESSION_KEY, "1");
+    localStorage.setItem(LAST_TIME_KEY, Date.now());
+
+    modal.classList.add("active");
+
+    let remaining = VIDEO_AD_DURATION;
+    let skipAvailable = false;
+
+    timerEl.textContent = remaining;
+
+    skipBtn.style.display = "none";
+    skipBtn.disabled = true;
+
+    try {
+        (adsbygoogle = window.adsbygoogle || []).push({});
+    } catch (err) {
+        console.error(err);
+    }
+
+    /* =====================================================
+       VERIFY AD RENDER (IMPORTANT)
+    ===================================================== */
+
+    setTimeout(() => {
+
+        if (!adExists()) {
+            // ❌ No ad → close modal immediately
+            closeVideoAd();
+            return;
+        }
+
+    }, 1200);
+
+    /* =====================================================
+       COUNTDOWN
+    ===================================================== */
+
+    countdownInterval = setInterval(() => {
+
+        remaining--;
+        timerEl.textContent = remaining;
+
+        if (!skipAvailable && VIDEO_AD_DURATION - remaining >= SKIP_AFTER) {
+            skipAvailable = true;
+            skipBtn.style.display = "block";
+            skipBtn.disabled = false;
+        }
+
+        if (remaining <= 0) {
+            closeVideoAd();
+        }
+
+    }, 1000);
+}
+
+/* =====================================================
+   CLOSE AD
+===================================================== */
+
+function closeVideoAd() {
+
+    clearInterval(countdownInterval);
+
+    modal.classList.remove("active");
+
+    adRunning = false;
+}
+
+/* =====================================================
+   USER TRIGGERS ONLY
+===================================================== */
+
+let userInteractionReady = false;
+
+function enableAdTriggering() {
+
+    if (userInteractionReady) return;
+    userInteractionReady = true;
+
+    document.addEventListener("click", handleUserAction);
+    document.addEventListener("scroll", handleUserAction);
+}
+
+function handleUserAction() {
+
+    setTimeout(() => {
+        showVideoAd();
+    }, 1500);
+}
+
+/* =====================================================
+   SKIP BUTTON
+===================================================== */
+
+skipBtn.addEventListener("click", closeVideoAd);
+
+/* =====================================================
+   INIT
+===================================================== */
+
+enableAdTriggering();
+
+</script>
+
+
+<style>
+/* =====================================================
+   VIDEO AD MODAL SYSTEM (OPTIMIZED)
+===================================================== */
+
+.video-ad-modal {
+
+    position: fixed;
+    inset: 0;
+
+    background: rgba(0,0,0,0.92);
+
+    z-index: 999999;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    opacity: 0;
+    visibility: hidden;
+
+    transition: all 0.3s ease;
+}
+
+.video-ad-modal.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* =====================================================
+   CONTAINER
+===================================================== */
+
+.video-ad-container {
+
+    position: relative;
+
+    width: min(900px, 95%);
+    aspect-ratio: 16 / 9;
+
+    background: #000;
+
+    border-radius: 18px;
+
+    overflow: hidden;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+}
+
+/* =====================================================
+   ADSENSE SLOT
+===================================================== */
+
+.video-ad-container ins.adsbygoogle {
+
+    width: 100% !important;
+    height: 100% !important;
+
+    display: block !important;
+}
+
+/* =====================================================
+   COUNTDOWN
+===================================================== */
+
+.video-ad-countdown {
+
+    position: absolute;
+    top: 12px;
+    right: 12px;
+
+    z-index: 20;
+
+    background: rgba(0,0,0,0.7);
+    color: #fff;
+
+    padding: 6px 12px;
+
+    border-radius: 999px;
+
+    font-size: 13px;
+    font-weight: 600;
+}
+
+/* =====================================================
+   SKIP BUTTON
+===================================================== */
+
+.video-skip-btn {
+
+    position: absolute;
+    bottom: 12px;
+    right: 12px;
+
+    z-index: 30;
+
+    border-radius: 999px;
+    font-weight: 600;
+
+    padding: 6px 14px;
+}
+
+/* =====================================================
+   MOBILE OPTIMIZATION
+===================================================== */
+
+@media (max-width: 768px) {
+
+    .video-ad-container {
+
+        width: 95%;
+        aspect-ratio: 16 / 9;
+
+        border-radius: 14px;
+    }
+
+    .video-ad-countdown {
+        font-size: 12px;
+        padding: 5px 10px;
+    }
+
+    .video-skip-btn {
+        padding: 5px 12px;
+        font-size: 13px;
+    }
+}
+
+@media (max-width: 480px) {
+
+    .video-ad-container {
+        width: 100%;
+        border-radius: 0;
+    }
+}
+</style>
+
+<script>
+class HyperSPA {
+
+    constructor() {
+
+        // IMPORTANT: must be a SINGLE #app-content in DOM
+        this.content = document.getElementById("app-content");
+
+        this.currentUrl = location.pathname + location.search;
+
+        this.cache = new Map();
+
+        this.init();
+    }
+
+    init() {
+
+        history.replaceState(
+            { url: this.currentUrl },
+            "",
+            this.currentUrl
+        );
+
+        document.addEventListener("click", (e) => this.handleClick(e));
+
+        window.addEventListener("popstate", (e) => {
+            if (e.state?.url) this.load(e.state.url, false);
+        });
+    }
+
+    handleClick(e) {
+
+        const link = e.target.closest("a[data-spa-link]");
+        if (!link) return;
+
+        const url = link.getAttribute("href");
+
+        if (
+            !url ||
+            url.startsWith("http") ||
+            url.startsWith("#") ||
+            link.target === "_blank"
+        ) return;
+
+        e.preventDefault();
+        this.load(url, true);
+    }
+
+    async load(url, push = true) {
+
+        if (url === this.currentUrl) return;
+
+        document.body.classList.add("spa-loading");
+
+        try {
+
+            // -------------------------
+            // CACHE HIT
+            // -------------------------
+            if (this.cache.has(url)) {
+                this.render(this.cache.get(url), url, push);
+                return;
+            }
+
+            // -------------------------
+            // FETCH FRAGMENT
+            // -------------------------
+            const res = await fetch(url, {
+                credentials: "same-origin",
+                headers: {
+                    "X-Requested-With": "spa"
+                }
+            });
+
+            if (!res.ok) {
+                location.href = url;
+                return;
+            }
+
+            const html = await res.text();
+
+            // cache raw fragment
+            this.cache.set(url, html);
+
+            this.render(html, url, push);
+
+        } catch (err) {
+            console.error(err);
+            location.href = url;
+        } finally {
+            document.body.classList.remove("spa-loading");
+        }
+    }
+
+    render(html, url, push) {
+
+    const doc = new DOMParser().parseFromString(html, "text/html");
+
+    // Try to get SPA fragment first
+    let nextContent = doc.querySelector("#app-content");
+
+    // FALLBACK: if backend returned ONLY fragment HTML (no wrapper)
+    if (!nextContent) {
+        nextContent = doc.body;
+    }
+
+    if (!nextContent || !nextContent.innerHTML.trim()) {
+        console.warn("Empty SPA response → forcing full reload");
+        location.href = url;
+        return;
+    }
+
+    // ALWAYS replace safely
+    this.content.innerHTML = nextContent.innerHTML;
+
+    if (push) {
+        history.pushState({ url }, "", url);
+    }
+
+    this.currentUrl = url;
+
+    window.scrollTo({ top: 0, behavior: "auto" });
+}
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+    new HyperSPA();
+});
+</script>
+
+
+<style>
+  #app-content {
+    content-visibility: auto;
+    contain-intrinsic-size: 1200px;
+}
+
+::view-transition-old(root),
+::view-transition-new(root) {
+    animation-duration: .15s;
+}
+
+body::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 3px;
+    z-index: 999999;
+    opacity: 0;
+    background: linear-gradient(
+        90deg,
+        #3b82f6,
+        #8b5cf6,
+        #06b6d4
+    );
+    transition: opacity .2s;
+}
+
+body.spa-loading::before {
+    opacity: 1;
+    animation: spa-progress 1s linear infinite;
+}
+
+@keyframes spa-progress {
+    from {
+        transform: translateX(-100%);
+    }
+    to {
+        transform: translateX(100%);
+    }
+}
+</style>
+
+
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+
+  // ❌ already completed
+  if (localStorage.getItem("onboarding_done")) return;
+
+  // =========================
+  // STEPS (now aligned with REAL UI tooltips + fallback selectors)
+  // =========================
+  const steps = [
+    {
+      selector: "[data-onboard='problempage']",
+      text: "🏠 Home — Manage your problems and dashboard."
+    },
+    {
+      selector: "[data-onboard='talenthub']",
+      text: "🚀 TalentHub — Discover talent and opportunities."
+    },
+    {
+      selector: "[data-onboard='eventhub-list']",
+      text: "📅 EventHub — Create and join events in your calendar system."
+    },
+    {
+      selector: "[data-onboard='expert-search']",
+      text: "🔍 Find Experts — Get instant help from professionals."
+    },
+    {
+      selector: "[data-bs-toggle='dropdown'][data-onboard='options'], .dropdown a[data-bs-toggle='dropdown']",
+      text: "⚙️ Options — Settings, slots, theme, and system tools."
+    },
+    {
+      selector: "[data-onboard='notifications']",
+      text: "🔔 Notifications — Stay updated in real time."
+    },
+    {
+      selector: "[data-onboard='profile']",
+      text: "👤 Profile — View and manage your account."
+    }
+  ];
+
+  let current = 0;
+
+  const popup = document.getElementById("onboardPopup");
+  const text = document.getElementById("onboardText");
+  const nextBtn = document.getElementById("nextOnboard");
+  const skipBtn = document.getElementById("skipOnboard");
+
+  // =========================
+  // CORE STEP HANDLER
+  // =========================
+  function showStep(index) {
+    const step = steps[index];
+    const el = document.querySelector(step.selector);
+
+    // if element not found → skip safely
+    if (!el) {
+      nextStep();
+      return;
+    }
+
+    // remove previous highlight
+    document.querySelectorAll(".onboard-highlight")
+      .forEach(e => e.classList.remove("onboard-highlight"));
+
+    // highlight current element
+    el.classList.add("onboard-highlight");
+
+    // ensure visibility
+    el.scrollIntoView({
+      behavior: "smooth",
+      block: "center"
+    });
+
+    // =========================
+    // POSITION POPUP
+    // =========================
+    const rect = el.getBoundingClientRect();
+
+    let top = rect.bottom + 10;
+    let left = rect.left;
+
+    const popupWidth = 260;
+    const popupHeight = 120;
+
+    // prevent right overflow
+    if (left + popupWidth > window.innerWidth) {
+      left = window.innerWidth - popupWidth - 10;
+    }
+
+    // prevent bottom overflow
+    if (top + popupHeight > window.innerHeight) {
+      top = rect.top - popupHeight - 10;
+    }
+
+    popup.style.top = `${top + window.scrollY}px`;
+    popup.style.left = `${left + window.scrollX}px`;
+
+    // =========================
+    // TOOLTIP SYNC (Bootstrap-aware)
+    // =========================
+    if (el.hasAttribute("title")) {
+      text.innerText = el.getAttribute("title");
+    } else {
+      text.innerText = step.text;
+    }
+
+    popup.style.display = "block";
+  }
+
+  function nextStep() {
+    current++;
+    if (current >= steps.length) {
+      finishOnboarding();
+    } else {
+      showStep(current);
+    }
+  }
+
+  function finishOnboarding() {
+    popup.style.display = "none";
+
+    document.querySelectorAll(".onboard-highlight")
+      .forEach(e => e.classList.remove("onboard-highlight"));
+
+    localStorage.setItem("onboarding_done", "true");
+  }
+
+  // =========================
+  // EVENTS
+  // =========================
+  nextBtn.addEventListener("click", nextStep);
+  skipBtn.addEventListener("click", finishOnboarding);
+
+  // =========================
+  // START
+  // =========================
+  showStep(current);
+
+});
+</script>
+
+<style>
+.onboard-popup{
+  position: fixed;
+  z-index: 9999;
+  display: none;
+}
+
+.onboard-content{
+  background: #111;
+  color: #fff;
+  padding: 12px 14px;
+  border-radius: 10px;
+  width: 240px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+  font-size: 13px;
+}
+
+.onboard-actions{
+  display: flex;
+  justify-content: space-between;
+  margin-top: 10px;
+}
+
+.onboard-highlight{
+  position: relative;
+  z-index: 10000;
+  box-shadow: 0 0 0 3px #3b82f6;
+  border-radius: 8px;
+}
+</style>
+
+<div id="onboardPopup" class="onboard-popup">
+  <div class="onboard-content">
+    <p id="onboardText"></p>
+
+    <div class="onboard-actions">
+      <button id="skipOnboard" class="btn btn-sm btn-light">Skip</button>
+      <button id="nextOnboard" class="btn btn-sm btn-primary">Next</button>
+    </div>
+  </div>
+</div>
+<!-- ========================= -->
+<!-- LOCATION LOGIC -->
+<!-- ========================= -->
+
+
+<script>
+
+let countryDetected = null;
+
+const modeSelect =
+    document.getElementById("modeSelect");
+
+const countryField =
+    document.getElementById("countryField");
+
+
+// =========================================================
+// MODE CHANGE
+// =========================================================
+modeSelect?.addEventListener(
+    "change",
+    async function () {
+
+        if (!countryField) {
+            return;
+        }
+
+        if (this.value === "onsite") {
+
+            const confirmed =
+                await requestLocation();
+
+            if (!confirmed) {
+
+                alert(
+                    "📍 Please enable location to use onsite mode"
+                );
+
+                this.value = "remote";
+
+                return;
+            }
+
+            countryField.value =
+                countryDetected || "";
+
+        } else {
+
+            countryField.value = "";
+        }
+    }
+);
+
+
+// =========================================================
+// GET LOCATION
+// =========================================================
+function requestLocation() {
+
+    return new Promise((resolve) => {
+
+        if (!navigator.geolocation) {
+
+            resolve(false);
+
+            return;
+        }
+
+        navigator.geolocation.getCurrentPosition(
+
+            async (pos) => {
+
+                try {
+
+                    const res = await fetch(
+                        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${pos.coords.latitude}&lon=${pos.coords.longitude}`
+                    );
+
+                    const data =
+                        await res.json();
+
+                    countryDetected =
+                        data.address?.country || "";
+
+                    resolve(true);
+
+                } catch (e) {
+
+                    console.error(e);
+
+                    resolve(false);
+                }
+
+            },
+
+            () => resolve(false)
+        );
+    });
+}
+
+</script>
 
 <script>
 document.addEventListener("DOMContentLoaded", function () {
 
-  const box = document.getElementById("cookie-consent");
-  const acceptBtn = document.getElementById("accept-cookies");
+  const KEY = "cookieConsent";
+  const EXPIRY_DAYS = 30;
 
+  const box = document.getElementById("cookie-consent");
+  if (!box) return;
+
+  const btn = document.getElementById("accept-cookies");
   const age13 = document.getElementById("age-13-plus");
   const under13 = document.getElementById("under-13");
   const parent = document.getElementById("parent-approved");
   const parentSection = document.getElementById("parent-confirmation");
 
-  // ------------------------
-  // CHECK IF ALREADY ACCEPTED
-  // ------------------------
-  const saved = localStorage.getItem("cookieConsent");
+  function save(data) {
+    const expiry = new Date();
+    expiry.setDate(expiry.getDate() + EXPIRY_DAYS);
 
-  if (saved) {
-    box.style.display = "none";
-    document.body.classList.remove("locked");
-    return;
+    localStorage.setItem(KEY, JSON.stringify({
+      ...data,
+      expiresAt: expiry.toISOString()
+    }));
   }
 
-  // LOCK PAGE IMMEDIATELY
-  document.body.classList.add("locked");
-
-  function updateState() {
+  function update() {
 
     if (age13.checked) {
       under13.checked = false;
@@ -446,42 +2142,70 @@ document.addEventListener("DOMContentLoaded", function () {
       parentSection.style.display = "none";
     }
 
-    acceptBtn.disabled = !(age13.checked || (under13.checked && parent.checked));
+    btn.disabled = !(age13.checked || (under13.checked && parent.checked));
   }
 
-  age13.addEventListener("change", updateState);
-  under13.addEventListener("change", updateState);
-  parent.addEventListener("change", updateState);
+  age13.addEventListener("change", update);
+  under13.addEventListener("change", update);
+  parent.addEventListener("change", update);
 
-  updateState();
+  update();
 
-  // ------------------------
-  // ACCEPT = UNLOCK SITE
-  // ------------------------
-  acceptBtn.addEventListener("click", function () {
+  btn.addEventListener("click", function () {
 
-    localStorage.setItem("cookieConsent", JSON.stringify({
+    save({
       accepted: true,
-      time: new Date().toISOString()
-    }));
+      timestamp: Date.now(),
+      ageGroup: age13.checked ? "13+" : "under13",
+      parentApproved: under13.checked ? parent.checked : false
+    });
 
-    // unlock everything
-    document.body.classList.remove("locked");
-    box.style.display = "none";
+    document.documentElement.classList.remove("show-cookie");
+    box.remove();
   });
 
 });
 </script>
 
+<script>
+  function showLinkWarning(url) {
+  document.getElementById("warn-url").innerText = url;
+  document.getElementById("confirmLink").href = url;
+
+  const modal = new bootstrap.Modal(
+    document.getElementById("linkWarningModal")
+  );
+
+  modal.show();
+}
+
+function initSafeLinks() {
+  document.querySelectorAll(".safe-link").forEach(link => {
+    link.addEventListener("click", function (e) {
+      e.preventDefault();
+      showLinkWarning(this.href);
+    });
+  });
+}
+
+document.addEventListener("DOMContentLoaded", initSafeLinks);
+</script>
 
 <!-- =========================
 SCRIPTS
 ========================= -->
+<script>
+    window.VAPID_PUBLIC_KEY =
+        "BIIbm2MOSy6gMArEyDzrSsc_4IyyytRMpbV_QLBz85g0AASc-KOcorIf6wbDCY3j-ZI2GbsdrXujlr2_3u1inAU";
+</script>
+
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script src="{% static 'js/main.js' %}"></script>
 <script src="{% static 'js/theme.js' %}"></script>
+<script src="{% static 'js/pushnotifications.js' %}"></script>
 <script src="{% static 'js/notification.js' %}"></script>
+
 <script src="{% static 'js/tips.js' %}"></script>
 <script>
   function updateNavbarHeight() {
@@ -521,27 +2245,15 @@ SCRIPTS
 </script>
 
 <style>
-
-.cookie-box {
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    max-width: 380px;
-    width: 90%;
-    background: #fff;
-    color: #111;
-    padding: 16px;
-    border-radius: 12px;
-    z-index: 9999;
+.safe-link {
+  color: #0d6efd;
+  text-decoration: underline;
 }
 
-@media (prefers-color-scheme: dark) {
-    .cookie-box {
-        background: #111827;
-        color: #fff;
-    }
+.safe-link::after {
+  content: " 🔗";
+  font-size: 0.8em;
 }
-
 
 /* ===== Notification Dropdown ===== */
 #notificationList {
@@ -601,28 +2313,111 @@ SCRIPTS
     display: inline;
   }
 }
-</style>
 
-<script>
-// Dynamically toggle icon-only mode on small screens
-function updateIcons() {
-  const width = window.innerWidth;
 
-  const markAllBtn = document.getElementById('markAllRead');
-  if (markAllBtn) {
-    if (width <= 576) {
-      markAllBtn.querySelector('.full-text').style.display = 'none';
-      markAllBtn.querySelector('.icon-only').style.display = 'inline';
-    } else {
-      markAllBtn.querySelector('.full-text').style.display = 'inline';
-      markAllBtn.querySelector('.icon-only').style.display = 'none';
-    }
+/* =========================
+   STATUS DOT (clean + modern)
+========================= */
+.status-dot{
+    width:10px;
+    height:10px;
+    border-radius:50%;
+    position:absolute;
+    bottom:2px;
+    right:2px;
+    border:2px solid #fff;
+}
+
+.status-online { background:#22c55e; }   /* green */
+.status-later { background:#facc15; }    /* yellow */
+.status-offline { background:#ef4444; }  /* red */
+
+
+/* =========================
+   BADGE (modern pill UI)
+========================= */
+.availability-badge{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    font-size:12px;
+    padding:4px 10px;
+    border-radius:999px;
+    font-weight:500;
+    cursor:default;
+}
+
+.availability-badge.status-online{
+    background:#e8f9ee;
+    color:#15803d;
+}
+
+.availability-badge.status-later{
+    background:#fff8db;
+    color:#a16207;
+}
+
+.availability-badge.status-offline{
+    background:#fee2e2;
+    color:#991b1b;
+}
+
+
+/* =========================
+   DROPDOWN MODERN STYLE
+========================= */
+.modern-dropdown{
+    border:1px solid rgba(0,0,0,0.06);
+    backdrop-filter: blur(8px);
+}
+
+.modern-select{
+    border-radius:8px;
+    font-size:13px;
+}
+
+.modern-btn{
+    border-radius:8px;
+    font-weight:500;
+}
+
+/* ========================= */
+/* PROFILE RESPONSIVE FIX */
+/* ========================= */
+
+@media (max-width: 576px) {
+
+  .availability-badge{
+    font-size: 11px;
+    padding: 4px 8px;
+    max-width: 160px;
+  }
+
+  .nav-avatar img{
+    width: 34px;
+    height: 34px;
+  }
+
+  .modern-status-btn{
+    font-size: 13px;
+    padding: 6px 10px;
+  }
+
+  .dropdown-menu{
+    width: 100% !important;
+    min-width: unset !important;
   }
 }
 
-window.addEventListener('resize', updateIcons);
-window.addEventListener('load', updateIcons);
-</script>
+@media (max-width: 400px) {
+
+  .availability-badge{
+    display: none; /* optional: saves space on very small screens */
+  }
+}
+</style>
+
+
 
 <style>
 /* ======================
@@ -772,6 +2567,10 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 });
+</script>
+
+<script>
+window.initSmartCardAds?.();
 </script>
 {% block extra_scripts %}{% endblock %}
 </body>

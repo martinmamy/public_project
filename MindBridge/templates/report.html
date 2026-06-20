@@ -5,7 +5,7 @@
 
   <!-- HEADER -->
   <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
-    <h4 class="fw-bold mb-0">📊 Payment Reports</h4>
+    <h4 class="fw-bold mb-0 text-info">📊 Payment Reports</h4>
 
     <!-- SORTING -->
     <div class="d-flex gap-2">
@@ -48,7 +48,7 @@
 
         <!-- TABLE -->
         <div class="col-lg-8">
-          <div class="card shadow-sm border-0">
+          <div class="card border-0">
             <div class="card-body p-0">
 
               <div class="table-responsive">
@@ -70,7 +70,7 @@
                         data-amount="{{ p.amount }}">
                       
                       <td class="fw-semibold text-primary clickable-user">
-                        {{ p.user.username }}
+                       {% if p.user.profile.first_name or p.user.profile.last_name %}{{ p.user.profile.first_name }} {{ p.user.profile.last_name }}{% else %}{{ p.user.username }}{% endif %}
                       </td>
                       <td>${{ p.amount }}</td>
                       <td><span class="badge bg-light text-dark">{{ p.payment_type }}</span></td>
@@ -96,7 +96,7 @@
 
         <!-- RIGHT PANEL -->
         <div class="col-lg-4">
-          <div class="card shadow-sm border-0 h-100" id="userStatsPanel">
+          <div class="card border-0 h-100" id="userStatsPanel">
             <div class="card-body text-center text-muted">
               <p class="mb-0">Click a user to view stats</p>
             </div>
@@ -114,10 +114,10 @@
 
         {% for u in qualified_users %}
         <div class="col-md-6 col-lg-4">
-          <div class="card shadow-sm border-0 p-3 h-100">
+          <div class="card border-0 p-3 h-100">
 
             <div class="d-flex justify-content-between align-items-center mb-2">
-              <strong>{{ u.user.username }}</strong>
+              <strong> {% if u.user.profile.first_name or u.user.profile.last_name %}{{ u.user.profile.first_name }} {{ u.user.profile.last_name }}{% else %}{{ u.user.username }}{% endif %}</strong>
               <span class="badge bg-success">Qualified</span>
             </div>
 
@@ -146,9 +146,9 @@
 
         {% for u in qualified_users %}
         <div class="col-6 col-md-4 col-lg-2">
-          <div class="card text-center shadow-sm border-0 p-3 h-100">
+          <div class="card text-center border-0 p-3 h-100">
 
-            <div class="fw-semibold">{{ u.user.username }}</div>
+            <div class="fw-semibold"> {% if u.user.profile.first_name or u.user.profile.last_name %}{{ u.user.profile.first_name }} {{ u.user.profile.last_name }}{% else %}{{ u.user.username }}{% endif %}</div>
 
             <div class="small text-muted">
               {{ u.transactions }} txns
@@ -158,7 +158,7 @@
               ${{ u.amount }}
             </div>
 
-            <a href="{% url 'download_user_report' u.user.id %}" 
+            <a href="{% url 'download_user_report' u.user.id %}" data-spa-link
                class="btn btn-sm btn-outline-primary">
               Download
             </a>

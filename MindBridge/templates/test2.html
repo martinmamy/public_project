@@ -1,0 +1,299 @@
+<style>
+.problem-card {
+    position: relative;
+    overflow: hidden;
+}
+
+/* OVERLAY */
+.card-ad-overlay {
+    position: absolute;
+    inset: 0;
+    display: none;
+    justify-content: center;
+    align-items: center;
+    background: rgba(15,23,42,.72);
+    backdrop-filter: blur(8px);
+    z-index: 9999;
+}
+
+.card-ad-overlay.active {
+    display: flex;
+}
+
+/* CONTENT */
+.card-ad-content {
+    width: min(92%, 520px);
+    background: rgba(255,255,255,.96);
+    border-radius: 20px;
+    padding: 20px;
+    text-align: center;
+    box-shadow: 0 20px 60px rgba(0,0,0,.25);
+}
+
+/* AD SLOTS */
+.ad-slot {
+    display: none;
+    min-height: 260px;
+}
+
+.ad-slot.active {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+/* PROMO / SPONSORED */
+.promo-image {
+    width: 100%;
+    border-radius: 14px;
+    margin-bottom: 10px;
+}
+
+.promo-btn {
+    display: inline-block;
+    padding: 10px 16px;
+    background: #4f46e5;
+    color: #fff;
+    border-radius: 10px;
+    text-decoration: none;
+}
+
+/* FOOTER */
+.ad-footer {
+    margin-top: 15px;
+}
+
+.skip-btn {
+    margin-top: 10px;
+    background: #111;
+    color: #fff;
+    padding: 8px 14px;
+    border-radius: 10px;
+    border: none;
+    cursor: pointer;
+}
+</style>
+
+<!-- ===================================================== -->
+<!-- MUST BE INSERTED INSIDE EXISTING .problem-card ONLY -->
+<!-- ===================================================== -->
+
+<div class="card-ad-overlay">
+
+    <div class="card-ad-content">
+
+        <div class="ad-label">Sponsored</div>
+
+        <!-- GOOGLE AD -->
+        <div class="ad-slot google-slot">
+            <ins class="adsbygoogle"
+                style="display:block;min-height:250px;"
+                data-ad-client="ca-pub-XXXXXXXX"
+                data-ad-slot="XXXXXXXX"></ins>
+        </div>
+
+        <!-- PROMO AD -->
+        <div class="ad-slot promo-slot">
+            <img class="promo-image" src="/static/images/promo-banner.jpg">
+            <h4>Upgrade Your Account</h4>
+            <p>Get more visibility.</p>
+            <a class="promo-btn" href="/promote/">Learn More</a>
+        </div>
+
+        <!-- SPONSORED / YOUR INTERNAL ADS SYSTEM -->
+        
+            <div id="adsPlaceholder-{{ problem.id }}"
+                 data-problem-id="{{ problem.id }}">
+
+            </div>
+        
+
+        <!-- FOOTER -->
+        <div class="ad-footer">
+            Skip in <span class="timer">10</span>s
+            <button class="skip-btn" hidden>Skip Ad</button>
+        </div>
+
+    </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+
+    const FIRST_MIN = 0;
+    const FIRST_MAX = 20000;
+
+    const NEXT_MIN = 120000;
+    const NEXT_MAX = 240000;
+
+    const rand = (a,b)=>Math.floor(Math.random()*(b-a+1))+a;
+
+    const state = new WeakMap();
+    const timers = new Map();
+
+    /* =====================================================
+       AVAILABLE ADS (INCLUDES YOUR SPONSORED PLACEHOLDER)
+    ====================================================== */
+    function getAvailable(card) {
+
+        const list = [];
+
+        if (card.querySelector(".google-slot ins")) list.push("google");
+        if (card.querySelector(".promo-slot")) list.push("promo");
+        if (card.querySelector(".sponsor-slot")) list.push("sponsor");
+
+        return list;
+    }
+
+    function pick(list, last) {
+
+        if (!list.length) return null;
+
+        let choice = list[Math.floor(Math.random() * list.length)];
+
+        if (choice === last && list.length > 1) {
+            choice = list.find(x => x !== last);
+        }
+
+        return choice;
+    }
+
+    const observer = new IntersectionObserver(entries => {
+
+        entries.forEach(entry => {
+
+            const card = entry.target;
+
+            if (!state.has(card)) {
+                state.set(card, {
+                    visible:false,
+                    firstShown:false,
+                    lastAd:0,
+                    showing:false,
+                    lastType:null
+                });
+            }
+
+            const s = state.get(card);
+            s.visible = entry.isIntersecting && entry.intersectionRatio >= 0.6;
+
+            if (s.visible && !s.firstShown) {
+
+                const delay = rand(FIRST_MIN, FIRST_MAX);
+
+                setTimeout(() => {
+                    if (s.visible && !s.showing) {
+                        showAd(card, s);
+                        s.firstShown = true;
+                        s.lastAd = Date.now();
+                    }
+                }, delay);
+            }
+
+        });
+
+    }, { threshold: 0.6 });
+
+    function init() {
+        document.querySelectorAll(".problem-card").forEach(card => {
+            if (!card.dataset.adsInit) {
+                observer.observe(card);
+                card.dataset.adsInit = "1";
+            }
+        });
+    }
+
+    init();
+
+    window.observeNewCards = init;
+
+    setInterval(() => {
+
+        const now = Date.now();
+
+        document.querySelectorAll(".problem-card").forEach(card => {
+
+            const s = state.get(card);
+            if (!s || !s.visible || s.showing || !s.firstShown) return;
+
+            const delay = rand(NEXT_MIN, NEXT_MAX);
+
+            if (now - s.lastAd >= delay) {
+                showAd(card, s);
+                s.lastAd = now;
+            }
+
+        });
+
+    }, 2000);
+
+    /* =====================================================
+       CORE FIX: NEVER SHOW EMPTY MODAL
+    ====================================================== */
+    function showAd(card, s) {
+
+        const overlay = card.querySelector(".card-ad-overlay");
+        const slots = card.querySelectorAll(".ad-slot");
+        const timer = card.querySelector(".timer");
+        const skip = card.querySelector(".skip-btn");
+
+        const available = getAvailable(card);
+
+        // ❌ NO ADS AT ALL → DO NOTHING
+        if (!available.length) return;
+
+        const type = pick(available, s.lastType);
+        if (!type) return;
+
+        const target = card.querySelector("." + type + "-slot");
+
+        // ❌ SLOT MISSING → DO NOTHING (PREVENT EMPTY MODAL)
+        if (!target) return;
+
+        s.lastType = type;
+
+        // reset
+        slots.forEach(x => x.classList.remove("active"));
+
+        overlay.classList.add("active");
+        s.showing = true;
+
+        target.classList.add("active");
+
+        // Google render
+        if (type === "google") {
+            try {
+                (adsbygoogle = window.adsbygoogle || []).push({});
+            } catch(e){}
+        }
+
+        // countdown
+        let t = rand(10,20);
+
+        timer.textContent = t;
+        skip.hidden = true;
+
+        const interval = setInterval(() => {
+
+            timer.textContent = t;
+            t--;
+
+            if (t <= 0) {
+                clearInterval(interval);
+                skip.hidden = false;
+            }
+
+        }, 1000);
+
+        timers.set(card, interval);
+
+        skip.onclick = () => {
+            clearInterval(timers.get(card));
+            overlay.classList.remove("active");
+            s.showing = false;
+        };
+    }
+
+});
+</script>

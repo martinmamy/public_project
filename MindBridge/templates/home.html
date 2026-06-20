@@ -1,122 +1,1077 @@
 {% extends "base.html" %}
+{% load static %}
+
 {% block title %}Welcome | Fancylearn{% endblock %}
 
 {% block content %}
-<div class="text-center my-5">
-    <h1 class="display-4 fw-bold mb-3">Welcome to <strong><span class="fancy-part">Fancy</span><span class="learn-part">learn</span></strong></h1>
-    <p class="lead mb-4 text-muted">
-        <strong><span class="fancy-part">Fancy</span><span class="learn-part">learn</span></strong> is your <strong> knowledge-sharing social media platform</strong> – connect with experts, explore challenging problems/issues, and grow your skills.
-    </p>
-    <p class="lead text-muted">
-        Be the source of information for others and help them stay up to date with educational posts.
-    </p>
 
-    <!-- Call-to-action buttons -->
-    {% if not user.is_authenticated %}
-    <div class="mb-5">
-        <a href="{% url 'register' %}" class="btn btn-primary btn-lg me-3">
-            <i class="fa-solid fa-user-plus me-2"></i> Register
-        </a>
-        <a href="{% url 'login' %}" class="btn btn-outline-primary btn-lg">
-            <i class="fa-solid fa-right-to-bracket me-2"></i> Login
-        </a>
+<section class="landing-page">
+
+    <!-- ========================================= -->
+    <!-- HERO -->
+    <!-- ========================================= -->
+
+    <div class="hero-section position-relative overflow-hidden">
+
+        <!-- floating blobs -->
+        <div class="hero-blob blob-1"></div>
+        <div class="hero-blob blob-2"></div>
+        <div class="hero-blob blob-3"></div>
+
+        <div class="container py-5 position-relative">
+
+            <div class="row align-items-center min-vh-75">
+
+                <!-- LEFT -->
+                <div class="col-lg-7 text-center text-lg-start">
+
+                    <div class="hero-badge mb-4">
+                        🚀 Knowledge Sharing • Collaboration • Growth
+                    </div>
+
+                    <h1 class="hero-title mb-4 text-info">
+
+                        Welcome to
+
+                        <strong>
+                            <span class="fancy-part">Fancy</span><span class="learn-part">learn</span>
+                        </strong>
+
+                    </h1>
+
+                    <p class="hero-subtitle mb-4">
+
+                        A modern knowledge-sharing social platform where learners,
+                        educators, and professionals connect, solve real-world problems,
+                        share educational content, and grow together.
+
+                    </p>
+
+                    <div class="d-flex flex-wrap gap-3 justify-content-center justify-content-lg-start">
+
+                        {% if not user.is_authenticated %}
+
+                        <a href="{% url 'register' %}"
+                           class="btn btn-primary btn-lg px-4 rounded-pill hero-btn">
+
+                            <i class="fa-solid fa-user-plus me-2"></i>
+                            Get Started
+
+                        </a>
+
+                        <a href="{% url 'login' %}"
+                           class="btn btn-outline-primary btn-lg px-4 rounded-pill">
+
+                            <i class="fa-solid fa-right-to-bracket me-2"></i>
+                            Login
+
+                        </a>
+
+                        {% endif %}
+
+                    </div>
+
+                    <!-- mini stats -->
+                    <div class="hero-stats mt-5">
+
+                        <div class="hero-stat-card">
+                            <h3>24/7</h3>
+                            <span>Learning</span>
+                        </div>
+
+                        <div class="hero-stat-card">
+                            <h3>∞</h3>
+                            <span>Knowledge</span>
+                        </div>
+
+                        <div class="hero-stat-card">
+                            <h3>100%</h3>
+                            <span>Community Driven</span>
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <!-- RIGHT -->
+                <div class="col-lg-5 mt-5 mt-lg-0">
+
+                    <div class="hero-visual">
+                        
+                        <div class="floating-card card-1">
+                            <i class="fa-solid fa-users"></i>
+                            <span>Community</span>
+                        </div>
+                        
+                        <div class="floating-card card-2">
+                            <i class="fa-solid fa-lightbulb"></i>
+                            <span>Ideas</span>
+                        </div>
+
+                        <div class="floating-card card-3">
+                            <i class="fa-solid fa-chart-line"></i>
+                            <span>Growth</span>
+                        </div>
+
+                        <div class="hero-circle">
+
+                            <div class="pulse-ring"></div>
+
+                            <div class="hero-logo">
+                                <i class="fa-solid fa-graduation-cap"></i>
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
     </div>
+
+    <!-- ========================================= -->
+    <!-- FEATURES -->
+    <!-- ========================================= -->
+
+    <div class="container py-5">
+
+        <div class="section-heading text-center mb-5">
+
+            <h2 class="fw-bold text-info">
+                Why Choose
+                <span class="text-primary">Fancylearn?</span>
+            </h2>
+
+            <p class="text-muted">
+                Learn, collaborate, and grow with a powerful educational community.
+            </p>
+
+        </div>
+
+        <div class="row g-4">
+
+            <div class="col-lg-4">
+
+                <div class="feature-card h-100">
+
+                    <div class="feature-icon bg-primary-subtle text-primary">
+                        <i class="fa-solid fa-lightbulb"></i>
+                    </div>
+
+                    <h4 class="fw-bold mb-3">
+                        Explore Posts
+                    </h4>
+
+                    <p class="text-muted mb-0">
+                        Discover educational challenges, technical discussions,
+                        and real-world issues shared by the community.
+                    </p>
+
+                </div>
+
+            </div>
+
+            <div class="col-lg-4">
+
+                <div class="feature-card h-100">
+
+                    <div class="feature-icon bg-success-subtle text-success">
+                        <i class="fa-solid fa-users"></i>
+                    </div>
+
+                    <h4 class="fw-bold mb-3">
+                        Connect & Collaborate
+                    </h4>
+
+                    <p class="text-muted mb-0">
+                        Interact with students, teachers, and professionals
+                        through comments, discussions, and shared knowledge.
+                    </p>
+
+                </div>
+
+            </div>
+
+            <div class="col-lg-4">
+
+                <div class="feature-card h-100">
+
+                    <div class="feature-icon bg-warning-subtle text-warning">
+                        <i class="fa-solid fa-chart-line"></i>
+                    </div>
+
+                    <h4 class="fw-bold mb-3">
+                        Learn Continuously
+                    </h4>
+
+                    <p class="text-muted mb-0">
+                        Stay updated with trending educational content,
+                        insights, and collaborative learning experiences.
+                    </p>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- ========================================= -->
+    <!-- HOW IT WORKS -->
+    <!-- ========================================= -->
+
+    <div class="how-section py-5">
+
+        <div class="container">
+
+            <div class="section-heading text-center mb-5">
+
+                <h2 class="fw-bold text-info">
+                    How It Works
+                </h2>
+
+                <p class="text-muted">
+                    Start learning and collaborating in just a few steps.
+                </p>
+
+            </div>
+
+            <div class="row g-4">
+
+                <div class="col-lg-4">
+
+                    <div class="step-card">
+
+                        <div class="step-number">
+                            1
+                        </div>
+
+                        <i class="fa-solid fa-pencil step-icon"></i>
+
+                        <h4 class="fw-bold mt-4">
+                            Post & Explore
+                        </h4>
+
+                        <p class="text-muted">
+                            Share educational content, ask questions,
+                            and explore challenges from the community.
+                        </p>
+
+                    </div>
+
+                </div>
+
+                <div class="col-lg-4">
+
+                    <div class="step-card">
+
+                        <div class="step-number">
+                            2
+                        </div>
+
+                        <i class="fa-solid fa-comments step-icon"></i>
+
+                        <h4 class="fw-bold mt-4">
+                            Engage & Discuss
+                        </h4>
+
+                        <p class="text-muted">
+                            Collaborate through comments, discussions,
+                            and shared problem-solving experiences.
+                        </p>
+
+                    </div>
+
+                </div>
+
+                <div class="col-lg-4">
+
+                    <div class="step-card">
+
+                        <div class="step-number">
+                            3
+                        </div>
+
+                        <i class="fa-solid fa-award step-icon"></i>
+
+                        <h4 class="fw-bold mt-4">
+                            Grow & Succeed
+                        </h4>
+
+                        <p class="text-muted">
+                            Build your reputation, gain recognition,
+                            and improve your expertise over time.
+                        </p>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- ========================================= -->
+    <!-- CTA -->
+    <!-- ========================================= -->
+
+    {% if not user.is_authenticated %}
+
+    <div class="container py-5">
+
+        <div class="cta-box text-center">
+
+            <h2 class="fw-bold mb-3">
+                Ready to Join the Community?
+            </h2>
+
+            <p class="text-muted mb-4">
+                Start exploring knowledge, collaborating with others,
+                and building your learning journey today.
+            </p>
+
+            <a href="{% url 'register' %}"
+               class="btn btn-primary btn-lg px-5 rounded-pill hero-btn">
+
+                <i class="fa-solid fa-user-plus me-2"></i>
+                Join Fancylearn
+
+            </a>
+
+        </div>
+
+    </div>
+
     {% endif %}
 
-    <!-- Feature highlights -->
-    <div class="row justify-content g-4">
-        <div class="col-lg-4">
-            <div class="card h-100 text-center shadow-sm">
-                <div class="card-body">
-                    <i class="fa-solid fa-lightbulb fa-2xl text-primary mb-3"></i>
-                    <h5 class="card-title fw-bold">Explore Problems</h5>
-                    <p class="card-text text-muted">
-                        Browse a wide variety of real-world problems/issues and educational posts posted by the community. Learn, practice, and find solutions.
-                    </p>
-                </div>
-            </div>
-        </div>
-        <div class="col-lg-4">
-            <div class="card h-100 text-center shadow-sm">
-                <div class="card-body">
-                    <i class="fa-solid fa-users fa-2xl text-primary mb-3"></i>
-                    <h5 class="card-title fw-bold">Connect with Experts</h5>
-                    <p class="card-text text-muted">
-                        Follow top contributors, ask questions, and gain insights from experienced professionals across multiple fields.
-                    </p>
-                </div>
-            </div>
-        </div>
-        <div class="col-lg-4">
-            <div class="card h-100 text-center shadow-sm">
-                <div class="card-body">
-                    <i class="fa-solid fa-chart-line fa-2xl text-primary mb-3"></i>
-                    <h5 class="card-title fw-bold">Track Trends & Progress</h5>
-                    <p class="card-text text-muted">
-                        Stay updated with the latest trending problems and lessons, monitor your learning progress, and identify emerging topics.
-                    </p>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
+</section>
 
-<!-- About Fancylearn -->
-<div class="my-5">
-    <h2 class="fw-bold mb-3 text-center">About <strong><span class="fancy-part">Fancy</span><span class="learn-part">learn</span></strong></h2>
-    <p class="text-center text-muted mx-auto" style="max-width:700px;">
-        <strong><span class="fancy-part">Fancy</span><span class="learn-part">learn</span></strong> is designed for everyone with no exceptions especially learners, professionals, and enthusiasts who want to engage with meaningful problems/issues, share knowledge, and grow their expertise. 
-        Users can post problems(issues they need help with), answer challenges, educate others, follow each other, and track the most trending discussions in the community.
-    </p>
-</div>
+<style>
+/* =========================================
+   FIX HERO CONTENT LAYERING
+========================================= */
 
-<!-- How it Works -->
-<div class="my-5">
-    <h2 class="fw-bold mb-4 text-center">How It Works</h2>
-    <div class="row g-4 justify-content-center">
-        <div class="col-lg-4">
-            <div class="card h-100 text-center shadow-sm">
-                <div class="card-body">
-                    <i class="fa-solid fa-pencil fa-2xl text-primary mb-3"></i>
-                    <h5 class="card-title fw-bold">1. Post & Explore</h5>
-                    <p class="card-text text-muted">
-                        Share your problems/issues and idea or explore others’ challenges to test your knowledge.
-                    </p>
-                </div>
-            </div>
-        </div>
-        <div class="col-lg-4">
-            <div class="card h-100 text-center shadow-sm">
-                <div class="card-body">
-                    <i class="fa-solid fa-comments fa-2xl text-primary mb-3"></i>
-                    <h5 class="card-title fw-bold">2. Engage & Collaborate</h5>
-                    <p class="card-text text-muted">
-                        Comment, suggest solutions, and collaborate with each other in real-time discussions.
-                    </p>
-                </div>
-            </div>
-        </div>
-        <div class="col-lg-4">
-            <div class="card h-100 text-center shadow-sm">
-                <div class="card-body">
-                    <i class="fa-solid fa-award fa-2xl text-primary mb-3"></i>
-                    <h5 class="card-title fw-bold">3. Learn & Earn Recognition</h5>
-                    <p class="card-text text-muted">
-                        Gain recognition for your contributions, track your progress, and improve your expertise.
-                    </p>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
+.hero-section {
 
-<!-- Footer Call-to-action -->
-{% if not user.is_authenticated %}
-<div class="text-center my-5">
-    <a href="{% url 'register' %}" class="btn btn-lg btn-outline-primary">
-        <i class="fa-solid fa-user-plus me-2"></i> Join <strong><span class="fancy-part">Fancy</span><span class="learn-part">learn</span></strong> Today
-    </a>
-</div>
-{% endif %}
+    isolation: isolate;
+}
+
+.hero-section .container {
+
+    position: relative;
+    z-index: 5;
+}
+
+/* =========================================
+   BLOBS BEHIND CONTENT
+========================================= */
+
+.hero-blob {
+
+    z-index: 0;
+
+    pointer-events: none;
+
+    opacity: 0.14; /* reduced */
+}
+
+/* =========================================
+   HERO TEXT ALWAYS ABOVE
+========================================= */
+
+.hero-title,
+.hero-subtitle,
+.hero-badge,
+.hero-stats,
+.hero-btn {
+
+    position: relative;
+    z-index: 10;
+}
+
+/* =========================================
+   HERO VISUAL
+========================================= */
+
+.hero-visual {
+
+    position: relative;
+    z-index: 2;
+}
+
+/* =========================================
+   FLOATING CARDS
+========================================= */
+
+.floating-card {
+
+    z-index: 3;
+}
+
+/* =========================================
+   MOBILE FIX
+========================================= */
+
+@media (max-width: 992px) {
+
+    .hero-section {
+
+        padding-top: 10px;
+    }
+
+    .hero-title {
+
+        font-size: 2rem;
+
+        line-height: 1.15;
+    }
+
+    .hero-subtitle {
+
+        font-size: 1rem;
+
+        max-width: 100%;
+    }
+
+    .hero-visual {
+
+        margin-top: 40px;
+
+        height: 300px;
+    }
+
+    /* reposition cards */
+
+    .card-1 {
+
+        top: 5%;
+        left: 0;
+    }
+
+    .card-2 {
+
+        top: 55%;
+        right: 0;
+    }
+
+    .card-3 {
+
+        bottom: 0;
+        left: 10%;
+    }
+
+    .floating-card {
+
+        padding: 10px 14px;
+
+        font-size: .85rem;
+    }
+
+    .hero-circle {
+
+        width: 190px;
+        height: 190px;
+    }
+
+    .hero-logo {
+
+        width: 90px;
+        height: 90px;
+
+        font-size: 2rem;
+    }
+}
+
+/* =========================================
+   SMALL MOBILE
+========================================= */
+
+@media (max-width: 576px) {
+
+    .hero-title {
+
+        font-size: 1rem;
+    }
+
+    .hero-stats {
+
+        justify-content: center;
+    }
+
+    .hero-stat-card {
+
+        min-width: 110px;
+
+        padding: 14px;
+    }
+
+    .floating-card {
+
+        transform: scale(.9);
+    }
+
+    .blob-1,
+    .blob-2,
+    .blob-3 {
+
+        filter: blur(70px);
+    }
+}
+/* =========================================
+   PAGE
+========================================= */
+
+.landing-page {
+
+    overflow: hidden;
+}
+
+/* =========================================
+   HERO
+========================================= */
+
+.hero-section {
+
+    position: relative;
+
+    padding-top: 40px;
+}
+
+.min-vh-75 {
+
+    min-height: 75vh;
+}
+
+.hero-title {
+
+    font-size: clamp(1rem, 6vw, 2,5rem);
+
+    font-weight: 900;
+
+    line-height: 1.05;
+}
+
+.hero-subtitle {
+
+    font-size: 1.15rem;
+
+    line-height: 1.8;
+
+    max-width: 650px;
+
+    color: #6c757d;
+}
+
+.hero-badge {
+
+    display: inline-flex;
+
+    align-items: center;
+
+    padding: 10px 18px;
+
+    border-radius: 999px;
+
+    background: rgba(13,110,253,0.08);
+
+    color: #0d6efd;
+
+    font-weight: 700;
+
+    animation: fadeUp 1s ease;
+}
+
+/* =========================================
+   FANCY COLORS
+========================================= */
+
+.fancy-part {
+
+    color: #0d6efd;
+}
+
+.learn-part {
+
+    color: #20c997;
+}
+
+/* =========================================
+   BLOBS
+========================================= */
+
+.hero-blob {
+
+    position: absolute;
+
+    border-radius: 50%;
+
+    filter: blur(90px);
+
+    opacity: .25;
+
+    animation: blobFloat 12s infinite ease-in-out;
+}
+
+.blob-1 {
+
+    width: 300px;
+    height: 300px;
+
+    background: #0d6efd;
+
+    top: -60px;
+    left: -80px;
+}
+
+.blob-2 {
+
+    width: 240px;
+    height: 240px;
+
+    background: #20c997;
+
+    bottom: 0;
+    right: 0;
+}
+
+.blob-3 {
+
+    width: 180px;
+    height: 180px;
+
+    background: #ffc107;
+
+    top: 40%;
+    left: 50%;
+}
+
+/* =========================================
+   HERO VISUAL
+========================================= */
+
+.hero-visual {
+
+    position: relative;
+
+    width: 100%;
+    height: 500px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.hero-circle {
+
+    width: 260px;
+    height: 260px;
+
+    border-radius: 50%;
+
+    background:
+        linear-gradient(
+            135deg,
+            #0d6efd,
+            #20c997
+        );
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    position: relative;
+
+    animation: float 6s ease-in-out infinite;
+}
+
+.hero-logo {
+
+    width: 120px;
+    height: 120px;
+
+    border-radius: 50%;
+
+    background: white;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    font-size: 3rem;
+
+    color: #0d6efd;
+
+    z-index: 2;
+}
+
+.pulse-ring {
+
+    position: absolute;
+
+    inset: -20px;
+
+    border: 3px solid rgba(13,110,253,0.2);
+
+    border-radius: 50%;
+
+    animation: pulse 2.5s infinite;
+}
+
+/* =========================================
+   FLOATING CARDS
+========================================= */
+
+.floating-card {
+
+    position: absolute;
+
+    display: flex;
+    align-items: center;
+    gap: 10px;
+
+    padding: 14px 18px;
+
+    border-radius: 18px;
+
+    background: rgba(255,255,255,0.9);
+
+    backdrop-filter: blur(12px);
+
+    box-shadow:
+        0 10px 30px rgba(0,0,0,0.08);
+
+    font-weight: 700;
+
+    animation: floatCard 5s ease-in-out infinite;
+}
+
+.floating-card i {
+
+    color: #0d6efd;
+}
+
+.card-1 {
+
+    top: 10%;
+    left: 10%;
+}
+
+.card-2 {
+
+    top: 50%;
+    right: 0;
+}
+
+.card-3 {
+
+    bottom: 10%;
+    left: 20%;
+}
+
+/* =========================================
+   STATS
+========================================= */
+
+.hero-stats {
+
+    display: flex;
+
+    gap: 18px;
+
+    flex-wrap: wrap;
+}
+
+.hero-stat-card {
+
+    min-width: 140px;
+
+    padding: 18px;
+
+    border-radius: 22px;
+
+    background: rgba(255,255,255,0.7);
+
+    backdrop-filter: blur(12px);
+
+    box-shadow:
+        0 10px 30px rgba(0,0,0,0.05);
+
+    transition: all .3s ease;
+}
+
+.hero-stat-card:hover {
+
+    transform: translateY(-6px);
+}
+
+.hero-stat-card h3 {
+
+    font-weight: 800;
+
+    color: #0d6efd;
+}
+
+/* =========================================
+   FEATURES
+========================================= */
+
+.feature-card {
+
+    padding: 35px;
+
+    border-radius: 28px;
+
+    background: rgba(255,255,255,0.85);
+
+    backdrop-filter: blur(10px);
+
+    transition: all .35s ease;
+
+    box-shadow:
+        0 8px 30px rgba(0,0,0,0.05);
+}
+
+.feature-card:hover {
+
+    transform: translateY(-10px);
+
+    box-shadow:
+        0 20px 40px rgba(0,0,0,0.08);
+}
+
+.feature-icon {
+
+    width: 70px;
+    height: 70px;
+
+    border-radius: 20px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    font-size: 1.5rem;
+
+    margin-bottom: 20px;
+}
+
+/* =========================================
+   HOW
+========================================= */
+
+.how-section {
+
+    background:
+        linear-gradient(
+            180deg,
+            rgba(13,110,253,0.03),
+            transparent
+        );
+}
+
+.step-card {
+
+    position: relative;
+
+    padding: 40px 30px;
+
+    text-align: center;
+
+    border-radius: 30px;
+
+    background: white;
+
+    transition: all .35s ease;
+
+    box-shadow:
+        0 8px 25px rgba(0,0,0,0.05);
+}
+
+.step-card:hover {
+
+    transform: translateY(-8px);
+}
+
+.step-number {
+
+    position: absolute;
+
+    top: -15px;
+    left: 50%;
+
+    transform: translateX(-50%);
+
+    width: 40px;
+    height: 40px;
+
+    border-radius: 50%;
+
+    background: #0d6efd;
+
+    color: white;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    font-weight: 800;
+}
+
+.step-icon {
+
+    font-size: 2.2rem;
+
+    color: #0d6efd;
+}
+
+/* =========================================
+   CTA
+========================================= */
+
+.cta-box {
+
+    padding: 70px 40px;
+
+    border-radius: 40px;
+
+    background:
+        linear-gradient(
+            135deg,
+            rgba(13,110,253,0.08),
+            rgba(32,201,151,0.08)
+        );
+
+    border: 1px solid rgba(13,110,253,0.08);
+}
+
+.hero-btn {
+
+    transition: all .3s ease;
+}
+
+.hero-btn:hover {
+
+    transform: translateY(-3px) scale(1.03);
+}
+
+/* =========================================
+   ANIMATIONS
+========================================= */
+
+@keyframes float {
+
+    0%,100% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-18px);
+    }
+}
+
+@keyframes pulse {
+
+    0% {
+        transform: scale(1);
+        opacity: .8;
+    }
+
+    100% {
+        transform: scale(1.2);
+        opacity: 0;
+    }
+}
+
+@keyframes blobFloat {
+
+    0%,100% {
+        transform: translateY(0) translateX(0);
+    }
+
+    50% {
+        transform: translateY(-20px) translateX(20px);
+    }
+}
+
+@keyframes floatCard {
+
+    0%,100% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-10px);
+    }
+}
+
+@keyframes fadeUp {
+
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* =========================================
+   DARK MODE
+========================================= */
+
+[data-theme="dark"] .feature-card,
+[data-theme="dark"] .step-card,
+[data-theme="dark"] .hero-stat-card,
+[data-theme="dark"] .floating-card {
+
+    background: rgba(20,20,20,0.9);
+
+    color: white;
+}
+
+[data-theme="dark"] .hero-logo {
+
+    background: #111;
+}
+
+[data-theme="dark"] .hero-subtitle,
+[data-theme="dark"] .text-muted {
+
+    color: #b5b5b5 !important;
+}
+
+/* =========================================
+   MOBILE
+========================================= */
+
+@media (max-width: 992px) {
+
+    .hero-title {
+
+        font-size: 2rem;
+    }
+
+    .hero-visual {
+
+        height: 380px;
+    }
+
+    .hero-circle {
+
+        width: 220px;
+        height: 220px;
+    }
+}
+
+</style>
 
 {% endblock %}

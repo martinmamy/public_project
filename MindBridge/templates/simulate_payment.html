@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+
+<div class="container py-5">
+
+    <div class="row justify-content-center">
+
+        <div class="col-lg-6">
+
+            <div class="card shadow-sm border-0 rounded-4">
+
+                <div class="card-body p-4">
+
+                    <h3 class="fw-bold mb-3">
+                        💳 Simulated Payment
+                    </h3>
+
+                    <p class="text-muted">
+                        Complete fake payment to activate your ad.
+                    </p>
+
+                    <hr>
+
+                    <div class="mb-3">
+                        <strong>Ad:</strong> {{ ad.title }}
+                    </div>
+
+                    <div class="mb-3">
+                        <strong>Amount:</strong> ${{ ad.price }}
+                    </div>
+
+                    <div class="mb-3">
+                        <strong>Transaction ID:</strong>
+                        <span class="text-primary">
+                            {{ transaction_id }}
+                        </span>
+                    </div>
+
+                    <button id="payBtn"
+                            class="btn btn-success w-100 btn-lg rounded-3">
+
+                        Pay & Activate Ad
+
+                    </button>
+
+                    <div id="status" class="mt-3 text-center text-muted"></div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<script>
+
+document.getElementById("payBtn").addEventListener("click", async () => {
+
+    const btn = document.getElementById("payBtn");
+    const status = document.getElementById("status");
+
+    btn.disabled = true;
+    btn.innerText = "Processing...";
+
+    status.innerText = "Simulating payment...";
+
+    const res = await fetch("", {
+        method: "POST",
+        headers: {
+            "X-CSRFToken": "{{ csrf_token }}",
+        }
+    });
+
+    const data = await res.json();
+
+    if (data.success) {
+
+        status.innerText = "Payment successful! Redirecting...";
+
+        setTimeout(() => {
+            window.location.href = data.redirect;
+        }, 1200);
+
+    } else {
+
+        status.innerText = "Payment failed";
+
+        btn.disabled = false;
+        btn.innerText = "Pay & Activate Ad";
+    }
+
+});
+
+</script>
+
+{% endblock %}

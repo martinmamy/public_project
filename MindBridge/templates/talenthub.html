@@ -11,73 +11,98 @@
 {% endblock %}
 
 {% block content %}
-<div class="row">
-
-<!-- MAIN FEED -->
-    <button id="bookmarkToggleBtn" class="sidebar-toggle-btn d-lg-none" title="Open BookMark">
-      <i class="fas fa-bookmark"></i>
-    </button>
+  <div class="row">
+      <p class="fw-bold mb-0 text-info">Educative Posts</p>
+      <!-- MAIN FEED -->
+      <button id="bookmarkToggleBtn" class="sidebar-toggle-btn d-lg-none" title="Open BookMark">
+        <i class="fas fa-bookmark"></i>
+      </button>
       <!-- ========================== -->
       <!-- Problem Cards -->
       <!-- ========================== -->
-      <!-- Header + Search & Sort -->
-        <div class="d-flex justify-content-between align-items-start mb-4 flex-wrap gap-2">
-          <div class="d-flex flex-column gap-2 mb-3 flex-grow-1">
+      <div class="d-flex justify-content-between align-items-start mb-4 flex-wrap gap-3">
 
-          <!-- Search + Category + Sort: horizontal -->
-          <div class="d-flex gap-2 mb-2" style="flex-wrap: nowrap;">
+        <div class="d-flex flex-column gap-3 flex-grow-1">
 
-            <!-- Search Input -->
-            <input type="text"
-              id="problem-search"
-              class="form-control responsive-field"
-              placeholder="Search problems using the titles..."
-              style="flex:1 1 140px; max-width:200px; min-width:120px; font-size:clamp(0.85rem,1vw,1rem);"
-               title="Search for a post">
+          <!-- Search + Filters -->
+          <div class="d-flex flex-wrap gap-2">
 
-            <!-- Category Filter -->
-            <select id="problem-category"
-                    class="form-select responsive-field"
-                    style="flex:0 0 160px; min-width:120px; font-size:clamp(0.8rem,0.9vw,0.95rem);">
-              <option value="">All Categories</option>
-              {% for value, label in PREDEFINED_CATEGORIES %}
-              <option value="{{ value }}">{{ label }}</option>
-              {% endfor %}
-            </select>
+            <!-- Search -->
+            <div style="flex:1 1 160px; min-width:220px; font-size:clamp(0.85rem,1vw,1rem);">
+              <input
+                type="text"
+                id="problem-search"
+                class="form-control responsive-field"
+                placeholder="Search problems using the titles..."
+                title="Search for a post">
+            </div>
 
-            <!-- Sort Select -->
-            <select id="problem-sort"
-                    class="form-select responsive-field"
-                    style="flex:0 0 140px; min-width:110px; font-size:clamp(0.8rem,0.9vw,0.95rem);">
-              <option value="recent" selected>Sort: Recent</option>
-              <option value="votes">Most Votes</option>
-              <option value="answers">Most Answers</option>
-            </select>
+            <!-- Category -->
+            <div style="flex:1 1 180px; min-width:160px;">
+              <select
+                id="problem-category"
+                class="form-select responsive-field">
+
+                <option value="">All Categories</option>
+
+                {% for value, label in PREDEFINED_CATEGORIES %}
+                <option value="{{ value }}">{{ label }}</option>
+                {% endfor %}
+
+              </select>
+            </div>
+
+            <!-- Sort -->
+            <div style="flex:1 1 160px; min-width:140px;">
+              <select
+                id="problem-sort"
+                class="form-select responsive-field w-100">
+
+                <option value="recent" selected>
+                  Sort: Recent
+                </option>
+
+                <option value="votes">
+                  Most Votes
+                </option>
+
+                <option value="answers">
+                  Most Answers
+                </option>
+
+              </select>
+            </div>
 
           </div>
 
-        <!-- Text + Post Link -->
-        <div class="d-flex flex-wrap gap-2 align-items-center">
-          <small style="font-size:clamp(0.75rem,0.9vw,0.9rem);">
-            Got a question, insight, or idea? Share it with the community!
-          </small>
-          <a href="{% url 'create_problem' %}">
-                <i class="fas fa-plus"></i> Post Now
-          </a>
+          <!-- Bottom Row -->
+          <div class="d-flex flex-wrap gap-2 align-items-center justify-content-between">
+
+            <small class="text-info">
+              Got a question, insight, or idea?
+              Share it with the community!
+            </small>
+
+            <a href="{% url 'create_problem' %}" data-spa-link>
+              <i class="fas fa-plus"></i>
+              Post Now
+            </a>
+
+          </div>
+
         </div>
 
       </div>
-    </div>
     <div class="col-lg-8" id="problems-talenthub-container">
       {% for problem in information|dictsortreversed:"created_at" %}
         {% if problem.post_type == 'information' %}
         <div class="problem-card mb-4" id="problem-{{ problem.id }}"
-          data-id="{{ problem.id }}"
-          data-title="{{ problem.title|escapejs }}"
-          data-category="{{ problem.category }}"
-          data-votes="{{ problem.annot_votes_score }}"
-          data-answers="{{ problem.annot_answers_count|abbreviate_number }}"
-          data-created="{{ problem.created_at.timestamp }}">
+          data-problem-id="{{ problem.id }}"
+          data-problem-title="{{ problem.title|escapejs }}"
+          data-problem-category="{{ problem.category }}"
+          data-problem-votes="{{ problem.annot_votes_score }}"
+          data-problem-answers="{{ problem.annot_answers_count|abbreviate_number }}"
+          data-problem-created="{{ problem.created_at.timestamp }}">
           <!-- RIGHT: category + status badges -->
             <div class="d-flex justify-content-end">
               {% if problem.category.name %}
@@ -90,7 +115,7 @@
           <div class="problem-card-header d-flex justify-content-between align-items-center">
             <!-- LEFT: avatar + username -->
                 <div class="header-left">
-                  <a href="{% url 'profile' problem.author.id %}" class="d-flex align-items-center text-decoration-none">
+                  <a href="{% url 'profile' problem.author.id %}" data-spa-link class="d-flex align-items-center text-decoration-none">
                     {% if problem.author.avatar %}
                       <img src="{{ problem.author.avatar.url }}" class="avatar me-2">
                     {% else %}
@@ -101,8 +126,18 @@
                     {% endif %}
                     </a>
                     <div class="d-flex flex-column">
-                      <a href="{% url 'profile' problem.author.id %}">
-                        <strong>{{ problem.author.username }}</strong>
+                      <a href="{% url 'profile' problem.author.id %}" data-spa-link>
+                        <div class="d-flex align-items-center gap-1">
+                          {% if problem.author.is_verified_expert %}
+                            <i class="fas fa-shield-alt verified-expert" title="Verified Expert"></i>
+                          {% endif %}
+                          {% if problem.author.profile.first_name or problem.author.profile.last_name %}
+                            <strong>{{ problem.author.profile.first_name }} {{ problem.author.profile.last_name }}</strong>
+                          {% else %}
+                          <strong>{{ problem.author.username }}</strong>
+                          {% endif %}
+
+                        </div>
                       </a>
                       <small class="problem-time" data-time="{{ problem.created_at|date:'c' }}"></small>
                     </div>
@@ -115,7 +150,10 @@
                             style="width:18px;height:18px; position:relative; left:-40px; top:10px; display:flex">
                           <i class="fa-solid fa-circle-plus"></i>
                         </button>
-                      {% endif %}
+                  {% endif %}
+                  
+                    <!-- 👇 PRESENCE SYSTEM HERE -->
+                    {% include "components/user_presence.html" with user=problem.author %}
                 </div>
 
             <!-- Controls & Badges -->
@@ -130,33 +168,33 @@
               </div>
               {% endif %}
             </div>
-          </div><hr>
-
+          </div>
+          
           <!-- Body -->
           <!-- Problem Content -->
           <div class="problem-card-body">
-          <h3 class="text-center problem-title">{{ problem.title }}</h3><br>
-          <div class="problem-content mb-2 read-more-box">
-              <div class="read-more-text">
-                  {{ problem.description|convert_mentions|linebreaksbr|safe }}
-              </div>
-              <button class="read-more-btn">Read more</button>
-          </div>
+            <h5 class="text-center problem-title">{{ problem.title }}</h5><br>
+            <div class="problem-content mb-2 read-more-box">
+                <div class="read-more-text">
+                    {{ problem.description|convert_mentions|linebreaksbr|linkify|safe }}
+                </div>
+                <button class="read-more-btn">Read more</button>
+            </div>
 
-          <!-- Media -->
-          {% if problem.file %}
-          {% with problem.file.url|lower as file_url %}
-          <div class="media-container mb-2 text-center">
-              {% if ".jpg" in file_url or ".jpeg" in file_url or ".png" in file_url or ".gif" in file_url %}
-              <img src="{{ problem.file.url }}" class="clickable-media" data-type="image" data-src="{{ problem.file.url }}" style="width:80%; height:250px; cursor:pointer; border-radius:8px;">
-              {% elif ".mp4" in file_url or ".mov" in file_url or ".avi" in file_url or ".mkv" in file_url or ".webm" in file_url %}
-              <video src="{{ problem.file.url }}" class="clickable-media" data-type="video" data-src="{{ problem.file.url }}" style="width:80%; height:250px; border-radius:8px;" controls></video>
-              {% elif ".mp3" in file_url or ".wav" in file_url or ".aac" in file_url %}
-              <audio src="{{ problem.file.url }}" class="clickable-media" data-type="audio" data-src="{{ problem.file.url }}" style="width:100%;" controls></audio>
-              {% endif %}
-          </div>
-          {% endwith %}
-          {% endif %}
+            <!-- Media -->
+            {% if problem.file %}
+            {% with problem.file.url|lower as file_url %}
+            <div class="media-container mb-2 text-center">
+                {% if ".jpg" in file_url or ".jpeg" in file_url or ".png" in file_url or ".gif" in file_url %}
+                <img src="{{ problem.file.url }}" class="clickable-media" data-type="image" data-src="{{ problem.file.url }}" style="width:80%; height:250px; cursor:pointer; border-radius:8px;">
+                {% elif ".mp4" in file_url or ".mov" in file_url or ".avi" in file_url or ".mkv" in file_url or ".webm" in file_url %}
+                <video src="{{ problem.file.url }}" class="clickable-media" data-type="video" data-src="{{ problem.file.url }}" style="width:80%; height:250px; border-radius:8px;" controls></video>
+                {% elif ".mp3" in file_url or ".wav" in file_url or ".aac" in file_url %}
+                <audio src="{{ problem.file.url }}" class="clickable-media" data-type="audio" data-src="{{ problem.file.url }}" style="width:100%;" controls></audio>
+                {% endif %}
+            </div>
+            {% endwith %}
+            {% endif %}
 
             <!-- Interaction Buttons -->
             <div class="d-flex flex-wrap align-items-center gap-3 mb-3">
@@ -189,7 +227,7 @@
               <!-- Tip -->
               {% if request.user != problem.author %}
               <div class="d-flex align-items-center gap-1">
-                <input type="number" class="form-control form-control-sm problem-tip-amount" placeholder="Tip $" style="width:70px;" title="Enter tip amount">
+                <input type="number" class="form-control form-control-sm problem-tip-amount" placeholder="Tip $" style="width:100px;" title="Enter tip amount">
                 <button class="btn btn-sm btn-warning send-problem-tip-btn" data-id="{{ problem.id }}" title="Tip this post">
                   <i class="fas fa-coins"></i> Tip
                 </button>
@@ -231,89 +269,55 @@
             </div>
             {% endif %}
 
-          <!-- Comments Section -->
-          <div class="comment-section">
+            <div id="adsPlaceholder-problem-{{ problem.id }}"
+                  data-problem-id="{{ problem.id }}">
+                  <!-- post content -->
+              {% include "partials/smart-card-ads.module.html" %}
+            </div>
 
-            <!-- View Comments Toggle Button -->
-            {% if problem.comments.count > 0 %}
-            <button class="btn btn-sm btn-link view-comments-btn text-decoration-none" type="button"  title="View comments">
-                Comments ({{ problem.comments.count|abbreviate_number }})
-            </button>
-            {% endif %}
-            <!-- Comment Form (always visible, not scrollable) -->
-            {% if user.is_authenticated %}
-              <form class="comment-form d-flex align-items-start gap-2 mt-2" data-problem-id="{{ problem.id }}">
-                  {% csrf_token %}
-                  <textarea 
-                      name="content" 
-                      class="form-control form-control-sm comment-textarea flex-grow-1" 
-                      placeholder="Write a comment..." 
-                      rows="1" 
-                      required
-                      style="resize: none; overflow:hidden;"
-                  ></textarea>
-                  <button type="submit" class="btn btn-sm btn-success d-flex align-items-center justify-content-center" title="Post comment">
-                      <i class="fas fa-paper-plane"></i>
-                  </button>
-              </form>
-            {% endif %}
+            <!-- Comments Section -->
+            <div class="comment-section">
+
+              <!-- View Comments Toggle Button -->
+              {% if problem.comments.count > 0 %}
+              <button class="btn btn-sm btn-link view-comments-btn text-decoration-none" type="button"  title="View comments">
+                  Comments ({{ problem.comments.count|abbreviate_number }})
+              </button>
+              {% endif %}
+              <!-- Comment Form (always visible, not scrollable) -->
+              {% if user.is_authenticated %}
+                <form class="comment-form d-flex align-items-start gap-2 mt-2" data-problem-id="{{ problem.id }}">
+                    {% csrf_token %}
+                    <textarea 
+                        name="content" 
+                        class="form-control form-control-sm comment-textarea flex-grow-1" 
+                        placeholder="Write a comment..." 
+                        rows="1" 
+                        required
+                        style="overflow:hidden; white-space:pre-wrap;"
+                    ></textarea>
+                    <button type="submit" class="btn btn-sm btn-success d-flex align-items-center justify-content-center" title="Post comment">
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </form>
+              {% endif %}
             <!-- Comments List (scrollable container) -->
             <div class="comments-list-container" style="display: none; max-height: 300px; overflow-y: auto;">
-                <div class="comments-list d-flex flex-column">
+
+                <div class="comments-list d-flex flex-column" id="comments-{{ problem.id }}">
+
                     {% for comment in problem.comments.all|dictsortreversed:"created_at" %}
-                    <div class="comment-card card mb-2 p-2" data-id="{{ comment.id }}" style="border-radius:8px; box-shadow:0 1px 4px rgba(0,0,0,0.08);">
-                        <div class="d-flex align-items-start gap-2">
-
-                        <!-- Avatar -->
-                        <a href="{% url 'profile' comment.user.id %}">
-                            {% if comment.user.avatar %}
-                              <img src="{{ comment.user.avatar.url }}" class="rounded-circle" style="width:36px; height:36px; object-fit:cover;">
-                            {% else %}
-                              {% with first=comment.user.username|slice:":1"|upper %}
-                              <div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center" style="width:36px; height:36px; font-weight:bold;">
-                                  {{ first }}
-                              </div>
-                              {% endwith %}
-                            {% endif %}
-                        </a>
-                        <!-- Username + Timestamp + Content -->
-                        <div class="flex-grow-1">
-                            <div class="d-flex justify-content-between align-items-start">
-                              <div class="d-flex flex-column">
-                                <a href="{% url 'profile' comment.user.id %}">
-                                  <strong>{{ comment.user.username }}</strong>
-                                </a>
-                                <small class="comment-time " data-time="{{ comment.created_at|date:'c' }}"></small>
-                              </div>
-                                {% if user == comment.user %}
-                                <div class="d-flex gap-1">
-                                    <button class="btn btn-light btn-sm action-btn edit-comment-btn" data-id="{{ comment.id }}" title="Edit">
-                                        <i class="fas fa-edit"></i>
-                                    </button>
-
-                                    <button class="btn btn-light btn-sm action-btn delete-comment-btn text-danger" data-id="{{ comment.id }}" title="Delete">
-                                        <i class="fas fa-trash-alt"></i>
-                                    </button>
-
-                                </div>
-                                {% endif %}
-                            </div>
-                            <div class="comment-content mt-3 read-more-box">
-                                <div class="read-more-text">
-                                    {{ comment.content|convert_mentions|linebreaksbr|safe }}
-                                </div>
-                                <button class="read-more-btn">Read more</button>
-                            </div>
-                        </div>
-                        </div>
-                    </div>
+                        {% include "partials/comment.html" %}
                     {% endfor %}
+
                 </div>
+
             </div>
             </div>
           </div>
         </div>
         {% endif %}
+        
         <!-- SHARE MODAL -->
           <div class="modal fade" id="shareModal-{{ problem.id }}" tabindex="-1" aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered">
@@ -356,43 +360,149 @@
 
     <!-- Mobile Bookmark Panel -->
     <div class="col-lg-4 position-relative">
-      <div class="sticky-panel" id="bookmarkcard">
-      <h5>Bookmarks</h5>
-      <div class="bookmark-content">
-        {% if bookmarked_problems %}
-          <ul class="list-group list-group-flush bookmark-list">
-            {% for bp in bookmarked_problems %}
-              <li class="list-group-item bookmark-item px-0" data-id="{{ bp.id }}">
-                <a href="#problem-{{ bp.id }}" class="bookmark-title text-decoration-none d-block">
-                  {{ bp.title|truncatechars:50 }}
-                  {% if bp.title|length > 50 %}
-                      <span class="read-more">...Read more</span>
-                  {% endif %}
-                </a>
-              </li>
-            {% endfor %}
-          </ul>
-        {% else %}
-          <div class="small">
-            <i class="fas fa-bookmark me-1"></i> No bookmarks yet.
-          </div>
-        {% endif %}
-      </div>
+
+        <div class="sticky-panel" id="bookmarkcard">
+
+            <h5>
+                Bookmarks
+            </h5>
+
+            <div class="bookmark-content">
+
+                {% if bookmarked_problems %}
+
+                    <ul class="list-group list-group-flush bookmark-list">
+
+                        {% for bp in bookmarked_problems %}
+
+                            <li class="list-group-item bookmark-item px-0"
+                                data-id="{{ bp.id }}">
+
+                                <a href="#problem-{{ bp.id }}"
+                                  data-spa-link
+                                  class="bookmark-title text-decoration-none d-block">
+
+                                    {{ bp.title|truncatechars:50 }}
+
+                                    {% if bp.title|length > 50 %}
+                                        <span class="read-more">
+                                            ...Read more
+                                        </span>
+                                    {% endif %}
+
+                                </a>
+
+                            </li>
+
+                            <!-- ========================================= -->
+                            <!-- GOOGLE AD EVERY 2 BOOKMARKS -->
+                            <!-- ========================================= -->
+
+                            {% if forloop.counter|divisibleby:2 %}
+
+                                <li class="list-group-item border-0 px-0 py-3 google-ad-item d-none">
+
+                                    <div class="bookmark-google-ad">
+
+                                        <ins class="adsbygoogle"
+                                            style="display:block"
+                                            data-ad-client="ca-pub-XXXXXXXXXXXX"
+                                            data-ad-slot="XXXXXXXXXX"
+                                            data-ad-format="auto"
+                                            data-full-width-responsive="true">
+                                        </ins>
+
+                                    </div>
+
+                                </li>
+
+                            {% endif %}
+
+                        {% endfor %}
+
+                    </ul>
+
+                {% else %}
+
+                    <div class="small">
+                        <i class="fas fa-bookmark me-1"></i>
+                        No bookmarks yet.
+                    </div>
+
+                {% endif %}
+
+            </div>
+
+        </div>
+
     </div>
+
+    <!-- Overlay -->
+    <div id="bookmarkOverlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1000;"></div>
+
   </div>
+  <!-- ========================== -->
+  <!-- Image Modal -->
+  <!-- ========================== -->
+  <!-- Media Modal -->
+  <div id="media-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); justify-content:center; align-items:center; z-index:2000; flex-direction:column;">
+    <span id="media-modal-close" style="position:absolute; top:20px; right:30px; font-size:30px; color:white; cursor:pointer;">&times;</span>
+    <div id="media-modal-content" style="max-width:90%; max-height:90%; display:flex; justify-content:center; align-items:center;"></div>
+  </div><br><br><br>
 
-  <!-- Overlay -->
-  <div id="bookmarkOverlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1000;"></div>
 
-</div>
-<!-- ========================== -->
-<!-- Image Modal -->
-<!-- ========================== -->
-<!-- Media Modal -->
-<div id="media-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); justify-content:center; align-items:center; z-index:2000; flex-direction:column;">
-  <span id="media-modal-close" style="position:absolute; top:20px; right:30px; font-size:30px; color:white; cursor:pointer;">&times;</span>
-  <div id="media-modal-content" style="max-width:90%; max-height:90%; display:flex; justify-content:center; align-items:center;"></div>
-</div><br><br><br>
+<style>
+.bookmark-google-ad {
+    overflow: hidden;
+    border-radius: 12px;
+    background: #fff;
+    min-height: 100px;
+    padding: 10px;
+    border: 1px solid #e5e7eb;
+}
+
+.google-ad-item.d-none {
+    display: none !important;
+}
+</style>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+    const adItems = document.querySelectorAll(".google-ad-item");
+
+    adItems.forEach(item => {
+
+        const ad = item.querySelector(".adsbygoogle");
+
+        if (!ad) return;
+
+        try {
+
+            (adsbygoogle = window.adsbygoogle || []).push({});
+
+            // Reveal only if ad filled
+            setTimeout(() => {
+
+                const iframe = ad.querySelector("iframe");
+
+                if (iframe) {
+                    item.classList.remove("d-none");
+                }
+
+            }, 1500);
+
+        } catch (err) {
+
+            console.log("Adsense error:", err);
+
+        }
+
+    });
+
+});
+</script>
+
 <script>
 function copyProblemLink(problemId) {
     const url = "{{ request.scheme }}://{{ request.get_host }}{% url 'talenthub' %}#problem-" + problemId;
@@ -437,6 +547,8 @@ document.addEventListener("DOMContentLoaded", function () {
     document.querySelectorAll(".read-more-box").forEach(initReadMore);
 
 });
+
+
 </script>
 <style>
 
@@ -480,7 +592,6 @@ BOOKMARK PANEL (DESKTOP)
   border-radius: 10px;
   background: var(--card);
 
-  box-shadow: 0 3px 10px rgba(0,0,0,0.08);
 
   font-size: clamp(0.9rem,1vw,1rem);
 }
@@ -547,7 +658,6 @@ MOBILE BOOKMARK PANEL
     background: var(--card);
     border-left: 1px solid #ddd;
 
-    box-shadow: -4px 0 15px rgba(0,0,0,0.15);
 
     z-index: 2000;
 
@@ -891,143 +1001,198 @@ document.addEventListener("DOMContentLoaded", () => {
     // ===========================
   // AJAX Comment Posting
   // ===========================
-  document.querySelectorAll(".comment-form").forEach(form => {
+document.querySelectorAll(".comment-form").forEach(form => {
     form.addEventListener("submit", async e => {
-      e.preventDefault();
+        e.preventDefault();
 
-      const pid = form.dataset.problemId;
-      const input = form.querySelector(".comment-textarea"); // ✅ fixed
-      const content = input.value.trim();
-      if (!content) return;
+        const pid = form.dataset.problemId;
+        const textarea = form.querySelector(".comment-textarea");
+        const content = textarea.value.trim();
 
-      const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+        if (!content) return;
 
-      const formData = new FormData();
-      formData.append("csrfmiddlewaretoken", csrfToken);
-      formData.append("content", content);
-      formData.append("problem_id", pid);
+        const formData = new FormData(form);
+        formData.set("content", content);
+        formData.set("problem_id", pid);
 
-      try {
-        // Send comment to server
-        const res = await fetch("/comments/create/", {
-          method: "POST",
-          body: formData,
-          headers: { "X-Requested-With": "XMLHttpRequest" }
-        });
+        try {
+            const res = await fetch("/comments/create/", {
+                method: "POST",
+                body: formData,
+                headers: {
+                    "X-Requested-With": "XMLHttpRequest"
+                }
+            });
 
-        const data = await res.json();
+            const data = await res.json();
 
-        if (!data.success) {
-          return alert(data.error || "Failed to post comment");
+            if (!data.success) {
+                return alert(data.error || "Failed to post comment");
+            }
+
+            const commentList = document.querySelector(`#comments-${pid}`);
+
+if (commentList) {
+    const wrapper = document.createElement("div");
+    wrapper.innerHTML = data.html.trim();
+
+    const newComment = wrapper.firstElementChild;
+
+    // 🔥 FORCE consistency
+    newComment.classList.add("comment-card");
+
+    commentList.prepend(newComment);
+}
+            textarea.value = "";
+            textarea.style.height = "auto";
+
+        } catch (err) {
+            console.error(err);
+            alert("Error posting comment");
         }
-
-        // Reload the page so that the view can render comments
-        window.location.reload();
-
-      } catch (err) {
-        console.error(err);
-        alert("Error posting comment");
-      }
     });
-  });
+});
 
-  // ===========================
-  // Edit / Delete Inline
-  // ===========================
-  document.body.addEventListener("click", async e => {
+document.body.addEventListener("click", async e => {
+
     const editBtn = e.target.closest(".edit-problem-btn, .edit-comment-btn, .edit-answer-btn");
     const deleteBtn = e.target.closest(".delete-problem-btn, .delete-comment-btn, .delete-answer-btn");
 
+    // =========================
     // EDIT
+    // =========================
     if (editBtn) {
-      e.preventDefault();
-      const card = editBtn.closest(".problem-card, .comment-card, .answer-card");
-      const contentDiv = card.querySelector(".problem-content, .comment-content, .answer-content");
-      const originalHTML = contentDiv.innerHTML;
+        e.preventDefault();
 
-      const textarea = document.createElement("textarea");
-      textarea.className = "form-control mb-1";
-      textarea.value = contentDiv.innerText;
+        const card = editBtn.closest(".problem-card, .comment-card, .answer-card");
+        const contentDiv = card.querySelector(
+            ".problem-content, .comment-content, .answer-content"
+        );
 
-      const saveBtn = document.createElement("button");
-      saveBtn.className = "btn btn-sm btn-success me-1";
-      saveBtn.textContent = "Save";
+        const originalText = contentDiv.innerText;
 
-      const cancelBtn = document.createElement("button");
-      cancelBtn.className = "btn btn-sm btn-secondary";
-      cancelBtn.textContent = "Cancel";
+        const wrapper = document.createElement("div");
+        wrapper.className = "inline-edit";
 
-      const wrapper = document.createElement("div");
-      wrapper.className = "inline-edit";
-      wrapper.append(textarea, saveBtn, cancelBtn);
-      contentDiv.replaceWith(wrapper);
+        const textarea = document.createElement("textarea");
+        textarea.className = "form-control mb-2";
+        textarea.value = originalText;
 
-      cancelBtn.onclick = () => wrapper.outerHTML = `<div class="${contentDiv.className}">${originalHTML}</div>`;
+        const saveBtn = document.createElement("button");
+        saveBtn.className = "btn btn-sm btn-success me-1";
+        saveBtn.textContent = "Save";
 
-      saveBtn.onclick = async () => {
-        const newContent = textarea.value.trim();
-        if (!newContent) return alert("Content cannot be empty");
+        const cancelBtn = document.createElement("button");
+        cancelBtn.className = "btn btn-sm btn-secondary";
+        cancelBtn.textContent = "Cancel";
 
+        wrapper.append(textarea, saveBtn, cancelBtn);
+
+        contentDiv.replaceWith(wrapper);
+
+        // CANCEL (SAFE RESTORE)
+        cancelBtn.onclick = () => {
+            wrapper.replaceWith(contentDiv);
+        };
+
+        // SAVE
+        saveBtn.onclick = async () => {
+
+            const newContent = textarea.value.trim();
+            if (!newContent) return alert("Content cannot be empty");
+
+            const id = card.dataset.id;
+
+            let url = "";
+            let payload = {};
+
+            if (card.classList.contains("problem-card")) {
+                url = `/problems/update/${id}/`;
+                payload = { description: newContent };
+            } 
+            else if (card.classList.contains("comment-card")) {
+                url = `/comments/problem/${id}/edit/`;
+                payload = { content: newContent };
+            } 
+            else if (card.classList.contains("answer-card")) {
+                url = `/answers/update/${id}/`;
+                payload = { content: newContent };
+            }
+
+            try {
+                const res = await fetch(url, {
+                    method: "POST",
+                    headers: {
+                        "X-Requested-With": "XMLHttpRequest",
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!res.ok) throw new Error(res.status);
+
+                // 🔥 CRITICAL FIX: DO NOT REBUILD DOM MANUALLY
+                // instead just update text safely
+
+                const newContentDiv = document.createElement("div");
+                newContentDiv.className = contentDiv.className;
+                newContentDiv.innerHTML = `
+                    <div class="read-more-text">
+                        ${newContent}
+                    </div>
+                    <button class="read-more-btn">Read more</button>
+                `;
+
+                wrapper.replaceWith(newContentDiv);
+
+            } catch (err) {
+                console.error(err);
+                alert("Edit failed");
+            }
+        };
+    }
+
+    // =========================
+    // DELETE
+    // =========================
+    if (deleteBtn) {
+        e.preventDefault();
+
+        if (!confirm("Are you sure you want to delete this item?")) return;
+
+        const card = deleteBtn.closest(".problem-card, .comment-card, .answer-card");
         const id = card.dataset.id;
+
         let url = "";
-        let payload = {};
 
         if (card.classList.contains("problem-card")) {
-            url = `/problems/update/${id}/`;
-            payload = { description: newContent }; // ✅ FIX HERE
+            url = `/problems/delete/${id}/`;
         } 
         else if (card.classList.contains("comment-card")) {
-            url = `/comments/problem/${id}/edit/`;
-            payload = { content: newContent };
+            url = `/comments/problem/${id}/delete/`;
         } 
         else if (card.classList.contains("answer-card")) {
-            url = `/answers/update/${id}/`;
-            payload = { content: newContent };
+            url = `/answers/delete/${id}/`;
         }
 
         try {
             const res = await fetch(url, {
-            method: "POST",
-            headers: {
-                'X-CSRFToken': csrfToken,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(payload)
+                method: "POST",
+                headers: {
+                    "X-Requested-With": "XMLHttpRequest"
+                }
             });
 
             if (!res.ok) throw new Error(res.status);
 
-            wrapper.outerHTML = `<div class="${contentDiv.className}">${newContent}</div>`;
+            card.remove();
+
         } catch (err) {
             console.error(err);
-            alert("Edit failed");
+            alert("Delete failed");
         }
-        };
     }
-
-    // DELETE
-    if (deleteBtn) {
-      e.preventDefault();
-      if (!confirm("Are you sure you want to delete this item?")) return;
-
-      const card = deleteBtn.closest(".problem-card, .comment-card, .answer-card");
-      const id = card.dataset.id;
-      let url = "";
-      if (card.classList.contains("problem-card")) url = `/problems/delete/${id}/`;
-      else if (card.classList.contains("comment-card")) url = `/comments/problem/${id}/delete/`;
-      else if (card.classList.contains("answer-card")) url = `/answers/delete/${id}/`;
-
-      try {
-        const res = await fetch(url, { method: "POST", headers: { 'X-CSRFToken': csrfToken } });
-        if (!res.ok) throw new Error(res.status);
-        card.remove();
-      } catch (err) {
-        console.error(err);
-        alert("Delete failed");
-      }
-    }
-  });
-
+});
 // -------------------------
 // FOLLOW MESSAGE
 // -------------------------
@@ -1167,92 +1332,429 @@ sortSelect.addEventListener("change", filterAndSortProblems);
   document.querySelectorAll(".clickable-media, .answer-media").forEach(disableMediaDownload);
 
 
+const problemsContainer = document.getElementById("problems-talenthub-container");
+
+
+
+let allCards = [];
+
+let initialized = false;
+
+let isRotating = false;
+
+
+
+// how many items move per scroll
+
+const BATCH_SIZE = 5;
+
+
+
 // -------------------------
-  // INFINITE SCROLL / AUTOLOAD
-  // -------------------------
-  let currentPage = 1;        // Tracks current page
-  let isLoading = false;      // Prevent duplicate fetches
-  const problemsContainer = document.getElementById("problems-talenthub-container");
 
-  const loadNextPage = async () => {
-    if (isLoading) return;
-    isLoading = true;
-    currentPage++;
+// INIT (FETCH ONCE ONLY)
 
-    try {
-      const res = await fetch(`/talenthub?page=${currentPage}`);
-      if (!res.ok) return;
+// -------------------------
 
-      const html = await res.text();
-      const tempDiv = document.createElement("div");
-      tempDiv.innerHTML = html;
-      const newCards = Array.from(tempDiv.querySelectorAll(".problem-card"));
+const initFeed = async () => {
 
-      // Append new cards
-      newCards.forEach(card => problemsContainer.appendChild(card));
+  if (initialized) return;
 
-      // Update timestamps for newly added cards
-      newCards.forEach(card => {
-        card.querySelectorAll('.problem-time, .comment-time').forEach(el => {
-          const now = new Date();
-          const time = new Date(el.dataset.time);
-          const diffMs = now - time;
-          const diffMins = Math.floor(diffMs / 60000);
+  initialized = true;
 
-          if(diffMins < 1) {
-            el.innerText = 'Just now';
-          } else if(diffMins < 60) {
-            el.innerText = `${diffMins} min${diffMins > 1 ? 's' : ''} ago`;
-          } else if(diffMins < 1440) {
-            const hours = Math.floor(diffMins / 60);
-            el.innerText = `${hours} hour${hours > 1 ? 's' : ''} ago`;
-          } else {
-            const days = Math.floor(diffMins / 1440);
-            el.innerText = `${days} day${days > 1 ? 's' : ''} ago`;
-          }
-        });
-      });
 
-      // Re-initialize vote buttons, save buttons, media, etc.
-      newCards.forEach(card => {
-        card.querySelectorAll(".vote-btn").forEach(btn => btn.addEventListener("click", () => handleVote(btn)));
-        card.querySelectorAll(".save-btn").forEach(btn => {
-          btn.addEventListener("click", async () => {
-            const problemId = btn.dataset.id;
-            const textSpan = btn.querySelector(".save-text");
-            const icon = btn.querySelector("i");
-            try {
-              const res = await fetch(`/problems/talenthub/${problemId}/save/`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json", "X-CSRFToken": csrfToken }
-              });
-              const data = await res.json();
-              if (data.status === "saved") {
-                textSpan.textContent = "Saved";
-                icon.classList.add("active");
-              } else {
-                textSpan.textContent = "Save";
-                icon.classList.remove("active");
-              }
-            } catch(err) { console.error(err); }
-          });
-        });
-        card.querySelectorAll(".clickable-media, .answer-media").forEach(disableMediaDownload);
-      });
 
-    } catch(err) {
-      console.error("Failed to load next page:", err);
-    } finally {
-      isLoading = false;
-    }
-  };
+  try {
 
-  // Detect when user scrolls near bottom (200px from bottom)
-  window.addEventListener("scroll", () => {
-    if ((window.innerHeight + window.scrollY) >= (document.body.offsetHeight - 200)) {
-      loadNextPage();
-    }
+    const res = await fetch(`/talenthub`);
+
+    if (!res.ok) return;
+
+
+
+    const html = await res.text();
+
+
+
+    const tempDiv = document.createElement("div");
+
+    tempDiv.innerHTML = html;
+
+
+
+    allCards = Array.from(tempDiv.querySelectorAll(".problem-card"));
+
+
+
+    initCards(allCards);
+
+
+
+    renderInitial();
+
+
+
+  } catch (err) {
+
+    console.error("Init failed:", err);
+
+  }
+
+};
+
+
+
+const renderInitial = () => {
+
+  const first = allCards.slice(0, 10);
+
+
+
+  first.forEach(card => {
+
+    problemsContainer.appendChild(card);
+
   });
+
+};
+
+
+
+
+
+const rotateFeed = () => {
+
+  if (isRotating) return;
+
+
+
+  isRotating = true;
+
+
+
+  requestAnimationFrame(() => {
+
+    const currentCards = Array.from(
+
+      problemsContainer.querySelectorAll(".problem-card")
+
+    );
+
+
+
+    const toMove = currentCards.slice(0, BATCH_SIZE);
+
+
+
+    toMove.forEach(card => {
+
+      problemsContainer.appendChild(card);
+
+    });
+
+
+
+    isRotating = false;
+
+  });
+
+};
+
+
+
+
+
+let scrollCooldown = false;
+
+
+
+window.addEventListener("scroll", () => {
+
+  if (scrollCooldown) return;
+
+
+
+  const nearBottom =
+
+    window.innerHeight + window.scrollY >=
+
+    document.body.offsetHeight - 200;
+
+
+
+  if (nearBottom) {
+
+    rotateFeed();
+
+
+
+    scrollCooldown = true;
+
+    setTimeout(() => {
+
+      scrollCooldown = false;
+
+    }, 150);
+
+  }
+
+});
+
+
+
+function initCards(cards) {
+
+  cards.forEach(card => {
+
+
+
+    // timestamps
+
+    card.querySelectorAll('.problem-time, .comment-time').forEach(el => {
+
+      const now = new Date();
+
+      const time = new Date(el.dataset.time);
+
+
+
+      const diffMs = now - time;
+
+
+
+      const seconds = Math.floor(diffMs / 1000);
+
+      const minutes = Math.floor(seconds / 60);
+
+      const hours = Math.floor(minutes / 60);
+
+      const days = Math.floor(hours / 24);
+
+      const weeks = Math.floor(days / 7);
+
+      const months = Math.floor(days / 30);
+
+      const years = Math.floor(days / 365);
+
+
+
+      let value = "";
+
+      let unit = "";
+
+
+
+      if (seconds < 60) {
+
+        value = seconds; unit = "s";
+
+      } else if (minutes < 60) {
+
+        value = minutes; unit = "m";
+
+      } else if (hours < 24) {
+
+        value = hours; unit = "h";
+
+      } else if (days < 7) {
+
+        value = days; unit = "d";
+
+      } else if (days < 30) {
+
+        value = weeks; unit = "w";
+
+      } else if (days < 365) {
+
+        value = months; unit = "mo";
+
+      } else {
+
+        value = years; unit = "y";
+
+      }
+
+
+
+      el.innerText = `${value}${unit}`;
+
+    });
+
+
+
+    // votes
+
+    card.querySelectorAll(".vote-btn").forEach(btn => {
+
+      if (btn.dataset.bound === "1") return;
+
+      btn.dataset.bound = "1";
+
+
+
+      btn.addEventListener("click", () => handleVote(btn));
+
+    });
+
+
+
+    // save
+
+    card.querySelectorAll(".save-btn").forEach(btn => {
+
+      if (btn.dataset.bound === "1") return;
+
+      btn.dataset.bound = "1";
+
+
+
+      btn.addEventListener("click", async () => {
+
+        const problemId = btn.dataset.id;
+
+        const textSpan = btn.querySelector(".save-text");
+
+        const icon = btn.querySelector("i");
+
+
+
+        try {
+
+          const res = await fetch(
+
+            `/problems/talenthub/${problemId}/save/`,
+
+            {
+
+              method: "POST",
+
+              headers: {
+
+                "Content-Type": "application/json",
+
+                "X-CSRFToken": csrfToken
+
+              }
+
+            }
+
+          );
+
+
+
+          const data = await res.json();
+
+
+
+          if (data.status === "saved") {
+
+            textSpan.textContent = "Saved";
+
+            icon.classList.add("active");
+
+          } else {
+
+            textSpan.textContent = "Save";
+
+            icon.classList.remove("active");
+
+          }
+
+
+
+        } catch (err) {
+
+          console.error(err);
+
+        }
+
+      });
+
+    });
+
+
+
+    // media protection
+
+    card.querySelectorAll(".clickable-media, .answer-media")
+
+      .forEach(disableMediaDownload);
+
+
+
+    initAds(card);
+
+  });
+
+}
+
+
+
+
+
+function initAds(root = document) {
+
+
+
+  root.querySelectorAll("[id^='adsPlaceholder-']").forEach(el => {
+
+
+
+    if (el.dataset.loaded === "1") return;
+
+    el.dataset.loaded = "1";
+
+
+
+    const problemId = el.dataset.problemId;
+
+    if (!problemId) return;
+
+
+
+    requestAnimationFrame(() => {
+
+
+
+      fetch(`/ads/${problemId}/`)
+
+        .then(res => res.json())
+
+        .then(data => {
+
+
+
+          if (!data.success || !data.html?.trim()) {
+
+            el.remove();
+
+            return;
+
+          }
+
+
+
+          el.innerHTML = data.html;
+
+
+
+          initAdsCarousel(el);
+
+        })
+
+        .catch(() => el.remove());
+
+
+
+    });
+
+  });
+
+}
+
+
+
+initFeed();
 
 
 // ===========================
@@ -1521,23 +2023,55 @@ function updateTimes() {
   const now = new Date();
 
   timeElements.forEach(el => {
-    const time = new Date(el.dataset.time);
-    const diffMs = now - time;
-    const diffMins = Math.floor(diffMs / 60000);
 
-    if(diffMins < 1) {
-      el.innerText = 'Just now';
-    } else if(diffMins < 60) {
-      el.innerText = `${diffMins} min${diffMins > 1 ? 's' : ''} ago`;
-    } else if(diffMins < 1440) { // less than a day
-      const hours = Math.floor(diffMins / 60);
-      el.innerText = `${hours} hour${hours > 1 ? 's' : ''} ago`;
-    } else { // days
-      const days = Math.floor(diffMins / 1440);
-      el.innerText = `${days} day${days > 1 ? 's' : ''} ago`;
+    const now = new Date();
+    const time = new Date(el.dataset.time);
+
+    const diffMs = now - time;
+
+    const seconds = Math.floor(diffMs / 1000);
+    const minutes = Math.floor(seconds / 60);
+    const hours = Math.floor(minutes / 60);
+    const days = Math.floor(hours / 24);
+    const weeks = Math.floor(days / 7);
+    const months = Math.floor(days / 30);
+    const years = Math.floor(days / 365);
+
+    let value = "";
+    let unit = "";
+
+    if (seconds < 60) {
+      value = seconds;
+      unit = "s";
+
+    } else if (minutes < 60) {
+      value = minutes;
+      unit = "m";
+
+    } else if (hours < 24) {
+      value = hours;
+      unit = "h";
+
+    } else if (days < 7) {
+      value = days;
+      unit = "d";
+
+    } else if (days < 30) {
+      value = weeks;
+      unit = "w";
+
+    } else if (days < 365) {
+      value = months;
+      unit = "mo";
+
+    } else {
+      value = years;
+      unit = "y";
     }
+
+    el.innerText = `${value}${unit}`;
   });
-}
+  }
 
 // Initial update
 updateTimes();
@@ -1546,5 +2080,119 @@ updateTimes();
 setInterval(updateTimes, 60000);
 </script>
 
+
+<script>
+function isImage(url) {
+    if (!url) return false;
+
+    const cleanUrl = url.split("?")[0].toLowerCase();
+
+    const imageExts = [
+        ".jpg", ".jpeg", ".png", ".webp",
+        ".gif", ".bmp", ".svg", ".avif"
+    ];
+
+    // direct file match
+    if (imageExts.some(ext => cleanUrl.endsWith(ext))) return true;
+
+    // CDN / API hints
+    if (
+        cleanUrl.includes("image") ||
+        cleanUrl.includes("cdn") ||
+        cleanUrl.includes("media")
+    ) return true;
+
+    return false;
+}
+
+function initAdsCarousel(root) {
+
+    const container = root.querySelector(".problem-ads");
+    if (!container) return;
+
+    let slides = Array.from(container.querySelectorAll(".ad-horizontal"));
+
+    // =====================================================
+    // FILTER ONLY IMAGE ADS (IMPORTANT ADDITION)
+    // =====================================================
+    slides = slides.filter(slide => {
+        const img = slide.querySelector("img");
+        const src = img?.getAttribute("src") || "";
+        return isImage(src);
+    });
+
+    if (slides.length <= 1) return;
+
+    let index = 0;
+
+    function shuffle(arr) {
+        for (let i = arr.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [arr[i], arr[j]] = [arr[j], arr[i]];
+        }
+        return arr;
+    }
+
+    function render() {
+        container.innerHTML = "";
+        slides.forEach(s => container.appendChild(s));
+    }
+
+    slides = shuffle(slides);
+    render();
+
+    function slide() {
+
+        index++;
+
+        if (index >= slides.length) {
+            index = 0;
+            slides = shuffle(slides);
+            render();
+        }
+
+        const width = slides[0].offsetWidth;
+        container.style.transform = `translateX(-${index * width}px)`;
+    }
+
+    let interval = setInterval(slide, 4000);
+
+    root.addEventListener("mouseenter", () => clearInterval(interval));
+    root.addEventListener("mouseleave", () => {
+        interval = setInterval(slide, 4000);
+    });
+}
+
+
+// =====================================================
+// FETCH ADS + INIT PER BLOCK
+// =====================================================
+
+document.querySelectorAll("[id^='adsPlaceholder-']").forEach(el => {
+
+    const problemId = el.dataset.problemId;
+    if (!problemId) return;
+
+    fetch(`/ads/${problemId}/`)
+        .then(res => res.json())
+        .then(data => {
+
+            // ❌ no ads → remove placeholder completely
+            if (!data.success || !data.html || !data.html.trim()) {
+                el.remove();
+                return;
+            }
+
+            // ✅ ads exist → inject
+            el.innerHTML = data.html;
+
+            // init carousel
+            initAdsCarousel(el);
+        })
+        .catch(() => {
+            el.remove(); // fail-safe cleanup
+        });
+});
+</script>
 
 {% endblock %}

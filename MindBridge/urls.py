@@ -1,31 +1,52 @@
 from django.urls import path
 
 
+from MindBridge.views.admin_views import AdminSendEmailView
 from MindBridge.views.ads_views import (
+    DeleteAdView,
+    EditDraftAdView,
+    EnableRecurringAdView,
     ProblemAdsView,
     CreateAdView, CreateAdPaymentView, AdPaymentSuccessView,
     AdvertiserDashboardView, AdminAdsDashboardView, AdClickView,
+    ProblemSponsoredAdsView,
+    RelaunchAdView,
+    SaveAdDraftView,
+    StopRecurringAdView,
     
 )
 
 from MindBridge.views.auth_views import (
+    DeleteProfileView,
+    ExpertSearchView,
+    ForgotPasswordView,
     RegisterView,
     LoginView,
     LogoutView,
     ProfileView,
+    ReportUserView,
     ResendOTPView,
+    ResetPasswordView,
+    SendEmailChangeOTPView,
+    ToggleVerificationRecurringView,
+    UpdateAvailabilityView,
+    UpdateEmailView,
     UpdateProfileView, ProfileActivityAPI,
+    VerifyDeletePasswordView,
+    VerifyEmailChangeOTPView,
     VerifyEmailView,
-    VerifyOTPView
+    VerifyOTPView,
+    VerifyPasswordAjax,
+    VerifyPasswordResetOTPView
 )
 
-from MindBridge.views.data_processing import PrivacyPartialView, PrivacyView, TermsPartialView, TermsView
+from MindBridge.views.data_processing import FAQView, PrivacyPartialView, PrivacyView, TermsPartialView, TermsView, TransparentInfo
 from MindBridge.views.feed_views import (
     GlobalFeedView,
     PersonalizedFeedView, 
     TrendingFeedView, FeedsPageView, ProblemIncrementView,
 )
-from MindBridge.views.home_views import HomePageView
+from MindBridge.views.home_views import HomePageView, settingsPageView
 from MindBridge.views.knowledgebase_views import KnowledgeBaseView
 from MindBridge.views.problem_views import (
     CreateProblemView,
@@ -62,6 +83,8 @@ from MindBridge.views.reporting_views import(
     PaymentReportView, download_user_report,
 )
 
+from MindBridge.views.session_views import AvailabilitySlotCreateView, BookingCancelView, BookingCreateView, SlotDeleteView, SlotEventsAPIView, SlotListView, SlotUpdateView
+from MindBridge.views.translator_views import TranslateContentView
 from MindBridge.views.vote_views import (
     VoteProblemView,
     VoteAnswerView,
@@ -78,18 +101,23 @@ from MindBridge.views.tip_views import (
 )
 
 from MindBridge.views.notification_views import (
-    NotificationsListView, MarkReadView, MarkAllReadView, DeleteNotificationView, NotificationsApiView, NotificationsPageView,
+    NotificationsListView, MarkReadView, MarkAllReadView, DeleteNotificationView, NotificationsApiView, NotificationsPageView, SavePushSubscriptionView,
 )
 from MindBridge.views.user_suggestion_views import(
     UserSuggestionView,
 )
 from MindBridge.views.events_views import (
     CreateEventView,
+    EventHubCreateView,
+    EventHubDeleteView,
+    EventHubListView,
+    EventHubUpdateView,
     EventListView,
     EventDetailView,
     JoinEventView,
     InviteUserToEventView,
     AcceptEventInviteView,
+    SetEventReminderView,
     StartLiveEventView,
     StopLiveEventView,
     LiveEventListView,
@@ -111,6 +139,15 @@ from MindBridge.views.expert_verify_views import (
 )
 from MindBridge.views.maintenance import (MaintenancePageView, MissingDataPageView, TemplateView,)
 
+from MindBridge.views.subscription_views import (
+    CreateSubscriptionAPIView,
+    CancelSubscriptionAPIView,
+    PayPalWebhookAPIView,
+    PayPalSubscriptionSuccessView,
+    PayPalSubscriptionCancelView,
+    SubscriptionCheckoutPageView,
+)
+
 urlpatterns = [
 
     # =========================
@@ -126,16 +163,57 @@ urlpatterns = [
     path("auth/verify-otp/", VerifyOTPView.as_view(), name="verify_otp"),
     path("auth/resend-otp/", ResendOTPView.as_view(), name="resend_otp"),
     path("auth/verify-email/", VerifyEmailView.as_view(), name="verify_email"),
-
+    path("auth/faq/", FAQView.as_view(), name="faq"),
     path("auth/profile/<uuid:user_id>/", ProfileView.as_view(), name="profile"),
     path("auth/profile/update/", UpdateProfileView.as_view(), name="update_profile"),
     path('auth/profile/<uuid:user_id>/activity/', ProfileActivityAPI.as_view(), name='profile_activity_api'),
+    path(
+        "auth/forgot-password/",
+        ForgotPasswordView.as_view(),
+        name="forgot_password"
+    ),
 
+    path(
+        "auth/verify-password-reset/",
+        VerifyPasswordResetOTPView.as_view(),
+        name="verify_password_reset_otp"
+    ),
+
+    path(
+        "auth/reset-password/",
+        ResetPasswordView.as_view(),
+        name="reset_password"
+    ),
+    path(
+        "auth/profile/availability/<int:pk>/",
+        UpdateAvailabilityView.as_view(),
+        name="update_availability"
+    ),
+    # urls.py
+    path("auth/profile/experts/", ExpertSearchView.as_view(), name="expert_search"),
+    path(
+        "auth/profile/delete/",
+        DeleteProfileView.as_view(),
+        name="delete_profile"
+    ),
+    path(
+        "verify-delete-password/",
+        VerifyDeletePasswordView.as_view(),
+        name="verify_delete_password"
+    ),
+    path("ajax/verify-password/", VerifyPasswordAjax.as_view(), name="verify_password_ajax"),
+    path("ajax/verify-email-otp/", VerifyEmailChangeOTPView.as_view(), name="verify_email_otp"),
+    path("update-email/", UpdateEmailView.as_view(), name="update_email"),
+    path("ajax/send-email-otp/", SendEmailChangeOTPView.as_view(), name="send_new_email_otp"),
+
+        
     path("privacy/", PrivacyView.as_view(), name="privacy"),
     path("terms/", TermsView.as_view(), name="terms"),
     
     path("privacy/partial/", PrivacyPartialView.as_view(), name="privacy_partial"),
     path("terms/partial/", TermsPartialView.as_view(), name="terms_partial"),
+    path("transparent-info/", TransparentInfo.as_view(), name="transparent_info"),
+    
     # =========================
     # PROBLEMS
     # =========================
@@ -262,6 +340,11 @@ urlpatterns = [
     path('notifications/delete/<int:notif_id>/', DeleteNotificationView.as_view(), name='delete_notification'),
     path("notifications/api/", NotificationsApiView.as_view(), name="notifications_api"),
     path("notifications-page/", NotificationsPageView.as_view(), name="notifications_page"),
+    path(
+        "push/save/",
+        SavePushSubscriptionView.as_view(),
+        name="push_save"
+    ),
     
     # -----------------------------
     # Feeds Page (all feeds)
@@ -385,6 +468,20 @@ urlpatterns = [
     path("events/<uuid:event_id>/delete/", DeleteEventView.as_view(), name="delete_event"),
     
     
+    path("events/hub/", EventHubListView.as_view(), name="eventhub_list"),
+
+    path("events/hub/create/", EventHubCreateView.as_view(), name="eventhub_create"),
+
+    # FIX: MUST be UpdateView (not CreateView)
+    path("events/hub/<uuid:pk>/edit/", EventHubUpdateView.as_view(), name="eventhub_update"),
+
+    path("events/hub/<uuid:pk>/delete/", EventHubDeleteView.as_view(), name="eventhub_delete"),
+    path(
+        "events/hub/<uuid:event_id>/reminder/",
+        SetEventReminderView.as_view(),
+        name="set_event_reminder"
+    ),
+    
     path(
         "payments/link/",
         LinkPaymentAccountView.as_view(),
@@ -425,6 +522,8 @@ urlpatterns = [
     path("ajax/verify-expert/<uuid:user_id>/", AjaxVerifyExpertView.as_view(), name="ajax_verify_expert"),
 
     path("ads/<uuid:problem_id>/", ProblemAdsView.as_view(), name="problem_ads"),
+    path("ads/<uuid:problem_id>/sponsored/", ProblemSponsoredAdsView.as_view(), name="problem_sponsored_ads"),
+    
     path("ads/create/", CreateAdView.as_view(), name="create_ad"),
     path("ads/create/payment/<uuid:ad_id>/", CreateAdPaymentView.as_view(), name="create_ad_payment"),
     path("ads/payment/success/<uuid:ad_id>/", AdPaymentSuccessView.as_view(), name="ad_payment_success"),
@@ -434,9 +533,155 @@ urlpatterns = [
 
     path("ads/<uuid:ad_id>/click/", AdClickView.as_view(), name="ad_click"),
     
-    path("reports/user/<int:user_id>/pdf/", download_user_report, name="download_user_report"),
+    path("ads/save-draft/", SaveAdDraftView.as_view(), name="save_ad_draft"),
+    
+    # ============================================
+    # EDIT DRAFT
+    # ============================================
+    path(
+        "ads/<uuid:ad_id>/edit/",
+        EditDraftAdView.as_view(),
+        name="edit_draft_ad"
+    ),
+
+    # ============================================
+    # RELAUNCH
+    # ============================================
+    path(
+        "ads/<uuid:ad_id>/relaunch/",
+        RelaunchAdView.as_view(),
+        name="relaunch_ad"
+    ),
+
+    # ============================================
+    # ENABLE RECURRING
+    # ============================================
+    path(
+        "ads/<uuid:ad_id>/enable-recurring/",
+        EnableRecurringAdView.as_view(),
+        name="enable_recurring_ad"
+    ),
+
+    # ============================================
+    # STOP RECURRING
+    # ============================================
+    path(
+        "ads/<uuid:ad_id>/stop-recurring/",
+        StopRecurringAdView.as_view(),
+        name="stop_recurring_ad"
+    ),
+
+    # ============================================
+    # DELETE
+    # ============================================
+    path(
+        "ads/<uuid:ad_id>/delete/",
+        DeleteAdView.as_view(),
+        name="delete_ad"
+    ),
+    
+    path("reports/user/<uuid:user_id>/pdf/", download_user_report, name="download_user_report"),
     path("reports/payments/", PaymentReportView.as_view(), name="payment_report"),
     
     path("knowledge-base/", KnowledgeBaseView.as_view(), name="knowledge_base"),
+    
+    
+    # list
+    # =====================================
+    # 📋 MAIN LIST (ALL ACTIONS HAPPEN HERE)
+    # =====================================
+    path('slots/<uuid:user_id>/', SlotListView.as_view(), name='slot_list'),
 
+    # =====================================
+    # 👨‍💻 CREATE SLOT PAGE (only create)
+    # =====================================
+    path('slots/create/', AvailabilitySlotCreateView.as_view(), name='slot_create'),
+
+    # =====================================
+    # ✏️ INLINE UPDATE (POST ONLY)
+    # =====================================
+    path('slots/<uuid:pk>/update/', SlotUpdateView.as_view(), name='slot_update'),
+
+    # =====================================
+    # 🗑 INLINE DELETE (POST ONLY)
+    # =====================================
+    path('slots/<uuid:pk>/delete/', SlotDeleteView.as_view(), name='slot_delete'),
+
+    # =====================================
+    # 📅 BOOK SLOT (POST ONLY)
+    # =====================================
+    path('slots/<uuid:slot_id>/book/', BookingCreateView.as_view(), name='book_slot'),
+    
+    path("booking/cancel/<uuid:booking_id>/", BookingCancelView.as_view(), name="cancel_booking_by_slot"),
+    
+    path("slots/api/", SlotEventsAPIView.as_view(), name="slot_events_api"),
+    
+    # =====================================
+    # ADMIN - SEND EMAIL
+    # =====================================
+    path("send-email/", AdminSendEmailView.as_view(), name="admin_send_email"),
+    path("settings/", settingsPageView.as_view(), name="settings_page"),
+    
+    path(
+        "report-user/",
+        ReportUserView.as_view(),
+        name="report_user"
+    ),
+    
+    
+    # =====================================================
+    # PLATFORM SUBSCRIPTION FLOW
+    # =====================================================
+
+    path(
+        "subscribe/",
+        CreateSubscriptionAPIView.as_view(),
+        name="create-subscription",
+    ),
+
+    path(
+        "subscriptions/<uuid:uuid>/cancel/",
+        CancelSubscriptionAPIView.as_view(),
+        name="cancel-subscription",
+    ),
+
+    # =====================================================
+    # PAYPAL
+    # =====================================================
+
+    path(
+        "paypal/webhooks/",
+        PayPalWebhookAPIView.as_view(),
+        name="paypal-webhooks",
+    ),
+
+    path(
+        "paypal/success/",
+        PayPalSubscriptionSuccessView.as_view(),
+        name="paypal-subscription-success",
+    ),
+
+    path(
+        "paypal/cancel/",
+        PayPalSubscriptionCancelView.as_view(),
+        name="paypal-subscription-cancel",
+    ),
+
+    # =====================================================
+    # CHECKOUT PAGE
+    # =====================================================
+
+    path(
+        "subscriptions/checkout/",
+        SubscriptionCheckoutPageView.as_view(),
+        name="subscription-checkout",
+    ),
+    
+    path(
+        "verification/toggle-recurring/",
+        ToggleVerificationRecurringView.as_view(),
+        name="toggle_verification_recurring"
+    ),
+    
+    path("ajax/translate/", TranslateContentView.as_view(), name="translate_text"),
 ]

@@ -1,0 +1,433 @@
+<style>
+.problem-card{
+    position:relative;
+    overflow:hidden;
+}
+
+/* =========================
+   OVERLAY BACKDROP
+========================= */
+.card-ad-overlay{
+    position:absolute;
+    inset:0;
+    background:rgba(0,0,0,.55);
+    backdrop-filter: blur(5px);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    z-index:9999;
+    padding:12px;
+}
+
+/* =========================
+   COMPACT AD MODAL (PRIMARY)
+========================= */
+.card-ad-overlay .db-ad-modal{
+    width: 300px;
+    max-width: 90%;
+    background:#fff;
+    border-radius:14px;
+    overflow:hidden;
+    box-shadow:0 18px 50px rgba(0,0,0,.25);
+    display:flex;
+    flex-direction:column;
+    animation: pop .2s ease-out;
+}
+
+/* =========================
+   IMAGE (CONTROLLED SIZE)
+========================= */
+.db-ad-image{
+    width:100%;
+    height:130px;
+    object-fit:cover;
+    display:block;
+}
+
+/* =========================
+   CONTENT AREA
+========================= */
+.db-ad-content{
+    padding:12px;
+    text-align:center;
+}
+
+/* TITLE */
+.db-ad-title{
+    font-size:14px;
+    margin:0 0 6px;
+    font-weight:700;
+    color:#111;
+}
+
+/* DESCRIPTION */
+.db-ad-description{
+    font-size:12px;
+    color:#6b7280;
+    margin:0;
+    line-height:1.4;
+}
+
+/* LINK WRAPPER */
+.db-ad-button{
+    text-decoration:none;
+    color:inherit;
+}
+
+/* =========================
+   POP ANIMATION
+========================= */
+@keyframes pop{
+    from{
+        transform:scale(.85);
+        opacity:0;
+    }
+    to{
+        transform:scale(1);
+        opacity:1;
+    }
+}
+
+/* =========================
+   SKIP BOX (OPTIONAL OVERLAY VERSION)
+========================= */
+.card-ad-box{
+    width: 300px;
+    max-width: 90%;
+    background:#fff;
+    border-radius:14px;
+    padding:16px;
+    text-align:center;
+    box-shadow:0 18px 50px rgba(0,0,0,.25);
+    position:relative;
+}
+
+/* LABEL */
+.card-ad-label{
+    position:absolute;
+    top:10px;
+    left:12px;
+    font-size:11px;
+    font-weight:700;
+    color:#666;
+    text-transform:uppercase;
+}
+
+/* SKIP BUTTON */
+.card-ad-skip{
+    margin-top:12px;
+    padding:8px 14px;
+    border-radius:10px;
+    border:none;
+    background:#111;
+    color:#fff;
+    font-size:12px;
+    cursor:pointer;
+}
+
+/* DISABLED STATE */
+.card-ad-skip:disabled{
+    opacity:.5;
+    cursor:not-allowed;
+}
+
+</style>
+
+<script>
+(function () {
+
+    if (window.problemCardAdsInit) return;
+    window.problemCardAdsInit = true;
+
+    let observer = null;
+
+    /* =========================
+       RANDOM HELPERS
+    ========================= */
+    function rand(min, max) {
+        return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
+    function engagementDelay() {
+        return rand(5000, 15000); // 5–15s before ad attempt
+    }
+
+    function cooldownDuration() {
+        return rand(30000, 120000); // 30s–2min cooldown
+    }
+
+    /* =========================
+       PER-CARD COOLDOWN
+    ========================= */
+    function cooldownKey(cardId) {
+        return `problemCardAdCooldown_${cardId}`;
+    }
+
+    function setCooldown(cardId) {
+        const expiry = Date.now() + cooldownDuration();
+        localStorage.setItem(cooldownKey(cardId), expiry);
+    }
+
+    function canShowAd(cardId) {
+        const expiry = parseInt(localStorage.getItem(cooldownKey(cardId)) || "0", 10);
+        return Date.now() >= expiry;
+    }
+
+    /* =========================
+       FETCH AD
+    ========================= */
+    async function fetchSponsoredAd(problemId) {
+        try {
+            const response = await fetch(`/ads/${problemId}/sponsored/`, {
+                credentials: "same-origin",
+                headers: {
+                    "X-Requested-With": "XMLHttpRequest"
+                }
+            });
+
+            if (!response.ok) return null;
+
+            return await response.json();
+
+        } catch (e) {
+            console.error(e);
+            return null;
+        }
+    }
+
+    /* =========================
+       SKIP LOGIC
+    ========================= */
+    function startSkip(button, overlay, card) {
+
+        let seconds = rand(10, 20);
+
+        button.disabled = true;
+        button.textContent = `Skip (${seconds})`;
+
+        const timer = setInterval(() => {
+
+            seconds--;
+
+            if (seconds <= 0) {
+                clearInterval(timer);
+                button.disabled = false;
+                button.textContent = "Skip";
+            } else {
+                button.textContent = `Skip (${seconds})`;
+            }
+
+        }, 1000);
+
+        button.onclick = () => {
+
+            clearInterval(timer);
+
+            overlay.remove();
+
+            const cardId = card.dataset.problemId;
+
+            setCooldown(cardId);
+
+            scheduleAd(card); // 🔥 restart loop after skip
+        };
+    }
+
+    /* =========================
+       SHOW OVERLAY
+    ========================= */
+    function showOverlay(card, html) {
+
+        if (card.querySelector(".card-ad-overlay")) return;
+
+        const overlay = document.createElement("div");
+        overlay.className = "card-ad-overlay";
+
+        overlay.innerHTML = `
+            <div class="card-ad-box">
+
+                <div class="card-ad-label">
+                    Sponsored
+                </div>
+
+                <div class="card-ad-body">
+                    ${html}
+                </div>
+
+                <button class="card-ad-skip" disabled></button>
+
+            </div>
+        `;
+
+        card.appendChild(overlay);
+
+        startSkip(
+            overlay.querySelector(".card-ad-skip"),
+            overlay,
+            card
+        );
+    }
+
+    /* =========================
+       AD ATTEMPT
+    ========================= */
+    async function attemptAd(card) {
+
+        if (!card || !card.isConnected) return;
+        if (!card._visible) return;
+
+        const cardId = card.dataset.problemId;
+        if (!cardId) return;
+
+        if (!canShowAd(cardId)) return;
+
+        if (card.querySelector(".card-ad-overlay")) return;
+
+        const data = await fetchSponsoredAd(cardId);
+
+        if (data && data.success && data.html) {
+            showOverlay(card, data.html);
+        }
+    }
+
+    /* =========================
+       SCHEDULER (CORE LOOP FIX)
+    ========================= */
+    function scheduleAd(card) {
+
+        clearTimeout(card._engagementTimer);
+
+        const delay = engagementDelay();
+
+        card._engagementTimer = setTimeout(async () => {
+
+            if (!card._visible) return;
+
+            const cardId = card.dataset.problemId;
+
+            if (!canShowAd(cardId)) {
+                scheduleAd(card); // retry later
+                return;
+            }
+
+            await attemptAd(card);
+
+            // 🔥 ALWAYS RESCHEDULE → infinite loop
+            scheduleAd(card);
+
+        }, delay);
+    }
+
+    /* =========================
+       OBSERVER
+    ========================= */
+    function observeCards() {
+
+        const cards = document.querySelectorAll(".problem-card");
+
+        if (observer) observer.disconnect();
+
+        observer = new IntersectionObserver(entries => {
+
+            entries.forEach(entry => {
+
+                const card = entry.target;
+
+                if (entry.isIntersecting) {
+
+                    card._visible = true;
+
+                    scheduleAd(card);
+
+                } else {
+
+                    card._visible = false;
+                    clearTimeout(card._engagementTimer);
+                }
+
+            });
+
+        }, {
+            threshold: 0.75
+        });
+
+        cards.forEach(card => observer.observe(card));
+    }
+
+    /* =========================
+       SPA SUPPORT
+    ========================= */
+    window.addEventListener("spa:render", observeCards);
+
+    if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", observeCards);
+    } else {
+        observeCards();
+    }
+
+})();
+</script>
+
+<div class="db-ad-modal">
+
+    <a
+        href="{{ ad.target_url }}"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="db-ad-image-link"
+    >
+        <img
+            src="{{ ad.ads_file.url }}"
+            alt="{{ ad.title }}"
+            class="db-ad-image"
+            style="width:100%; height:100%; object-fit:cover;"
+        >
+    </a>
+
+    <div class="db-ad-content">
+
+        <a
+            href="{{ ad.target_url }}"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="db-ad-button"
+        >
+            <h3 class="db-ad-title">
+                {{ ad.title }}
+            </h3>
+
+            <p class="db-ad-description">
+                {{ ad.description }}
+            </p>
+
+        </a>
+
+    </div>
+
+</div>
+
+<style>
+/* overlay centering */
+.card-ad-overlay{
+    position:absolute;
+    inset:0;
+    background:rgba(0,0,0,.55);
+    backdrop-filter:blur(6px);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    z-index:9999;
+}
+
+/* modal container */
+.card-ad-overlay .db-ad-modal{
+    width:min(92%,420px);
+    background:#fff;
+    border-radius:18px;
+    overflow:hidden;
+    box-shadow:0 25px 70px rgba(0,0,0,.3);
+    display:flex;
+    flex-direction:column;
+}
+
+</style>

@@ -1,0 +1,1293 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}FAQ | FancyLearn{% endblock %}
+
+{% block content %}
+
+<section class="faq-page py-5">
+
+    <div class="faq-bg-shape shape-1"></div>
+    <div class="faq-bg-shape shape-2"></div>
+
+    <div class="container position-relative">
+
+        <!-- ===================================== -->
+        <!-- HERO -->
+        <!-- ===================================== -->
+
+        <div class="faq-hero text-center mb-5">
+
+            <span class="faq-pill">
+                FancyLearn Community Help Center
+            </span>
+
+            <h1 class="faq-title mt-4 text-info">
+                Frequently Asked Questions
+            </h1>
+
+            <p class="faq-subtitle">
+                Learn how FancyLearn works, how to share knowledge,
+                connect with experts, create educational posts,
+                book learning sessions, collaborate with learners,
+                and grow within the community.
+            </p>
+
+            <!-- SEARCH -->
+            <div class="faq-search-wrapper mt-4">
+
+                <div class="faq-search-box">
+
+                    <i class="fa-solid fa-magnifying-glass"></i>
+
+                    <input
+                        type="text"
+                        id="faqSearch"
+                        class="faq-search"
+                        placeholder="Search questions..."
+                    >
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- ===================================== -->
+        <!-- FAQ -->
+        <!-- ===================================== -->
+
+        <div class="faq-wrapper">
+
+            <div class="accordion faq-accordion" id="faqAccordion">
+
+                <!-- ===================================== -->
+                <!-- GENERAL -->
+                <!-- ===================================== -->
+
+                <div class="faq-section-title">
+                    General Questions
+                </div>
+
+                <!-- 1 -->
+                <div class="accordion-item faq-item">
+                    <h2 class="accordion-header">
+
+                        <button
+                            class="accordion-button faq-btn text-info"
+                            type="button"
+                            data-bs-toggle="collapse"
+                            data-bs-target="#faq1">
+
+                            1. What is FancyLearn?
+
+                        </button>
+
+                    </h2>
+
+                    <div
+                        id="faq1"
+                        class="accordion-collapse collapse show"
+                        data-bs-parent="#faqAccordion">
+
+                        <div class="accordion-body faq-body">
+
+                            FancyLearn is a knowledge-sharing and collaborative
+                            learning platform where anyone can learn, teach,
+                            share ideas, discuss topics, and connect with experts.
+
+                            <br><br>
+
+                            The platform is built for:
+                            
+                            <ul>
+                                <li>Learners</li>
+                                <li>Experts and professionals</li>
+                                <li>Students</li>
+                                <li>Content creators</li>
+                                <li>Researchers</li>
+                                <li>Communities</li>
+                                <li>Anyone interested in sharing knowledge</li>
+                            </ul>
+
+                            FancyLearn allows users to create educational posts,
+                            ask questions, explore knowledge bases, participate
+                            in discussions, discover trending ideas, and book
+                            sessions with experts for personalized learning.
+
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- 2 -->
+                <div class="accordion-item faq-item">
+
+                    <h2 class="accordion-header">
+
+                        <button
+                            class="accordion-button collapsed faq-btn text-info"
+                            type="button"
+                            data-bs-toggle="collapse"
+                            data-bs-target="#faq2">
+
+                            2. Who can use FancyLearn?
+
+                        </button>
+
+                    </h2>
+
+                    <div
+                        id="faq2"
+                        class="accordion-collapse collapse"
+                        data-bs-parent="#faqAccordion">
+
+                        <div class="accordion-body faq-body">
+
+                            Anyone can use FancyLearn.
+
+                            <br><br>
+
+                            The platform is designed for people who want to:
+                            
+                            <ul>
+                                <li>Learn new skills or topics</li>
+                                <li>Share educational knowledge</li>
+                                <li>Post useful information</li>
+                                <li>Discuss real-world problems and ideas</li>
+                                <li>Connect with experts</li>
+                                <li>Book educational meetings or sessions</li>
+                                <li>Build a learning-focused community</li>
+                            </ul>
+
+                            FancyLearn is not limited to schools or academic institutions.
+                            It supports both formal and informal learning experiences.
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <!-- 3 -->
+                <div class="accordion-item faq-item">
+
+                    <h2 class="accordion-header">
+
+                        <button
+                            class="accordion-button collapsed faq-btn text-info"
+                            type="button"
+                            data-bs-toggle="collapse"
+                            data-bs-target="#faq3">
+
+                            3. Is FancyLearn only for education?
+
+                        </button>
+
+                    </h2>
+
+                    <div
+                        id="faq3"
+                        class="accordion-collapse collapse"
+                        data-bs-parent="#faqAccordion">
+
+                        <div class="accordion-body faq-body">
+
+                            No. While FancyLearn focuses on learning and knowledge,
+                            users can share information and insights across many topics.
+
+                            <br><br>
+
+                            This may include:
+                            
+                            <ul>
+                                <li>Technology</li>
+                                <li>Science</li>
+                                <li>Business</li>
+                                <li>Career development</li>
+                                <li>Design and creativity</li>
+                                <li>Productivity</li>
+                                <li>Research</li>
+                                <li>Personal development</li>
+                            </ul>
+
+                            The goal is to create a collaborative environment
+                            where people exchange meaningful and valuable knowledge.
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <!-- 4 -->
+                <div class="accordion-item faq-item">
+
+                    <h2 class="accordion-header">
+
+                        <button
+                            class="accordion-button collapsed faq-btn text-info"
+                            type="button"
+                            data-bs-toggle="collapse"
+                            data-bs-target="#faq4">
+
+                            4. Do I need to install any software?
+
+                        </button>
+
+                    </h2>
+
+                    <div
+                        id="faq4"
+                        class="accordion-collapse collapse"
+                        data-bs-parent="#faqAccordion">
+
+                        <div class="accordion-body faq-body">
+
+                            No installation is required.
+
+                            FancyLearn works directly in modern web browsers
+                            on desktop computers, tablets, and mobile devices.
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <!-- ===================================== -->
+                <!-- ACCOUNT -->
+                <!-- ===================================== -->
+
+                <div class="faq-section-title">
+                    Accounts & Profiles
+                </div>
+
+                <!-- 5 -->
+                <div class="accordion-item faq-item">
+
+                    <h2 class="accordion-header">
+
+                        <button
+                            class="accordion-button collapsed faq-btn text-info"
+                            type="button"
+                            data-bs-toggle="collapse"
+                            data-bs-target="#faq5">
+
+                            5. How do I create an account?
+
+                        </button>
+
+                    </h2>
+
+                    <div
+                        id="faq5"
+                        class="accordion-collapse collapse"
+                        data-bs-parent="#faqAccordion">
+
+                        <div class="accordion-body faq-body">
+
+                            To create an account:
+
+                            <ol>
+                                <li>Open the registration page</li>
+                                <li>Enter your username and email</li>
+                                <li>Create a secure password</li>
+                                <li>Complete your profile information</li>
+                                <li>Start exploring the platform</li>
+                            </ol>
+
+                            Once registered, you can begin creating posts,
+                            interacting with others, and booking sessions with experts.
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <!-- 6 -->
+                <div class="accordion-item faq-item">
+
+                    <h2 class="accordion-header">
+
+                        <button
+                            class="accordion-button collapsed faq-btn text-info"
+                            type="button"
+                            data-bs-toggle="collapse"
+                            data-bs-target="#faq6">
+
+                            6. Can I customize my profile?
+
+                        </button>
+
+                    </h2>
+
+                    <div
+                        id="faq6"
+                        class="accordion-collapse collapse"
+                        data-bs-parent="#faqAccordion">
+
+                        <div class="accordion-body faq-body">
+
+                            Yes. Users can personalize their profiles with:
+
+                            <ul>
+                                <li>Profile pictures</li>
+                                <li>Bio and descriptions</li>
+                                <li>Professional information</li>
+                                <li>Skills and interests</li>
+                                <li>Educational background</li>
+                                <li>Social links</li>
+                            </ul>
+
+                            Profiles help other users understand your interests,
+                            expertise, and learning goals.
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <!-- ===================================== -->
+                <!-- POSTS -->
+                <!-- ===================================== -->
+
+                <div class="faq-section-title">
+                    Posts & Knowledge Sharing
+                </div>
+
+                <!-- 7 -->
+                <div class="accordion-item faq-item">
+
+                    <h2 class="accordion-header">
+
+                        <button
+                            class="accordion-button collapsed faq-btn text-info"
+                            type="button"
+                            data-bs-toggle="collapse"
+                            data-bs-target="#faq7">
+
+                            7. What kind of posts can users create?
+
+                        </button>
+
+                    </h2>
+
+                    <div
+                        id="faq7"
+                        class="accordion-collapse collapse"
+                        data-bs-parent="#faqAccordion">
+
+                        <div class="accordion-body faq-body">
+
+                            Users can create educational and knowledge-focused posts such as:
+
+                            <ul>
+                                <li>Learning tips</li>
+                                <li>Problem-solving discussions</li>
+                                <li>Tutorials and explanations</li>
+                                <li>Research insights</li>
+                                <li>Technical guides</li>
+                                <li>Career advice</li>
+                                <li>Community discussions</li>
+                                <li>Knowledge base content</li>
+                            </ul>
+
+                            Posts are designed to help people learn from each other
+                            and participate in meaningful discussions.
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <!-- 8 -->
+                <div class="accordion-item faq-item">
+
+                    <h2 class="accordion-header">
+
+                        <button
+                            class="accordion-button collapsed faq-btn text-info"
+                            type="button"
+                            data-bs-toggle="collapse"
+                            data-bs-target="#faq8">
+
+                            8. Can users ask questions and receive answers?
+
+                        </button>
+
+                    </h2>
+
+                    <div
+                        id="faq8"
+                        class="accordion-collapse collapse"
+                        data-bs-parent="#faqAccordion">
+
+                        <div class="accordion-body faq-body">
+
+                            Yes.
+
+                            Users can create question-based posts and receive
+                            responses from other learners, experts, and community members.
+
+                            <br><br>
+
+                            Discussions may include:
+                            
+                            <ul>
+                                <li>Problem solving</li>
+                                <li>Technical explanations</li>
+                                <li>Learning guidance</li>
+                                <li>Recommendations</li>
+                                <li>Collaborative discussions</li>
+                            </ul>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <!-- ===================================== -->
+                <!-- BOOKINGS -->
+                <!-- ===================================== -->
+
+                <div class="faq-section-title">
+                    Expert Bookings & Meetings
+                </div>
+
+                <!-- 9 -->
+                <div class="accordion-item faq-item">
+
+                    <h2 class="accordion-header">
+
+                        <button
+                            class="accordion-button collapsed faq-btn text-info"
+                            type="button"
+                            data-bs-toggle="collapse"
+                            data-bs-target="#faq9">
+
+                            9. Can users book sessions with experts?
+
+                        </button>
+
+                    </h2>
+
+                    <div
+                        id="faq9"
+                        class="accordion-collapse collapse"
+                        data-bs-parent="#faqAccordion">
+
+                        <div class="accordion-body faq-body">
+
+                            Yes. FancyLearn supports expert bookings.
+
+                            <br><br>
+
+                            Learners can:
+                            
+                            <ul>
+                                <li>Browse expert profiles</li>
+                                <li>View availability</li>
+                                <li>Schedule learning sessions</li>
+                                <li>Book meetings for guidance or mentorship</li>
+                                <li>Arrange collaborative discussions</li>
+                            </ul>
+
+                            This helps users connect directly with knowledgeable
+                            individuals for more personalized learning experiences.
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <!-- 10 -->
+                <div class="accordion-item faq-item">
+
+                    <h2 class="accordion-header">
+
+                        <button
+                            class="accordion-button collapsed faq-btn text-info"
+                            type="button"
+                            data-bs-toggle="collapse"
+                            data-bs-target="#faq10">
+
+                            10. Does FancyLearn provide direct messaging?
+
+                        </button>
+
+                    </h2>
+
+                    <div
+                        id="faq10"
+                        class="accordion-collapse collapse"
+                        data-bs-parent="#faqAccordion">
+
+                        <div class="accordion-body faq-body">
+
+                            FancyLearn currently does not provide a built-in
+                            direct messaging system.
+
+                            <br><br>
+
+                            However, users may coordinate learning sessions,
+                            meetings, and material sharing through booking interactions
+                            and external communication methods where appropriate.
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <!-- ===================================== -->
+                <!-- MATERIALS -->
+                <!-- ===================================== -->
+
+                <div class="faq-section-title">
+                    Learning Resources & Materials
+                </div>
+
+                <!-- 11 -->
+                <div class="accordion-item faq-item">
+
+                    <h2 class="accordion-header">
+
+                        <button
+                            class="accordion-button collapsed faq-btn text-info"
+                            type="button"
+                            data-bs-toggle="collapse"
+                            data-bs-target="#faq11">
+
+                            11. Does FancyLearn store course materials?
+
+                        </button>
+
+                    </h2>
+
+                    <div
+                        id="faq11"
+                        class="accordion-collapse collapse"
+                        data-bs-parent="#faqAccordion">
+
+                        <div class="accordion-body faq-body">
+
+                            FancyLearn is not designed as a traditional learning
+                            management system for storing large course libraries
+                            or full educational repositories.
+
+                            <br><br>
+
+                            Instead, the platform focuses on:
+                            
+                            <ul>
+                                <li>Knowledge-sharing posts</li>
+                                <li>Community learning</li>
+                                <li>Discussions and collaboration</li>
+                                <li>Expert interactions</li>
+                                <li>Knowledge bases</li>
+                                <li>Learning guidance</li>
+                            </ul>
+
+                            Users may still share useful educational resources
+                            within posts, discussions, or learning sessions
+                            where appropriate.
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <!-- ===================================== -->
+                <!-- COMMUNITY -->
+                <!-- ===================================== -->
+
+                <div class="faq-section-title">
+                    Community & Engagement
+                </div>
+
+                <!-- 12 -->
+                <div class="accordion-item faq-item">
+
+                    <h2 class="accordion-header">
+
+                        <button
+                            class="accordion-button collapsed faq-btn text-info"
+                            type="button"
+                            data-bs-toggle="collapse"
+                            data-bs-target="#faq12">
+
+                            12. How does the community system work?
+
+                        </button>
+
+                    </h2>
+
+                    <div
+                        id="faq12"
+                        class="accordion-collapse collapse"
+                        data-bs-parent="#faqAccordion">
+
+                        <div class="accordion-body faq-body">
+
+                            The community system allows users to:
+
+                            <ul>
+                                <li>Engage with educational posts</li>
+                                <li>Comment on discussions</li>
+                                <li>Follow useful contributors</li>
+                                <li>Explore trending knowledge topics</li>
+                                <li>Participate in collaborative learning</li>
+                                <li>Discover experts and learners</li>
+                            </ul>
+
+                            FancyLearn encourages respectful, educational,
+                            and meaningful interactions between users.
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <!-- ===================================== -->
+                <!-- SECURITY -->
+                <!-- ===================================== -->
+
+                <div class="faq-section-title">
+                    Privacy & Security
+                </div>
+
+                <!-- 13 -->
+                <div class="accordion-item faq-item">
+
+                    <h2 class="accordion-header">
+
+                        <button
+                            class="accordion-button collapsed faq-btn text-info"
+                            type="button"
+                            data-bs-toggle="collapse"
+                            data-bs-target="#faq13">
+
+                            13. Is my account information secure?
+
+                        </button>
+
+                    </h2>
+
+                    <div
+                        id="faq13"
+                        class="accordion-collapse collapse"
+                        data-bs-parent="#faqAccordion">
+
+                        <div class="accordion-body faq-body">
+
+                            FancyLearn uses reasonable security measures
+                            designed to help protect user accounts and platform data.
+
+                            <br><br>
+
+                            Security practices may include:
+
+                            <ul>
+                                <li>Secure authentication systems</li>
+                                <li>Protected account access</li>
+                                <li>Permission controls</li>
+                                <li>Account recovery tools</li>
+                                <li>Monitoring for suspicious activity</li>
+                            </ul>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <!-- ===================================== -->
+                <!-- SUPPORT -->
+                <!-- ===================================== -->
+
+                <div class="faq-section-title">
+                    Technical Support
+                </div>
+
+                <!-- 14 -->
+                <div class="accordion-item faq-item">
+
+                    <h2 class="accordion-header">
+
+                        <button
+                            class="accordion-button collapsed faq-btn text-info"
+                            type="button"
+                            data-bs-toggle="collapse"
+                            data-bs-target="#faq14">
+
+                            14. What should I do if something is not working?
+
+                        </button>
+
+                    </h2>
+
+                    <div
+                        id="faq14"
+                        class="accordion-collapse collapse"
+                        data-bs-parent="#faqAccordion">
+
+                        <div class="accordion-body faq-body">
+
+                            Try the following:
+
+                            <ul>
+                                <li>Refresh the page</li>
+                                <li>Check your internet connection</li>
+                                <li>Clear your browser cache</li>
+                                <li>Use an updated browser</li>
+                                <li>Log out and sign in again</li>
+                            </ul>
+
+                            If the issue continues, contact support through
+                            the available platform support channels.
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <!-- ===================================== -->
+                <!-- CONTACT -->
+                <!-- ===================================== -->
+
+                <div class="faq-section-title">
+                    Contact Information
+                </div>
+
+                <div class="faq-contact" id="faq-contact">
+
+                    <h3 class="fw-bold mb-3 text-info">
+                        Need More Help?
+                    </h3>
+
+                    <p class="mb-3 text-info">
+
+                        If your question is not covered in this FAQ,
+                        you can contact the FancyLearn support team
+                        using the official support email address.
+
+                    </p>
+
+                    <div class="support-email-box mb-4">
+
+                        <div class="fw-bold mb-2">
+                            Official Support Email
+                        </div>
+
+                        <div class="support-email">
+                            support@fancylearn.com
+                        </div>
+
+                        <small class="text-muted d-block mt-2">
+
+                            Please make sure you send your request
+                            using the same email address associated
+                            with your FancyLearn account whenever possible.
+
+                        </small>
+
+                    </div>
+
+                    <div class="support-template">
+
+                        <h5 class="fw-bold mb-3 text-info">
+                            Include The Following Information
+                        </h5>
+
+                        <ul class="mb-4">
+                            <li>Subject: Anything your request is about (support, feedback, privacy, terms, etc.)</li>
+                            <li>Your username</li>
+                            <li>Your first and last name</li>
+                            <li>Your registered FancyLearn email address</li>
+                            <li>A detailed explanation of the issue or request</li>
+                        </ul>
+
+                        <h5 class="fw-bold mb-3 text-info">
+                            Support Request Template
+                        </h5>
+
+                        <div class="support-template-box">
+
+                <pre class="mb-0">Subject: FancyLearn Support Request
+
+                Username: johndoe
+                First Name: John
+                Last Name: Doe
+                Registered Email: johndoe@email.com
+
+                Issue Description:
+                Please clearly describe your issue,
+                question, or request here.</pre>
+
+                        </div>
+
+                    </div>
+
+                    <div class="faq-contact-actions mt-4">
+
+                        <a href="mailto:support@fancylearn.com"
+                        class="btn btn-primary rounded-pill px-4">
+
+                            Contact Support
+
+                        </a>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</section>
+
+<style>
+.support-email-box{
+
+    padding:20px;
+
+    border-radius:20px;
+
+    background:rgba(13,110,253,.06);
+
+    border:1px solid rgba(13,110,253,.1);
+}
+
+.support-email{
+
+    font-size:1.05rem;
+    font-weight:700;
+
+    color:#0d6efd;
+
+    word-break:break-word;
+}
+
+.support-template-box{
+
+    padding:22px;
+
+    border-radius:20px;
+
+    background:#0f172a;
+
+    color:#e2e8f0;
+
+    overflow:auto;
+}
+
+.support-template-box pre{
+
+    margin:0;
+
+    white-space:pre-wrap;
+
+    font-size:.95rem;
+
+    line-height:1.8;
+
+    color:inherit;
+}
+
+[data-theme="dark"] .support-template-box{
+
+    background:#020617;
+}
+/* =====================================
+   PAGE
+===================================== */
+
+.faq-page{
+
+    position:relative;
+
+    min-height:100vh;
+
+    overflow:hidden;
+
+    background:
+    linear-gradient(
+        180deg,
+        rgba(13,110,253,.05),
+        transparent 35%
+    );
+}
+
+/* =====================================
+   BACKGROUND SHAPES
+===================================== */
+
+.faq-bg-shape{
+
+    position:absolute;
+
+    border-radius:50%;
+
+    filter:blur(90px);
+
+    opacity:.18;
+
+    z-index:0;
+}
+
+.shape-1{
+
+    width:300px;
+    height:300px;
+
+    background:#0d6efd;
+
+    top:-80px;
+    left:-100px;
+}
+
+.shape-2{
+
+    width:260px;
+    height:260px;
+
+    background:#20c997;
+
+    bottom:0;
+    right:-60px;
+}
+
+/* =====================================
+   HERO
+===================================== */
+
+.faq-hero{
+
+    position:relative;
+
+    z-index:2;
+}
+
+.faq-pill{
+
+    display:inline-flex;
+
+    align-items:center;
+
+    padding:10px 18px;
+
+    border-radius:999px;
+
+    background:rgba(13,110,253,.08);
+
+    color:#0d6efd;
+
+    font-size:13px;
+    font-weight:700;
+}
+
+.faq-title{
+
+    font-size:clamp(1rem,6vw,4rem);
+
+    font-weight:900;
+}
+
+.faq-subtitle{
+
+    max-width:850px;
+
+    margin:auto;
+
+    color:#6c757d;
+
+    line-height:1.9;
+
+    font-size:1.05rem;
+}
+
+/* =====================================
+   SEARCH
+===================================== */
+
+.faq-search-wrapper{
+
+    max-width:650px;
+
+    margin:auto;
+}
+
+.faq-search-box{
+
+    position:relative;
+}
+
+.faq-search-box i{
+
+    position:absolute;
+
+    top:50%;
+    left:20px;
+
+    transform:translateY(-50%);
+
+    color:#6c757d;
+}
+
+.faq-search{
+
+    width:100%;
+
+    height:60px;
+
+    border:none;
+
+    outline:none;
+
+    padding-inline:50px 20px;
+
+    border-radius:999px;
+
+    background:#fff;
+
+    box-shadow:
+    0 12px 30px rgba(0,0,0,.06);
+}
+
+/* =====================================
+   WRAPPER
+===================================== */
+
+.faq-wrapper{
+
+    max-width:980px;
+
+    margin:auto;
+
+    position:relative;
+
+    z-index:2;
+}
+
+/* =====================================
+   SECTION TITLES
+===================================== */
+
+.faq-section-title{
+
+    margin-top:55px;
+    margin-bottom:18px;
+
+    font-weight:800;
+
+    font-size:1.08rem;
+
+    color:#0d6efd;
+}
+
+/* =====================================
+   ACCORDION
+===================================== */
+
+.faq-accordion{
+
+    display:flex;
+
+    flex-direction:column;
+
+    gap:16px;
+}
+
+.faq-item{
+
+    border:none !important;
+
+    overflow:hidden;
+
+    border-radius:24px !important;
+
+    background:rgba(255,255,255,.92);
+
+    backdrop-filter:blur(14px);
+
+    box-shadow:
+    0 10px 30px rgba(0,0,0,.05);
+
+    transition:.25s ease;
+}
+
+.faq-item:hover{
+
+    transform:translateY(-2px);
+}
+
+/* =====================================
+   BUTTON
+===================================== */
+
+.faq-btn{
+
+    background:transparent !important;
+
+    box-shadow:none !important;
+
+    padding:24px;
+
+    font-size:1rem;
+    font-weight:700;
+
+    color:var(--bs-body-color);
+}
+
+.faq-btn:not(.collapsed){
+
+    color:#0d6efd;
+}
+
+/* =====================================
+   BODY
+===================================== */
+
+.faq-body{
+
+    padding:0 24px 24px;
+
+    line-height:1.9;
+
+    color:#6c757d;
+}
+
+.faq-body ul,
+.faq-body ol{
+
+    margin-top:12px;
+
+    padding-left:22px;
+}
+
+/* =====================================
+   CONTACT
+===================================== */
+
+.faq-contact{
+
+    margin-top:20px;
+
+    padding:38px;
+
+    border-radius:30px;
+
+    background:
+    linear-gradient(
+        135deg,
+        rgba(13,110,253,.08),
+        rgba(32,201,151,.06)
+    );
+
+    border:1px solid rgba(13,110,253,.08);
+}
+
+.faq-contact-actions{
+
+    display:flex;
+
+    gap:12px;
+
+    flex-wrap:wrap;
+}
+
+/* =====================================
+   DARK MODE
+===================================== */
+
+[data-theme="dark"] .faq-item{
+
+    background:rgba(20,20,20,.9);
+}
+
+[data-theme="dark"] .faq-search{
+
+    background:#1a1a1a;
+
+    color:#fff;
+}
+
+[data-theme="dark"] .faq-subtitle,
+[data-theme="dark"] .faq-body{
+
+    color:#bdbdbd;
+}
+
+/* =====================================
+   MOBILE
+===================================== */
+
+@media(max-width:768px){
+
+    .faq-btn{
+
+        padding:18px;
+
+        font-size:.95rem;
+    }
+
+    .faq-body{
+
+        padding:0 18px 20px;
+    }
+
+    .faq-contact{
+
+        padding:24px;
+    }
+
+    .faq-search{
+
+        height:54px;
+    }
+}
+
+</style>
+
+<script>
+
+document.addEventListener("DOMContentLoaded", () => {
+
+    const search = document.getElementById("faqSearch");
+
+    if(!search) return;
+
+    search.addEventListener("input", () => {
+
+        const value = search.value.toLowerCase();
+
+        document.querySelectorAll(".faq-item").forEach(item => {
+
+            const text = item.innerText.toLowerCase();
+
+            item.style.display =
+                text.includes(value)
+                ? ""
+                : "none";
+
+        });
+
+    });
+
+});
+
+</script>
+
+{% endblock %}

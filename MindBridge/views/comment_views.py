@@ -80,7 +80,11 @@ class CreateCommentView(LoginRequiredMixin, View):
                 base_url = reverse("problem_detail", args=[comment.problem.id])
 
             comment_url = f"{base_url}#comment-{comment.id}"
-
+            display_name = (
+                f"{request.user.first_name} {request.user.last_name}".strip()
+                if request.user.first_name or request.user.last_name
+                else request.user.username
+            )
             # -----------------------
             # Notifications
             # -----------------------
@@ -88,7 +92,7 @@ class CreateCommentView(LoginRequiredMixin, View):
                 NotificationService.create_notification(
                     user=comment.problem.author,
                     actor=request.user,
-                    message=f"{request.user.username} commented on your problem '{comment.problem.title}'.",
+                    message=f"{display_name} commented on your problem '{comment.problem.title}'.",
                     url=base_url
                 )
 
@@ -96,7 +100,7 @@ class CreateCommentView(LoginRequiredMixin, View):
                 NotificationService.create_notification(
                     user=comment.answer.author,
                     actor=request.user,
-                    message=f"{request.user.username} commented on your answer.",
+                    message=f"{display_name} commented on your answer.",
                     url=base_url
                 )
 
@@ -107,23 +111,21 @@ class CreateCommentView(LoginRequiredMixin, View):
                     NotificationService.create_notification(
                         user=user,
                         actor=request.user,
-                        message=f"{request.user.username} mentioned you in a comment.",
+                        message=f"{display_name} mentioned you in a comment.",
                         url=comment_url  # ✅ FIXED
                     )
 
         if request.headers.get("x-requested-with") == "XMLHttpRequest":
+            from django.template.loader import render_to_string
+
+            html = render_to_string("partials/comment.html", {
+                "comment": comment,
+                "user": request.user,
+                "request": request
+            })
             return JsonResponse({
                 "success": True,
-                "comment": {
-                    "id": str(comment.id),
-                    "user": request.user.username,
-                    "user_id": request.user.id,
-                    "user_avatar": request.user.avatar.url if getattr(request.user, 'avatar', None) else None,
-                    "user_initial": request.user.username[0].upper(),
-                    "content": comment.content,
-                    "created_at": comment.created_at.isoformat()
-                },
-                "current_user_id": request.user.id
+                "html": html
             })
 
         messages.success(request, "Comment posted successfully.")
@@ -176,7 +178,11 @@ class EditProblemCommentView(LoginRequiredMixin, View):
                 base_url = reverse("problem_detail", args=[updated.problem.id])
 
             comment_url = f"{base_url}#comment-{updated.id}"
-
+            display_name = (
+                f"{request.user.first_name} {request.user.last_name}".strip()
+                if request.user.first_name or request.user.last_name
+                else request.user.username
+            )
             # Mentions
             mentioned_users = extract_mentions(updated.content)
             for user in mentioned_users:
@@ -184,7 +190,7 @@ class EditProblemCommentView(LoginRequiredMixin, View):
                     NotificationService.create_notification(
                         user=user,
                         actor=request.user,
-                        message=f"{request.user.username} mentioned you in an updated comment.",
+                        message=f"{display_name} mentioned you in an updated comment.",
                         url=comment_url  # ✅ FIXED
                     )
 
@@ -224,7 +230,12 @@ class EditAnswerCommentView(LoginRequiredMixin, View):
             updated = form.save(commit=False)
             updated.user = request.user
             updated.save(update_fields=["content"])
-
+            
+            display_name = (
+                f"{request.user.first_name} {request.user.last_name}".strip()
+                if request.user.first_name or request.user.last_name
+                else request.user.username
+            )
             # Notify newly mentioned users
             mentioned_users = extract_mentions(updated.content)
             problem_url = reverse("problem_detail", args=[updated.answer.problem.id])
@@ -233,7 +244,7 @@ class EditAnswerCommentView(LoginRequiredMixin, View):
                     NotificationService.create_notification(
                         user=user,
                         actor=request.user,
-                        message=f"{request.user.username} mentioned you in an updated comment.",
+                        message=f"{display_name} mentioned you in an updated comment.",
                         url=f"{problem_url}#comment-{updated.id}"
                     )
 

@@ -1,0 +1,1932 @@
+{% extends "base.html" %}
+{% load static %}
+{% load mention_tags %}
+{% load custom_tags %}
+
+{% block title %}All Problems | Fancylearn{% endblock %}
+
+{% block content %}
+  <div class="row">
+
+    <!-- Trending Story-style Carousel -->
+    <div class="trending-stories-wrapper position-relative mb-4">
+      <h5 class="fw-bold mb-2">Trending</h5>
+
+      <!-- Carousel container -->
+      <div title="Click on post card to go to detail" class="trending-stories d-flex gap-3 overflow-auto" id="trendingStories">
+        {% for story in trendings_problems %}
+          {% if story.post_type != "information" %}
+            <div class="story-card flex-shrink-0 position-relative"
+                style="width:180px; border-radius:12px; background:var(--card); padding:8px; cursor:pointer;"
+                onclick="window.location.href='{% url 'problem_detail_partial' story.id %}'">
+
+              <!-- Author Avatar -->
+              <div class="position-absolute" style="top:9px; left:9px; z-index:5;">
+                {% if story.author.avatar %}
+                <img src="{{ story.author.avatar.url }}" class="rounded-circle border border-white" 
+                    style="width:32px; height:32px; object-fit:cover;">
+                {% else %}
+                {% with first=story.author.username|slice:":1"|upper %}
+                <div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center border border-white"
+                    style="width:32px; height:32px; font-size:14px;">{{ first }}</div>
+                {% endwith %}
+                {% endif %}
+              </div>
+
+              <div class="story-media mb-2" style="height:100px; display:flex; align-items:center; justify-content:center; overflow:hidden; border-radius:8px;">
+                {% if story.file %}
+                  {% with story.file.url|lower as file_url %}
+                    {% if ".jpg" in file_url or ".jpeg" in file_url or ".png" in file_url or ".gif" in file_url %}
+                      <img src="{{ story.file.url }}" alt="{{ story.title }}" style="width:100%; height:100%; object-fit:cover;" draggable="false" oncontextmenu="return false;">
+                    {% elif ".mp4" in file_url or ".mov" in file_url or ".webm" in file_url %}
+                      <video src="{{ story.file.url }}" style="width:100%; height:100%; object-fit:cover;" muted autoplay loop controlslist="nodownload nofullscreen noremoteplayback" oncontextmenu="return false"></video>
+                    {% elif ".mp3" in file_url or ".wav" in file_url or ".aac" in file_url %}
+                      <audio src="{{ story.file.url }}" controls controlslist="nodownload" oncontextmenu="return false" style="width:100%;"></audio>
+                    {% endif %}
+                  {% endwith %}
+                {% else %}
+                  <div class="bg-secondary w-100 h-100"></div>
+                {% endif %}
+              </div>
+              <!-- Title -->
+              <p class="small fw-bold text-truncate mb-1 mt-1" title="{{ story.title }}">{{ story.title }}</p>
+
+              <!-- Stats -->
+              <div class="d-flex justify-content-between align-items-center small">
+                <span title="Votes count on this post">👍 {{ story.votes_score|abbreviate_number }}</span>
+                <span title="Views count on this post"><i class="fas fa-eye"></i> {{ story.views_count|abbreviate_number }}</span>
+              </div>
+            </div>
+          {% else %}
+            <div class="story-card flex-shrink-0 position-relative"
+              style="width:180px; border-radius:12px; background:var(--card); padding:8px; cursor:pointer;"
+              onclick="window.location.href='{% url 'talenthub' %}#problem-{{ story.id }}'">
+
+              <!-- Author Avatar -->
+              <div class="position-absolute" style="top:9px; left:9px; z-index:5;">
+                {% if story.author.avatar %}
+                <img src="{{ story.author.avatar.url }}" class="rounded-circle border border-white" 
+                    style="width:32px; height:32px; object-fit:cover;">
+                {% else %}
+                {% with first=story.author.username|slice:":1"|upper %}
+                <div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center border border-white"
+                    style="width:32px; height:32px; font-size:14px;">{{ first }}</div>
+                {% endwith %}
+                {% endif %}
+              </div>
+
+              <div class="story-media mb-2" style="height:100px; display:flex; align-items:center; justify-content:center; overflow:hidden; border-radius:8px;">
+                {% if story.file %}
+                  {% with story.file.url|lower as file_url %}
+                    {% if ".jpg" in file_url or ".jpeg" in file_url or ".png" in file_url or ".gif" in file_url %}
+                      <img src="{{ story.file.url }}" alt="{{ story.title }}" style="width:100%; height:100%; object-fit:cover;" draggable="false" oncontextmenu="return false;">
+                    {% elif ".mp4" in file_url or ".mov" in file_url or ".webm" in file_url %}
+                      <video src="{{ story.file.url }}" style="width:100%; height:100%; object-fit:cover;" muted autoplay loop controlslist="nodownload nofullscreen noremoteplayback" oncontextmenu="return false"></video>
+                    {% elif ".mp3" in file_url or ".wav" in file_url or ".aac" in file_url %}
+                      <audio src="{{ story.file.url }}" controls controlslist="nodownload" oncontextmenu="return false" style="width:100%;"></audio>
+                    {% endif %}
+                  {% endwith %}
+                {% else %}
+                  <div class="bg-secondary w-100 h-100"></div>
+                {% endif %}
+              </div>
+              <!-- Title -->
+              <p class="small fw-bold text-truncate mb-1 mt-1" title="{{ story.title }}">{{ story.title }}</p>
+
+              <!-- Stats -->
+              <div class="d-flex justify-content-between align-items-center small">
+                <span title="Votes count on this post">👍 {{ story.votes_score|abbreviate_number }}</span>
+                <span title="Views count on this post"><i class="fas fa-eye"></i> {{ story.views_count|abbreviate_number }}</span>
+              </div>
+            </div>
+          {% endif %}
+        {% endfor %}
+      </div>
+
+      <!-- Side Buttons -->
+      <button class="btn btn-sm btn-dark position-absolute top-50 start-0 translate-middle-y" id="scrollLeft" style="z-index:10;">
+        <i class="fas fa-chevron-left"></i>
+      </button>
+      <button class="btn btn-sm btn-dark position-absolute top-50 end-0 translate-middle-y" id="scrollRight" style="z-index:10;">
+        <i class="fas fa-chevron-right"></i>
+      </button>
+    </div>
+
+    <!-- MAIN FEED -->
+    <div class="col-lg-8">
+      <button id="sidebarToggle" class="sidebar-toggle-btn d-lg-none" title="Open Issues BookMark">
+        BM
+      </button>
+      <!-- Header + Search & Sort -->
+      <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+        <div class="d-flex flex-column gap-2 mb-3">
+
+          <!-- First line: Search -->
+          <div class="d-flex gap-2 flex-wrap">
+            <input type="text"
+                  id="problem-search"
+                  class="form-control flex-grow-1 responsive-field small-field"
+                  placeholder="Search problems using the titles..."
+                  style="flex:1 1 140px; max-width:200px; min-width:120px; font-size:clamp(0.85rem,1vw,1rem);"
+                  title="Search post">
+
+            <!-- Category Filter -->
+            <select id="problem-category"
+                    class="form-select small-field"
+                    style="width:160px;">
+              <option value="">All Categories</option>
+              {% for value, label in PREDEFINED_CATEGORIES %}
+                <option value="{{ value }}">{{ label }}</option>
+              {% endfor %}
+            </select>
+
+            <!-- Sort -->
+            <select id="problem-sort"
+                    class="form-select small-field"
+                    style="width:140px;">
+              <option value="recent" selected>Sort: Recent</option>
+              <option value="votes">Most Votes</option>
+              <option value="answers">Most Answers</option>
+            </select>
+          </div>
+
+        </div>
+
+        <small>Got a question, insight, or idea? Share it with the community!</small>
+        <a href="{% url 'create_problem' %}">
+            <i class="fas fa-plus"></i> Post Now
+        </a>
+      </div>
+      <!-- PROBLEMS LIST -->
+      <div id="problems-container">
+        {% for problem in problems|dictsortreversed:"created_at" %}
+        <div title="Click on post title to go to detail" class="card shadow-sm mb-4 border-0 problem-card position-relative"
+             data-problem-id="{{ problem.id }}"
+             data-title="{{ problem.title|lower }}"
+             data-votes="{{ problem.annot_votes_score }}"
+             data-answers="{{ problem.annot_answers_count }}"
+             data-created="{{ problem.created_at|date:'U' }}"
+             data-category="{{ problem.category.name|default:problem.category }}"
+             data-solved="{{ problem.is_solved|yesno:'true,false' }}">
+          <div class="card-body">
+            <!-- RIGHT: category + status badges -->
+            <div class="d-flex justify-content-end">
+                {% if problem.category.name %}
+                  <span title="Post category" class="category-badge">{{ problem.category.name }}</span>
+                {% else %}
+                  <span title="Post category" class="category-badge badge bg-secondary ms-2 text-light">{{ problem.category }}</span>
+                {% endif %}
+                {% if problem.is_solved %}
+                  <span title="Post status" class="badge-status badge bg-success ms-2 text-light"><i class="fas fa-check-circle"></i> Solved</span>
+                {% endif %}
+            </div>
+
+            <!-- PROBLEM HEADER -->
+            <div class="card-header">
+              <!-- LEFT: avatar + username -->
+              <div class="header-left">
+                <a href="{% url 'profile' problem.author.id %}" class="d-flex align-items-center text-decoration-none">
+                  {% if problem.author.avatar %}
+                    <img src="{{ problem.author.avatar.url }}" class="avatar me-2">
+                  {% else %}
+                    {% with first=problem.author.username|slice:":1"|upper %}
+                      <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40'%3E%3Crect width='40' height='40' fill='%23dee2e6'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='central' text-anchor='middle' font-family='Arial, sans-serif' font-size='20' fill='%23343a40'%3E{{ first }}%3C/text%3E%3C/svg%3E"
+                      class="avatar me-2">
+                    {% endwith %}
+                  {% endif %}
+                  <div class="d-flex flex-column">
+                    <strong>{{ problem.author.username }}</strong>
+                    <small data-time="{{ problem.created_at|date:'c' }}"></small>
+                  </div>
+                </a>
+                {% if request.user != problem.author and not problem.is_following %}
+                  <button class="follow-btn bg-primary text-white border-0 rounded-circle d-flex align-items-center justify-content-center"
+                              data-user-id="{{ problem.author.id }}"
+                              title="Follow" 
+                              style="width:18px;height:18px; position:relative; left:-30px; top:10px; display:flex">
+                          <i class="fa-solid fa-circle-plus"></i>
+                  </button>
+                {% endif %}
+              </div>
+            </div>
+
+            <!-- TITLE & DESCRIPTION -->
+            <h5 class="problem-title mb-2 text-center">
+              <a href="{% url 'problem_detail_partial' problem.id %}" class="problem-link fw-bold">
+                {{ problem.title }}
+              </a>
+            </h5>
+            
+            <div class="problem-content mb-3">
+              {% if problem.description|length > 200 %}
+                {{ problem.description|truncate_html_chars:200|convert_mentions|linebreaks|linkify|safe }}
+                <a href="{% url 'problem_detail_partial' problem.id %}" class="read-more-link">Read more</a>
+              {% else %}
+                {{ problem.description|convert_mentions|linebreaks|linkify|safe }}
+              {% endif %}
+            </div>
+
+            <!-- MEDIA -->
+            {% if problem.file %}
+              {% with problem.file.url|lower as file_url %}
+                <div class="media-container text-center mb-3">
+                  {% if ".jpg" in file_url or ".jpeg" in file_url or ".png" in file_url or ".gif" in file_url %}
+                    <img src="{{ problem.file.url }}" style="width:80%; height:400px; cursor:pointer; border-radius:8px;" class="clickable-media" data-bs-toggle="modal" data-bs-target="#mediaModal" data-src="{{ problem.file.url }}">
+                  {% elif ".mp4" in file_url or ".mov" in file_url or ".avi" in file_url or ".mkv" in file_url or ".webm" in file_url %}
+                    <video style="width:100%; max-width:300px; cursor:pointer; border-radius:8px;" controls class="clickable-media" data-bs-toggle="modal" data-bs-target="#mediaModal" data-src="{{ problem.file.url }}">
+                      <source src="{{ problem.file.url }}">
+                    </video>
+                  {% elif ".mp3" in file_url or ".wav" in file_url or ".aac" in file_url %}
+                    <audio style="width:100%;" controls class="clickable-media" data-bs-toggle="modal" data-bs-target="#mediaModal" data-src="{{ problem.file.url }}">
+                      <source src="{{ problem.file.url }}">
+                    </audio>
+                  {% endif %}
+                </div>
+              {% endwith %}
+            {% endif %}
+
+            <!-- VOTES & STATS (HORIZONTAL FIX) -->
+            <div class="d-flex flex-wrap align-items-center gap-2 mb-3 problem-stats">
+              
+              <!-- Vote buttons -->
+              <div class="d-flex align-items-center gap-1">
+                <button class="btn vote-btn upvote" data-id="{{ problem.id }}" data-type="problem" title="Upvote">👍</button>
+                <span title="Votes count on this post" id="problem-score-{{ problem.id }}" class="fw-bold">{{ problem.annot_votes_score|abbreviate_number }}</span>
+                <button class="btn vote-btn downvote" data-id="{{ problem.id }}" data-type="problem" title="DownVote">👎</button>
+              </div>
+
+              <!-- Answers & Views -->
+              <span title="Answers count on this post" class="small"><i class="fas fa-reply"></i> {{ problem.annot_answers_count|abbreviate_number }}</span>
+              <span title="Views count on this post" class="small"><i class="fas fa-eye"></i> {{ problem.annot_views_count|abbreviate_number }}</span>
+
+              <!-- Bookmark -->
+              <span class="cursor-pointer small save-btn d-flex align-items-center gap-1" data-id="{{ problem.id }}">
+                <i class="fas fa-bookmark {% if problem.is_bookmarked %}active{% endif %}"></i>
+                <span title="Bookmark this post"  class="save-text">{% if problem.is_bookmarked %}Saved{% else %}Save{% endif %}</span>
+              </span>
+
+              <!-- Share -->
+              <span title="Share this post" class="cursor-pointer small d-flex align-items-center gap-1" data-bs-toggle="modal" data-bs-target="#shareModal-{{ problem.id }}">
+                <i class="fas fa-share"></i> Share
+              </span>
+
+              <!-- Tips -->
+              {% if problem.author %}
+                <span title="Tips received on this post" class="badge bg-info text-dark d-flex align-items-center gap-1">
+                  <i class="fas fa-coins"></i> {{ problem.tips_received|abbreviate_number }}
+                </span>
+              {% endif %}
+
+              {% if request.user != problem.author %}
+                <div class="problem-tip-box d-flex align-items-center gap-2">
+                  <input type="number"
+                        class="form-control form-control-sm problem-tip-amount"
+                        placeholder="$" title="Enter amount to tip">
+
+                  <button class="btn btn-warning btn-sm send-problem-tip-btn"
+                          data-id="{{ problem.id }}" title="Tip this post">
+                    <i class="fas fa-coins"></i>
+                    <span class="tip-text">Tip</span>
+                  </button>
+
+                  <span title="Tips sent from you for this post" class="badge bg-info text-dark d-flex align-items-center gap-1">
+                    <i class="fas fa-coins"></i>
+                    {{ problem.tips_received|abbreviate_number }}
+                  </span>
+                </div>
+              {% endif %}
+
+              <!-- Promotion badges -->
+              {% if problem.promotion_priority == 3 %}
+                <span class="badge bg-danger d-flex align-items-center gap-1">📌 Pinned</span>
+              {% elif problem.promotion_priority == 2 %}
+                <span class="badge bg-info d-flex align-items-center gap-1">🚀 Boosted</span>
+              {% elif problem.promotion_priority == 1 %}
+                <span class="badge bg-warning d-flex align-items-center gap-1">⭐ Featured</span>
+              {% endif %}
+            </div>
+
+            <!-- TAGS -->
+            {% if problem.tags.all %}
+              <div class="problem-tags-compact">
+                
+                <span class="badge bg-secondary tag-indicator"
+                      data-bs-toggle="tooltip"
+                      data-bs-html="true"
+                      title="
+                      {% for tag in problem.tags.all %}
+                        • {{ tag.name }}<br>
+                      {% endfor %}
+                      ">
+                  🏷 {{ problem.tags.all|length }}
+                </span>
+
+              </div>
+            {% endif %}
+            <!-- ANSWERS SECTION -->
+<div class="answers-section mt-3">
+
+  <!-- HEADER -->
+  <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+
+    <!-- Toggle Answers -->
+    <a class="text-decoration-none d-flex align-items-center gap-1"
+       data-bs-toggle="collapse"
+       href="#answers-{{ problem.id }}">
+      <i class="fas fa-comments"></i>
+      <span>Answers ({{ problem.annot_answers_count|abbreviate_number }})</span>
+    </a>
+
+    <!-- Right Side: bounty + ads -->
+    <div class="d-flex align-items-center gap-2 ms-auto">
+
+      {% if problem.bounty_amount and problem.bounty_amount > 0 %}
+        <span class="badge bg-warning text-dark"
+              title="Bounty Amount for Best Answer">
+          <i class="fas fa-coins"></i>
+          {{ problem.bounty_amount|abbreviate_number }}
+        </span>
+      {% endif %}
+
+      <!-- Ads placeholder (isolated, no layout interference) -->
+      <div id="adsPlaceholder-{{ problem.id }}"
+           data-problem-id="{{ problem.id }}"></div>
+
+    </div>
+
+  </div>
+
+  <!-- ANSWERS LIST -->
+  <div class="collapse answers-scrollable mt-3"
+       id="answers-{{ problem.id }}">
+
+    {% for answer in problem.answers.all|dictsortreversed:"votes_score" %}
+
+      <div class="card answer-card {% if answer.is_accepted %}accepted-answer{% endif %}"
+           data-answer-id="{{ answer.id }}">
+
+        <!-- HEADER -->
+        <div class="d-flex align-items-center justify-content-between mb-2 flex-wrap gap-2">
+
+          <a href="{% url 'profile' answer.author.id %}"
+             class="d-flex align-items-center text-decoration-none gap-2">
+
+            <!-- Avatar -->
+            {% if answer.author.avatar %}
+              <img src="{{ answer.author.avatar.url }}"
+                   class="rounded-circle"
+                   style="width:35px;height:35px;object-fit:cover;">
+            {% else %}
+              {% with first=answer.author.username|slice:":1"|upper %}
+              <div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center"
+                   style="width:35px;height:35px;">
+                {{ first }}
+              </div>
+              {% endwith %}
+            {% endif %}
+
+            <div class="d-flex flex-column small">
+              <strong>{{ answer.author.username }}</strong>
+              <span class="answer-time"
+                    data-time="{{ answer.created_at|date:'c' }}"></span>
+            </div>
+
+          </a>
+
+          {% if answer.is_accepted %}
+            <span class="badge bg-success text-light">
+              <i class="fas fa-check-circle"></i> Accepted
+            </span>
+          {% endif %}
+
+        </div>
+
+        <!-- CONTENT -->
+        <div class="mb-2">
+          <p class="mb-1">
+            {% if answer.content|length > 200 %}
+              {{ answer.content|truncatechars:200|convert_mentions|linebreaks|linkify|safe }}
+              <a href="{% url 'problem_detail_partial' problem.id %}#answer-{{ answer.id }}"
+                 class="read-more-link">Read more</a>
+            {% else %}
+              {{ answer.content|convert_mentions|linebreaks|linkify|safe }}
+            {% endif %}
+          </p>
+        </div>
+
+        <!-- MEDIA -->
+        {% if answer.file %}
+          {% with answer.file.url|lower as file_url %}
+            <div class="text-center mb-2">
+
+              {% if ".jpg" in file_url or ".jpeg" in file_url or ".png" in file_url or ".gif" in file_url %}
+                <img src="{{ answer.file.url }}"
+                     class="clickable-media"
+                     style="max-width:300px;border-radius:8px;"
+                     data-bs-toggle="modal"
+                     data-bs-target="#mediaModal"
+                     data-src="{{ answer.file.url }}">
+
+              {% elif ".mp4" in file_url or ".mov" in file_url or ".webm" in file_url %}
+                <video controls
+                       style="width:100%;max-height:250px;border-radius:8px;"
+                       class="clickable-media"
+                       data-bs-toggle="modal"
+                       data-bs-target="#mediaModal"
+                       data-src="{{ answer.file.url }}">
+                  <source src="{{ answer.file.url }}">
+                </video>
+
+              {% elif ".mp3" in file_url or ".wav" in file_url %}
+                <audio controls style="width:100%;">
+                  <source src="{{ answer.file.url }}">
+                </audio>
+              {% endif %}
+
+            </div>
+          {% endwith %}
+        {% endif %}
+
+        <!-- ACTIONS -->
+        <div class="d-flex align-items-center flex-wrap gap-2">
+
+          <!-- VOTES -->
+          <div class="d-flex align-items-center gap-1">
+            <button class="btn vote-btn upvote"
+                    data-id="{{ answer.id }}"
+                    data-type="answer">👍</button>
+
+            <span id="answer-score-{{ answer.id }}">
+              {{ answer.votes_score|abbreviate_number }}
+            </span>
+
+            <button class="btn vote-btn downvote"
+                    data-id="{{ answer.id }}"
+                    data-type="answer">👎</button>
+          </div>
+
+          <!-- Tips -->
+          {% if answer.author %}
+            <span class="badge bg-info text-dark">
+              <i class="fas fa-coins"></i>
+              {{ answer.tips_received|abbreviate_number }}
+            </span>
+          {% endif %}
+
+        </div>
+
+        <!-- TIP BOX -->
+        {% if request.user != answer.author %}
+        <div class="answer-tip-box d-flex align-items-center gap-2 mt-2">
+
+          <input type="number"
+                 class="form-control form-control-sm tip-amount"
+                 placeholder="$">
+
+          <button class="btn btn-warning btn-sm send-tip-btn"
+                  data-id="{{ answer.id }}">
+            <i class="fas fa-coins"></i> Tip
+          </button>
+
+          <span class="badge bg-info text-dark">
+            {{ answer.tips_received|abbreviate_number }}
+          </span>
+
+        </div>
+        {% endif %}
+
+      </div>
+
+    {% empty %}
+      <div class="small text-muted">No answers yet.</div>
+    {% endfor %}
+
+  </div>
+
+</div>
+
+          </div>
+        </div>
+
+        <!-- SHARE MODAL -->
+        <div class="modal fade" id="shareModal-{{ problem.id }}" tabindex="-1" aria-hidden="true">
+          <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h5 class="modal-title">Share Problem</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" title="Share this post"></button>
+              </div>
+              <div class="modal-body">
+                <ol class="list-group list-group-numbered">
+                  {% with problem_url=problem.get_absolute_url %}
+                  <li class="list-group-item">
+                    <a href="https://twitter.com/intent/tweet?url={{ request.build_absolute_uri|add:problem_url }}" target="_blank">
+                      <i class="fab fa-twitter me-2"></i> Twitter
+                    </a>
+                  </li>
+                  <li class="list-group-item">
+                    <a href="https://www.facebook.com/sharer/sharer.php?u={{ request.build_absolute_uri|add:problem_url }}" target="_blank">
+                      <i class="fab fa-facebook me-2"></i> Facebook
+                    </a>
+                  </li>
+                  <li class="list-group-item">
+                    <a href="https://www.linkedin.com/shareArticle?mini=true&url={{ request.build_absolute_uri|add:problem_url }}" target="_blank">
+                      <i class="fab fa-linkedin me-2"></i> LinkedIn
+                    </a>
+                  </li>
+                  <li class="list-group-item">
+                    <a href="#" 
+                      onclick="copyProblemLink('{% url 'problem_detail_partial' problem.id %}'); return false;">
+                        <i class="fas fa-link me-2"></i> Copy Link
+                    </a>
+                  </li>
+                  {% endwith %}
+                </ol>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div id="problem-modal"
+            class="position-fixed start-0 bottom-0 w-100 shadow-lg modal-surface">
+
+            <div class="modal-handle"></div>
+
+            <div class="p-3 h-100 overflow-auto">
+
+              <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="m-0 modal-title-text">{{ problem.title }} </h5>
+                <a href="{% url 'problem_detail' problem.id %}" class="text-decoration-none text-reset">View Details</a>
+                <button id="close-problem" class="btn btn-sm btn-outline-secondary">✕</button>
+              </div>
+
+              <div id="problem-content" class="modal-body-text">
+                <p>Loading...</p>
+              </div>
+
+            </div>
+        </div>
+        {% empty %}
+        <div class="card p-4 text-center ">No problems yet. Be the first to ask!</div>
+        {% endfor %}
+      </div>
+    </div>
+  
+    <!-- backdrop -->
+    <div id="problem-backdrop" class="modal-backdrop-layer"></div>
+      <!-- RIGHT PANEL: BOOKMARKS -->
+      <div class="col-lg-4 position-relative">
+        <div class="sticky-panel" id="bookmarkPanel">
+          <h5 class="fw-bold mb-3">Bookmarks</h5>
+
+          {% if bookmarked_problems %}
+            <ul class="list-group list-group-flush bookmark-list">
+              {% for bp in bookmarked_problems %}
+                <li class="list-group-item bookmark-item px-0 d-flex justify-content-between align-items-start" data-id="{{ bp.id }}">
+
+                  {% if bp.post_type == "information" %}
+                    <!-- Go to TalentHub + scroll to problem -->
+                    <a href="{% url 'talenthub' %}#problem-{{ bp.id }}" class="bookmark-title text-decoration-none d-block">
+                      {{ bp.title|truncatechars:50 }}
+                      {% if bp.title|length > 50 %}
+                        <span class="read-more">...Read more</span>
+                      {% endif %}
+                    </a>
+                  {% else %}
+                    <!-- Go to normal problem detail -->
+                    <a href="{% url 'problem_detail_partial' bp.id %}" class="bookmark-title text-decoration-none d-block">
+                      {{ bp.title|truncatechars:50 }}
+                      {% if bp.title|length > 50 %}
+                        <span class="read-more">...Read more</span>
+                      {% endif %}
+                    </a>
+                  {% endif %}
+
+                  <!-- Optional solved badge -->
+                  {% if bp.annot_accepted_count > 0 %}
+                    <span class="badge bg-success ms-2 text-light">
+                      <i class="fas fa-check-circle"></i> Solved
+                    </span>
+                  {% endif %}
+
+                </li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            <div class="small">
+              <i class="fas fa-bookmark me-1"></i> No bookmarks yet.
+            </div>
+          {% endif %}
+
+        </div>
+      </div>
+    </div>
+
+    <!-- Image Preview Modal -->
+    <div id="img-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); justify-content:center; align-items:center; z-index:2000;">
+      <span id="img-modal-close" style="position:absolute; top:20px; right:30px; font-size:30px; color:white; cursor:pointer;">&times;</span>
+      <img id="img-modal-content" src="" style="max-width:90%; max-height:90%; border-radius:10px; box-shadow:0 4px 12px rgba(0,0,0,0.5);"/>
+    </div>
+
+    <!-- MEDIA MODAL -->
+    <div class="modal fade" id="mediaModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+          <div class="modal-body" id="modal-media-container"></div>
+        </div>
+      </div>
+    </div>
+  
+
+<style>
+/* BACKDROP */
+.modal-backdrop-layer {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.55);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease;
+    z-index: 1040; /* BELOW Bootstrap modals */
+}
+
+.modal-backdrop-layer.active {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+
+/* MODAL BASE */
+.modal-surface {
+    height: 0;
+    overflow: hidden;
+    transition: height 0.35s ease;
+    z-index: 10000;
+    border-top-left-radius: 18px;
+    border-top-right-radius: 18px;
+
+    /* LIGHT MODE DEFAULT */
+    background: var(--bg-gradient);
+    color: var(--text);
+}
+
+/* HANDLE */
+.modal-handle {
+    width: 42px;
+    height: 5px;
+    background: #c7c7c7;
+    color: var(--text);
+    border-radius: 10px;
+    margin: 10px auto;
+}
+
+/* TEXT */
+.modal-title-text {
+    color: inherit;
+    font-weight: 600;
+}
+
+.modal-body-text {
+    color: inherit;
+}
+
+/* 📱 MOBILE FIX */
+@media (max-width: 768px) {
+    .modal-surface {
+        max-height: 80vh; /* almost full screen */
+        border-radius: 16px 16px 0 0;
+    }
+}
+
+/* 🌙 DARK MODE */
+@media (prefers-color-scheme: dark) {
+    .modal-surface {
+        background: #111827;
+        border-top: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .modal-backdrop-layer {
+        background: rgba(0,0,0,0.7);
+    }
+
+    .modal-handle {
+        background: #4b5563;
+    }
+}
+</style>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+  const modal = document.getElementById("problem-modal");
+  const backdrop = document.getElementById("problem-backdrop");
+  const content = document.getElementById("problem-content");
+  const closeBtn = document.getElementById("close-problem");
+
+  let isOpen = false;
+
+  // -------------------------
+  // TIME FORMAT
+  // -------------------------
+  const fbTimeSince = (dateString) => {
+    const now = new Date();
+    const past = new Date(dateString);
+
+    const seconds = Math.floor((now - past) / 1000);
+
+    if (seconds < 60) return `${seconds}s ago`;
+    if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
+    if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
+    if (seconds < 604800) return `${Math.floor(seconds / 86400)}d ago`;
+
+    return past.toLocaleDateString(undefined, {
+      month: "short",
+      day: "numeric"
+    });
+  };
+
+  function updateTimes(root = document) {
+    root.querySelectorAll("[data-time]").forEach(el => {
+      el.innerText = fbTimeSince(el.dataset.time);
+    });
+  }
+
+  // -------------------------
+  // OPEN MODAL
+  // -------------------------
+  function openModal(url) {
+
+    isOpen = true;
+
+    // prevent background scroll
+    document.body.style.overflow = "hidden";
+    document.body.classList.add("modal-open");
+
+    // show backdrop FIRST
+    backdrop.style.opacity = "1";
+    backdrop.style.pointerEvents = "auto";
+
+    // show modal
+    modal.style.height = "88vh";
+
+    content.innerHTML = "<p>Loading...</p>";
+
+    fetch(url, {
+      headers: { "X-Requested-With": "XMLHttpRequest" }
+    })
+    .then(r => r.text())
+    .then(html => {
+      content.innerHTML = html;
+      updateTimes(content);
+    })
+    .catch(() => {
+      content.innerHTML = "<p>Failed to load content.</p>";
+    });
+  }
+
+  // -------------------------
+  // CLOSE MODAL
+  // -------------------------
+  function closeModal() {
+
+    isOpen = false;
+
+    document.body.style.overflow = "auto";
+    document.body.classList.remove("modal-open");
+
+    modal.style.height = "0";
+
+    backdrop.style.opacity = "0";
+    backdrop.style.pointerEvents = "none";
+  }
+
+  // -------------------------
+  // CLICK HANDLERS
+  // -------------------------
+  document.querySelectorAll("a.problem-link").forEach(link => {
+    link.addEventListener("click", function (e) {
+      e.preventDefault();
+      openModal(this.href);
+    });
+  });
+
+  closeBtn?.addEventListener("click", closeModal);
+  backdrop?.addEventListener("click", closeModal);
+
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape" && isOpen) {
+      closeModal();
+    }
+  });
+
+  updateTimes(document);
+
+});
+
+function showLinkWarning(url) {
+  document.getElementById("warn-url").innerText = url;
+  document.getElementById("confirmLink").href = url;
+
+  const modal = new bootstrap.Modal(
+    document.getElementById("linkWarningModal")
+  );
+
+  modal.show();
+}
+
+function initSafeLinks() {
+  document.querySelectorAll(".safe-link").forEach(link => {
+    link.addEventListener("click", function (e) {
+      e.preventDefault();
+      showLinkWarning(this.href);
+    });
+  });
+}
+
+document.addEventListener("DOMContentLoaded", initSafeLinks);
+
+
+function showLinkWarning(url) {
+  document.getElementById("warn-url").innerText = url;
+  document.getElementById("confirmLink").href = url;
+
+  const modal = new bootstrap.Modal(
+    document.getElementById("linkWarningModal")
+  );
+
+  modal.show();
+}
+
+/* 🔥 EVENT DELEGATION (works for dynamic modal content) */
+document.addEventListener("click", function (e) {
+  const link = e.target.closest(".safe-link");
+
+  if (!link) return;
+
+  e.preventDefault();
+  showLinkWarning(link.href);
+});
+</script>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+  tooltipTriggerList.map(function (el) {
+    return new bootstrap.Tooltip(el);
+  });
+});
+</script>
+
+<script>
+function copyProblemLink(relativeUrl) {
+    const url = "{{ request.scheme }}://{{ request.get_host }}" + relativeUrl;
+
+    navigator.clipboard.writeText(url).then(() => {
+        alert("Link copied!");
+    });
+}
+</script>
+<script>
+
+document.addEventListener("DOMContentLoaded", function() {
+  // Modal elements
+  const modal = document.getElementById("img-modal");
+  const modalImg = document.getElementById("img-modal-content");
+  const closeBtn = document.getElementById("img-modal-close");
+
+  // Click any image in problem description to enlarge
+  document.querySelectorAll(".problem-content img").forEach(img => {
+    img.style.cursor = "zoom-in";
+
+    // Prevent drag
+    img.setAttribute("draggable", "false");
+
+    img.addEventListener("click", () => {
+      modal.style.display = "flex";
+      modalImg.src = img.src;
+
+      // Prevent dragging the modal image
+      modalImg.setAttribute("draggable", "false");
+    });
+
+    // Disable right-click on the image
+    img.addEventListener("contextmenu", (e) => e.preventDefault());
+  });
+
+  // Close modal
+  closeBtn.addEventListener("click", () => {
+    modal.style.display = "none";
+  });
+
+  // Click outside image closes modal
+  modal.addEventListener("click", (e) => {
+    if (e.target === modal) modal.style.display = "none";
+  });
+
+  // Disable right-click on modal image
+  modalImg.addEventListener("contextmenu", (e) => e.preventDefault());
+});
+
+document.addEventListener("DOMContentLoaded", () => {
+
+  // -------------------------
+  // CSRF HELPER
+  // -------------------------
+  const getCSRFToken = () => {
+    const token = document.querySelector('[name=csrfmiddlewaretoken]');
+    if (token) return token.value;
+    const cookie = document.cookie.split("; ").find(c => c.trim().startsWith("csrftoken="));
+    return cookie ? cookie.split("=")[1] : "";
+  };
+  const csrfToken = getCSRFToken();
+
+  // -------------------------
+  // MEDIA PROTECTION
+  // -------------------------
+  const disableMediaDownload = el => {
+    if (!el) return;
+    el.setAttribute("oncontextmenu", "return false"); // disable right-click
+    const tag = el.tagName.toLowerCase();
+    if (tag === "video" || tag === "audio") {
+      el.controlsList = "nodownload nofullscreen noremoteplayback";
+    }
+  };
+  document.querySelectorAll(".clickable-media, .answer-media").forEach(disableMediaDownload);
+
+  // -------------------------
+  // MEDIA MODAL
+  // -------------------------
+  const mediaModalEl = document.getElementById("mediaModal");
+  const mediaContainer = document.getElementById("modal-media-container");
+
+  document.addEventListener("click", e => {
+    const media = e.target.closest(".clickable-media, .answer-media");
+    if (!media || !mediaContainer) return;
+
+    const src = media.dataset.src;
+    if (!src) return;
+
+    const tag = media.tagName.toLowerCase();
+    let html = "";
+
+    if (tag === "img") {
+      html = `<img src="${src}" class="img-fluid rounded" style="max-height:80vh;" oncontextmenu="return false;">`;
+    } else if (tag === "video") {
+      html = `<video autoplay controls class="w-100 rounded" style="max-height:80vh;" controlsList="nodownload" oncontextmenu="return false">
+                <source src="${src}">
+              </video>`;
+    } else if (tag === "audio") {
+      html = `<audio autoplay controls class="w-100" controlsList="nodownload" oncontextmenu="return false">
+                <source src="${src}">
+              </audio>`;
+    }
+
+    mediaContainer.innerHTML = html;
+    if (mediaModalEl) new bootstrap.Modal(mediaModalEl).show();
+  });
+
+  mediaModalEl?.addEventListener("hidden.bs.modal", () => {
+    mediaContainer.innerHTML = "";
+  });
+
+// ==========================
+// LIVE BOOKMARK SYSTEM (FULL FIXED)
+// ==========================
+document.addEventListener("click", async (e) => {
+
+  const btn = e.target.closest(".save-btn");
+  if (!btn) return;
+
+  const problemId = btn.dataset.id;
+  const textSpan = btn.querySelector(".save-text");
+  const icon = btn.querySelector("i");
+
+  const panel = document.getElementById("bookmarkPanel");
+  const emptyState = panel.querySelector(".small");
+
+  const getList = () => panel.querySelector(".bookmark-list");
+
+  // Get problem info from DOM
+  const card = document.querySelector(`.problem-card[data-problem-id="${problemId}"]`);
+
+  const title =
+    card?.querySelector(".problem-title")?.innerText?.trim() || "Untitled";
+
+  const isSolved = card?.dataset.solved === "true";
+
+  const url = `/problems/${problemId}/`;
+
+  try {
+    const res = await fetch(`/problems/${problemId}/save/`, {
+      method: "POST",
+      headers: {
+        "X-CSRFToken": csrfToken,
+        "Content-Type": "application/json"
+      }
+    });
+
+    const data = await res.json();
+
+    // ==========================
+    // BUTTON UI UPDATE
+    // ==========================
+    if (data.status === "saved") {
+      textSpan.textContent = "Saved";
+      icon.classList.add("active");
+    } else {
+      textSpan.textContent = "Save";
+      icon.classList.remove("active");
+    }
+
+    // ==========================
+    // SIDEBAR UPDATE
+    // ==========================
+    let list = getList();
+    let existingItem = panel.querySelector(`.bookmark-item[data-id="${problemId}"]`);
+
+    // ==========================
+    // ADD BOOKMARK
+    // ==========================
+    if (data.status === "saved") {
+
+      if (emptyState) emptyState.remove();
+
+      if (!list) {
+        list = document.createElement("ul");
+        list.className = "list-group bookmark-list";
+        panel.appendChild(list);
+      }
+
+      if (!existingItem) {
+        const li = document.createElement("li");
+        li.className = "list-group-item d-flex justify-content-between align-items-start bookmark-item";
+        li.dataset.id = problemId;
+
+        li.innerHTML = `
+          <a href="${url}" class="bookmark-title text-decoration-none">
+            ${title.length > 50
+              ? `${title.substring(0, 50)} <span class="read-more">...Read more</span>`
+              : title}
+          </a>
+
+          ${isSolved ? `
+            <span class="badge bg-success ms-2 text-light">
+              <i class="fas fa-check-circle"></i> Solved
+            </span>
+          ` : ``}
+        `;
+
+        list.prepend(li);
+      }
+
+    }
+
+    // ==========================
+    // REMOVE BOOKMARK
+    // ==========================
+    else {
+
+      if (existingItem) existingItem.remove();
+
+      if (!panel.querySelector(".bookmark-item")) {
+        panel.innerHTML = `
+          <h5 class="fw-bold mb-3">Bookmarks</h5>
+          <div class="small">
+            <i class="fas fa-bookmark me-1"></i> No bookmarks yet.
+          </div>
+        `;
+      }
+    }
+
+  } catch (err) {
+    console.error("Bookmark error:", err);
+  }
+});
+
+// -------------------------
+// VOTING (single vote per post)
+// -------------------------
+const lastAnswerVotes = {};  // Tracks last voted answer per problem
+const votedPosts = new Set(); // Tracks all posts voted on (problem or answer)
+
+const showVoteMessage = (msg="Thanks for voting!") => {
+  const toast = document.createElement("div");
+  toast.className = "vote-toast position-fixed bottom-0 end-0 m-3 p-2 bg-success rounded shadow";
+  toast.innerText = msg;
+  document.body.appendChild(toast);
+  setTimeout(() => toast.remove(), 1500);
+};
+
+const handleVote = async btn => {
+  const id = btn.dataset.id;
+  const type = btn.dataset.type;
+  const problemId = btn.dataset.problemId;
+  const isUp = btn.classList.contains("upvote");
+
+  // Unique post identifier
+  const postKey = `${type}-${id}`;
+
+  // Prevent multiple votes
+  if (votedPosts.has(postKey)) {
+    alert("You have already voted on this post.");
+    return;
+  }
+
+  const scoreEl = type === "problem"
+    ? document.getElementById(`problem-score-${id}`)
+    : document.getElementById(`answer-score-${id}`);
+
+  // Reset previous vote if another answer was voted
+  if (type === "answer" && lastAnswerVotes[problemId] && lastAnswerVotes[problemId] !== id) {
+    try {
+      const oldId = lastAnswerVotes[problemId];
+      const res = await fetch(`/vote/answer/${oldId}/`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "X-CSRFToken": csrfToken },
+        body: JSON.stringify({ value: 0 })
+      });
+      const data = await res.json();
+      const oldScoreEl = document.getElementById(`answer-score-${oldId}`);
+      if (oldScoreEl && data.score !== undefined) oldScoreEl.innerText = data.score;
+      votedPosts.delete(`answer-${oldId}`); // allow revote on old answer if changed later
+    } catch(err) { console.error(err); }
+  }
+
+  // Submit current vote
+  try {
+    const res = await fetch(`/vote/${type}/${id}/`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-CSRFToken": csrfToken },
+      body: JSON.stringify({ value: isUp ? 1 : -1 })
+    });
+    const data = await res.json();
+
+    if (data.status === "voted") {
+      if (scoreEl && data.score !== undefined) scoreEl.innerText = data.score;
+      showVoteMessage("Thanks for voting!");
+      votedPosts.add(postKey); // mark this post as voted
+
+      if (type === "answer") {
+        lastAnswerVotes[problemId] = id;
+        sortAllProblemAnswers();
+      }
+    } else if (data.status === "already") {
+      alert("You have already voted for this.");
+      votedPosts.add(postKey); // mark as voted anyway
+    }
+
+  } catch(err) { 
+    console.error(err); 
+    alert("Vote failed. Please try again."); 
+  }
+};
+
+// Initialize buttons
+document.querySelectorAll(".vote-btn").forEach(btn => {
+  btn.addEventListener("click", () => handleVote(btn));
+});
+  // -------------------------
+  // SORT ANSWERS & MOST VOTED
+  // -------------------------
+  const sortAllProblemAnswers = () => {
+    document.querySelectorAll(".problem-card").forEach(card => {
+      const collapse = card.querySelector(".answers-section .collapse");
+      if (!collapse) return;
+
+      const answers = Array.from(collapse.querySelectorAll(".answer-card"));
+      if (answers.length === 0) return;
+
+      const accepted = answers.filter(a => a.classList.contains("accepted-answer"));
+      const others = answers.filter(a => !a.classList.contains("accepted-answer"));
+
+      // Sort others by score descending
+      others.sort((a,b) => parseInt(b.querySelector("[id^='answer-score']").innerText) - parseInt(a.querySelector("[id^='answer-score']").innerText));
+
+      collapse.innerHTML = "";
+      accepted.forEach(a => collapse.appendChild(a));
+
+      if (others.length > 0) {
+        const topScore = parseInt(others[0].querySelector("[id^='answer-score']").innerText);
+        if (topScore > 0) {
+          const mostVoted = others.shift();
+          collapse.appendChild(mostVoted);
+
+          // Remove existing badge if any
+          mostVoted.querySelectorAll(".most-voted-badge").forEach(b => b.remove());
+
+          const badge = document.createElement("span");
+          badge.className = "badge bg-info text-dark ms-2 most-voted-badge";
+          badge.innerText = "Most Voted";
+          mostVoted.querySelector(".d-flex.align-items-center")?.appendChild(badge);
+        }
+      }
+
+      others.forEach(a => collapse.appendChild(a));
+    });
+  };
+
+  sortAllProblemAnswers();
+
+  // -------------------------
+  // ELEMENTS
+  // -------------------------
+  const container = document.getElementById("problems-container");
+  const searchInput = document.getElementById("problem-search");
+  const sortSelect = document.getElementById("problem-sort");
+  const categorySelect = document.getElementById("problem-category");
+
+  // -------------------------
+  // MASTER LIST (all cards, never lost)
+  // -------------------------
+  let allProblemCards = Array.from(container.querySelectorAll(".problem-card"));
+
+  // -------------------------
+  // FILTER & SORT FUNCTION
+  // -------------------------
+  const filterAndSort = () => {
+    const query = searchInput.value.trim().toLowerCase();
+    const selectedCategory = categorySelect.value;
+
+    // -------------------------
+    // FILTER
+    // -------------------------
+    let filtered = allProblemCards.filter(card => {
+      const title = (card.dataset.title || "").toLowerCase();
+      const category = card.dataset.category || "";
+
+      const matchesSearch = title.includes(query);
+      const matchesCategory = !selectedCategory || category === selectedCategory;
+
+      return matchesSearch && matchesCategory;
+    });
+
+    // -------------------------
+    // SORT
+    // -------------------------
+    const sortVal = sortSelect.value;
+    filtered.sort((a, b) => {
+      const votesA = parseInt(a.dataset.votes || 0);
+      const votesB = parseInt(b.dataset.votes || 0);
+
+      const answersA = parseInt(a.dataset.answers || 0);
+      const answersB = parseInt(b.dataset.answers || 0);
+
+      const createdA = parseInt(a.dataset.created || 0);
+      const createdB = parseInt(b.dataset.created || 0);
+
+      if (sortVal === "votes") return votesB - votesA;
+      if (sortVal === "answers") return answersB - answersA;
+      if (sortVal === "recent") return createdB - createdA;
+
+      return 0;
+    });
+
+    // -------------------------
+    // RENDER FILTERED + SORTED CARDS
+    // -------------------------
+    container.innerHTML = "";
+    filtered.forEach(card => container.appendChild(card));
+
+    // -------------------------
+    // OPTIONAL: sort answers inside each problem card
+    // -------------------------
+    if (typeof sortAllProblemAnswers === "function") {
+      sortAllProblemAnswers();
+    }
+  };
+
+  // -------------------------
+  // EVENT LISTENERS
+  // -------------------------
+  searchInput.addEventListener("input", filterAndSort);
+  sortSelect.addEventListener("change", filterAndSort);
+  categorySelect.addEventListener("change", filterAndSort);
+
+  // -------------------------
+  // OPTIONAL: allow new cards to be added dynamically
+  // -------------------------
+  const addNewCards = (cards) => {
+    cards.forEach(card => {
+      container.appendChild(card);
+      allProblemCards.push(card);
+    });
+    filterAndSort();
+  };
+
+
+
+  // -------------------------
+  // TIME FORMAT (FB STYLE)
+  // -------------------------
+  const fbTimeSince = dateString => {
+    const now = new Date();
+    const past = new Date(dateString);
+    const seconds = Math.floor((now - past)/1000);
+    if (seconds < 60) return `${seconds}s ago`;
+    if (seconds < 3600) return `${Math.floor(seconds/60)}m ago`;
+    if (seconds < 86400) return `${Math.floor(seconds/3600)}h ago`;
+    if (seconds < 604800) return `${Math.floor(seconds/86400)}d ago`;
+    return past.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+  };
+  document.querySelectorAll("[data-time]").forEach(el => el.innerText = fbTimeSince(el.dataset.time));
+
+
+// -------------------------
+  // INFINITE SCROLL / AUTOLOAD
+  // -------------------------
+  let currentPage = 1;        // Tracks current page
+  let isLoading = false;      // Prevent duplicate fetches
+  const problemsContainer = document.getElementById("problems-container");
+
+  const loadNextPage = async () => {
+    if (isLoading) return;
+    isLoading = true;
+    currentPage++;
+
+    try {
+      const res = await fetch(`/problems?page=${currentPage}`);
+      if (!res.ok) return;
+
+      const html = await res.text(); 
+      const tempDiv = document.createElement("div");
+      tempDiv.innerHTML = html;
+      const newCards = Array.from(tempDiv.querySelectorAll(".problem-card"));
+
+      // Append new cards
+      newCards.forEach(card => {
+        problemsContainer.appendChild(card);
+      });
+
+      // Format timestamps for new cards
+      newCards.forEach(card => {
+        card.querySelectorAll("[data-time]").forEach(el => {
+          el.innerText = fbTimeSince(el.dataset.time);
+        });
+      });
+
+      // Re-initialize vote buttons, save buttons, media, etc.
+      newCards.forEach(card => {
+        card.querySelectorAll(".vote-btn").forEach(btn => {
+          btn.addEventListener("click", () => handleVote(btn));
+        });
+        card.querySelectorAll(".save-btn").forEach(btn => {
+          btn.addEventListener("click", async () => {
+            const problemId = btn.dataset.id;
+            const textSpan = btn.querySelector(".save-text");
+            const icon = btn.querySelector("i");
+            try {
+              const res = await fetch(`/problems/${problemId}/save/`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json", "X-CSRFToken": csrfToken }
+              });
+              const data = await res.json();
+              if (data.status === "saved") {
+                textSpan.textContent = "Saved";
+                icon.classList.add("active");
+              } else {
+                textSpan.textContent = "Save";
+                icon.classList.remove("active");
+              }
+            } catch(err) { console.error(err); }
+          });
+        });
+        card.querySelectorAll(".clickable-media, .answer-media").forEach(disableMediaDownload);
+      });
+
+      // Re-sort answers for all cards
+      sortAllProblemAnswers();
+
+    } catch(err) {
+      console.error("Failed to load next page:", err);
+    } finally {
+      isLoading = false;
+    }
+  };
+
+  // Detect when user scrolls near bottom (200px from bottom)
+  window.addEventListener("scroll", () => {
+    if ((window.innerHeight + window.scrollY) >= (document.body.offsetHeight - 200)) {
+      loadNextPage();
+    }
+  });
+
+const bookmarkPanel = document.getElementById("bookmarkPanel");
+const toggleBtn = document.getElementById("sidebarToggle");
+
+if (toggleBtn && bookmarkPanel) {
+  toggleBtn.addEventListener("click", () => {
+    bookmarkPanel.classList.toggle("open");
+
+    const icon = toggleBtn.querySelector("i");
+    if (bookmarkPanel.classList.contains("open")) {
+      icon.classList.remove("BMK");
+      icon.classList.add("BMK");
+    } else {
+      icon.classList.remove("BMK");
+      icon.classList.add("BMK");
+    }
+  });
+}
+
+// -------------------------
+// FOLLOW MESSAGE
+// -------------------------
+const showFollowMessage = (msg = "Following user!") => {
+
+  const toast = document.createElement("div");
+
+  toast.className =
+    "follow-toast position-fixed bottom-0 end-0 m-3 px-3 py-2 bg-success text-white rounded shadow";
+
+  toast.style.zIndex = "9999";
+  toast.innerText = msg;
+
+  document.body.appendChild(toast);
+
+  setTimeout(() => {
+    toast.style.opacity = "0";
+    setTimeout(() => toast.remove(), 300);
+  }, 1500);
+
+};
+
+
+// -------------------------
+// FOLLOW USER
+// -------------------------
+document.addEventListener("click", async (e) => {
+
+  const btn = e.target.closest(".follow-btn");
+  if (!btn) return;
+
+  const userId = btn.dataset.userId;
+
+  // prevent double click
+  if (btn.dataset.loading === "true") return;
+  btn.dataset.loading = "true";
+
+  try {
+
+    const res = await fetch(`/users/${userId}/follow/`, {
+      method: "POST",
+      headers: {
+        "X-CSRFToken": csrfToken,
+        "Content-Type": "application/json",
+        "X-Requested-With": "XMLHttpRequest"
+      }
+    });
+
+    if (!res.ok) {
+      throw new Error("Request failed");
+    }
+
+    const data = await res.json();
+
+    if (data.status === "followed") {
+
+      btn.remove(); // remove + button
+      showFollowMessage("Now following!");
+
+    } else if (data.status === "already") {
+
+      showFollowMessage("You already follow this user.");
+
+    }
+
+  } catch (err) {
+
+    console.error(err);
+    showFollowMessage("Follow failed. Try again.");
+
+  } finally {
+
+    btn.dataset.loading = "false";
+
+  }
+
+});
+
+
+});
+</script>
+
+
+
+<script>
+function trackAdClick(adId) {
+    fetch(`/ads/click/${adId}/`, {
+        method: "POST",
+        headers: {
+            "X-CSRFToken": getCSRFToken(),
+            "Content-Type": "application/json"
+        }
+    }).catch(() => {});
+}
+
+function getCSRFToken() {
+    return document.cookie.split('; ')
+        .find(row => row.startsWith('csrftoken='))
+        ?.split('=')[1];
+}
+</script>
+
+<script>
+document.querySelectorAll("[id^='adsPlaceholder-']").forEach(el => {
+    const problemId = el.dataset.problemId;
+    if (!problemId) return;
+
+    fetch(`/ads/${problemId}/`)
+        .then(res => res.text())
+        .then(html => {
+            el.innerHTML = html;
+            if (window.adsbygoogle) (adsbygoogle = window.adsbygoogle || []).push({});
+        });
+});
+</script>
+
+
+<style>
+
+.answers-scrollable {
+    max-height: 400px;   /* Adjust height as needed */
+    overflow-y: auto;    /* Enables vertical scrolling */
+    padding-right: 5px;  /* Optional: prevent scrollbar overlap */
+}
+
+.answers-scrollable::-webkit-scrollbar {
+    width: 6px;
+}
+
+.answers-scrollable::-webkit-scrollbar-thumb {
+    background-color: rgba(0,0,0,0.2);
+    border-radius: 3px;
+}
+
+.answers-scrollable::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+/* ======================
+BOOKMARK PANEL (DESKTOP)
+====================== */
+#bookmarkPanel{
+  position: sticky;
+  top: 80px; /* adjust to navbar height */
+  align-self: flex-start;
+
+  max-height: calc(100vh - 80px);
+  overflow-y: auto;
+
+  padding: clamp(12px,1.5vw,18px);
+  border-radius: 10px;
+  background: var(--card);
+
+  box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+
+  font-size: clamp(0.9rem,1vw,1rem);
+}
+
+/* bookmark list */
+.bookmark-list{
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+
+.bookmark-list .list-group-item{
+  border:none;
+  padding: clamp(8px,1vw,12px);
+  border-radius:8px;
+  background: var(--card);
+  transition:background .2s ease;
+}
+
+.bookmark-list .list-group-item:hover{
+  background: rgba(0,0,0,0.05);
+}
+
+.bookmark-list a{
+  font-size: clamp(0.85rem,1vw,0.95rem);
+  color: var(--text);
+}
+
+.bookmark-list .badge{
+  font-size: clamp(0.6rem,0.8vw,0.75rem);
+}
+
+/* Bookmark titles: single line with ellipsis */
+.bookmark-title {
+  display: inline-block;
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  vertical-align: middle;
+}
+
+/* Optional: "Read more" style */
+.read-more {
+  color: var(--primary);
+  font-weight: 500;
+  margin-left: 2px;
+  cursor: pointer;
+}
+/* ======================
+MOBILE BOOKMARK PANEL
+====================== */
+@media (max-width: 992px){
+
+  #bookmarkPanel{
+    position: fixed;
+    top: 150px;
+    right: -100%;
+
+    width: 70%;
+    max-width: 300px;
+    max-height: 90vh;
+
+    background: var(--card);
+    border-left: 1px solid #ddd;
+
+    box-shadow: -4px 0 15px rgba(0,0,0,0.15);
+
+    z-index: 2000;
+
+    transition: right .35s ease;
+    padding: clamp(12px,2vw,20px);
+
+    overflow-y: auto;
+
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+
+    font-size: clamp(0.85rem,2vw,1rem);
+  }
+
+  #bookmarkPanel.open{
+    right:0;
+  }
+
+  #bookmarkPanel h5{
+    font-size: clamp(1rem,2.5vw,1.2rem);
+  }
+
+  #bookmarkPanel .list-group-item{
+    padding: clamp(8px,2vw,12px);
+  }
+
+}
+/* =========================
+Extra compact fields - fully responsive
+========================= */
+.small-field {
+  height: clamp(24px, 2vw, 28px);                /* compact height */
+  font-size: clamp(0.7rem, 0.8vw, 0.75rem);     /* small font */
+  padding: clamp(2px, 0.5vw, 3px) clamp(3px, 0.8vw, 5px); /* tight padding */
+  box-sizing: border-box;
+  width: clamp(180px, 25vw, 300px);             /* responsive width: min 180px, max 300px */
+}
+
+/* Narrow select field - stays tiny but responsive */
+#problem-sort.small-field {
+  width: clamp(70px, 12%, 120px);               /* responsive min/max width */
+}
+
+/* Optional: keep search + select on same line on small screens */
+@media (max-width: 480px) {
+  .d-flex > .small-field {
+    width: 100%; /* stack if very narrow screens */
+  }
+}
+
+
+
+/* Carousel container */
+.trending-stories {
+  scroll-behavior: smooth;
+  padding-bottom: 6px;
+  display: flex;
+  gap: 12px; /* spacing between cards */
+  overflow-x: auto;
+
+  /* Hide scrollbar for all browsers */
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none;  /* IE 10+ */
+}
+.trending-stories::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Edge */
+}
+
+/* Story card hover effect */
+.story-card {
+  flex-shrink: 0;           /* Prevent shrinking in flex container */
+  border-radius: 12px;
+  background: var(--card);
+  padding: 8px;
+  cursor: pointer;
+  transition: transform 0.2s ease-in-out;
+}
+.story-card:hover {
+  transform: scale(1.05);
+}
+
+/* Story title truncation */
+.story-title {
+  display: block;           
+  white-space: nowrap;      
+  overflow: hidden;         
+  text-overflow: ellipsis;  
+  font-size: 0.9rem;
+  line-height: 1.2rem;
+}
+
+/* Media inside story card */
+.story-media {
+  border-radius: 8px;
+  overflow: hidden;
+  height: 100px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Responsive adjustments */
+
+/* Small screens (mobile) */
+@media (max-width: 576px) {
+  .story-card { width: 120px; }
+  .story-media { height: 80px; }
+  .story-title { font-size: 0.75rem; }
+}
+
+/* Medium screens (tablet) */
+@media (min-width: 577px) and (max-width: 992px) {
+  .story-card { width: 150px; }
+  .story-media { height: 90px; }
+  .story-title { font-size: 0.8rem; }
+}
+
+/* Large screens (desktop) */
+@media (min-width: 993px) {
+  .story-card { width: 180px; }
+  .story-media { height: 100px; }
+  .story-title { font-size: 0.9rem; }
+}
+
+/* Side buttons responsiveness */
+.trending-stories-wrapper .btn {
+  width: 30px;
+  height: 30px;
+  font-size: 0.8rem;
+}
+@media (max-width: 576px) {
+  .trending-stories-wrapper .btn {
+    width: 24px;
+    height: 24px;
+    font-size: 0.7rem;
+  }
+}
+
+</style>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const container = document.getElementById("trendingStories");
+  const leftBtn = document.getElementById("scrollLeft");
+  const rightBtn = document.getElementById("scrollRight");
+
+  const scrollAmount = 220; // card width + gap
+  const autoScrollDelay = 3500;
+
+  let autoScroll;
+  let isDragging = false;
+  let startX;
+  let scrollLeft;
+
+  // =============================
+  // 🔁 INFINITE LOOP (CLONE EDGES)
+  // =============================
+  const items = Array.from(container.children);
+
+  items.forEach(item => {
+    const cloneStart = item.cloneNode(true);
+    const cloneEnd = item.cloneNode(true);
+
+    container.appendChild(cloneStart);
+    container.insertBefore(cloneEnd, container.firstChild);
+  });
+
+  // Reset scroll to middle
+  container.scrollLeft = container.scrollWidth / 3;
+
+  // =============================
+  // ▶️ BUTTON CONTROLS
+  // =============================
+  function scrollNext() {
+    container.scrollBy({ left: scrollAmount, behavior: "smooth" });
+  }
+
+  function scrollPrev() {
+    container.scrollBy({ left: -scrollAmount, behavior: "smooth" });
+  }
+
+  rightBtn.addEventListener("click", scrollNext);
+  leftBtn.addEventListener("click", scrollPrev);
+
+  // =============================
+  // 🔁 AUTO SCROLL
+  // =============================
+  function startAutoScroll() {
+    autoScroll = setInterval(scrollNext, autoScrollDelay);
+  }
+
+  function stopAutoScroll() {
+    clearInterval(autoScroll);
+  }
+
+  container.addEventListener("mouseenter", stopAutoScroll);
+  container.addEventListener("mouseleave", startAutoScroll);
+
+  // =============================
+  // 🖐️ DRAG / SWIPE SUPPORT
+  // =============================
+  container.addEventListener("mousedown", (e) => {
+    isDragging = true;
+    startX = e.pageX - container.offsetLeft;
+    scrollLeft = container.scrollLeft;
+    container.style.cursor = "grabbing";
+  });
+
+  container.addEventListener("mouseleave", () => {
+    isDragging = false;
+    container.style.cursor = "grab";
+  });
+
+  container.addEventListener("mouseup", () => {
+    isDragging = false;
+    container.style.cursor = "grab";
+  });
+
+  container.addEventListener("mousemove", (e) => {
+    if (!isDragging) return;
+    e.preventDefault();
+    const x = e.pageX - container.offsetLeft;
+    const walk = (x - startX) * 1.5;
+    container.scrollLeft = scrollLeft - walk;
+  });
+
+  // =============================
+  // 📱 TOUCH SUPPORT (MOBILE)
+  // =============================
+  container.addEventListener("touchstart", (e) => {
+    startX = e.touches[0].pageX;
+    scrollLeft = container.scrollLeft;
+  });
+
+  container.addEventListener("touchmove", (e) => {
+    const x = e.touches[0].pageX;
+    const walk = (x - startX) * 1.5;
+    container.scrollLeft = scrollLeft - walk;
+  });
+
+  // =============================
+  // ♻️ LOOP RESET (INFINITE FEEL)
+  // =============================
+  container.addEventListener("scroll", () => {
+    const maxScroll = container.scrollWidth;
+    const current = container.scrollLeft;
+
+    if (current <= scrollAmount) {
+      container.scrollLeft = maxScroll / 3;
+    } else if (current >= maxScroll - scrollAmount) {
+      container.scrollLeft = maxScroll / 3;
+    }
+  });
+
+  // =============================
+  // 🎬 VIDEO AUTO-PLAY FIX
+  // =============================
+  function handleVideos() {
+    const videos = container.querySelectorAll("video");
+
+    videos.forEach(video => {
+      video.pause();
+
+      const rect = video.getBoundingClientRect();
+      const inView = rect.left >= 0 && rect.right <= window.innerWidth;
+
+      if (inView) {
+        video.play().catch(() => {});
+      }
+    });
+  }
+
+  container.addEventListener("scroll", handleVideos);
+
+  // =============================
+  // 🚀 INIT
+  // =============================
+  container.style.cursor = "grab";
+  startAutoScroll();
+  handleVideos();
+});
+</script>
+{% endblock %}

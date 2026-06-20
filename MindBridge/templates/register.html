@@ -6,14 +6,9 @@
 <div class="row justify-content-center">
     <div class="col-md-5">
 
-        <div class="card shadow-sm border-0 p-4">
+        <div class="card border-0 p-4">
 
             <h3 class="text-center mb-3 fw-bold">Create Account</h3>
-
-            <p class="text-center text-muted small mb-4">
-                After registration, we will send a verification code to your email.  
-                You must verify your account before login.
-            </p>
 
             {% if form.non_field_errors %}
                 <div class="alert alert-danger">
@@ -83,17 +78,17 @@
 
             <p class="mt-3 text-center">
                 Already have an account?
-                <a href="{% url 'login' %}">Login</a>
+                <a href="{% url 'login' %}" data-spa-link>Login</a>
             </p>
-
+            <p class="text-center text-muted small mb-4">
+                After registration, we will send a verification code to your email.  
+                You must verify your account before login.
+            </p>
         </div>
 
     </div>
 </div>
 
-{% endblock %}
-
-{% block extra_scripts %}
 
 <script>
 // SAFE ELEMENT CHECKS (prevents JS crashes)
@@ -130,47 +125,280 @@ if (form && btn) {
 </script>
 
 <style>
+/* =========================
+   PAGE BACKGROUND
+========================= */
+
+body {
+    min-height: 100vh;
+
+    background:
+        radial-gradient(circle at top left, rgba(99,102,241,0.12), transparent 28%),
+        radial-gradient(circle at bottom right, rgba(6,182,212,0.12), transparent 28%),
+        linear-gradient(135deg, #f8fafc 0%, #eef2ff 100%);
+
+    font-family: ui-sans-serif, system-ui, sans-serif;
+}
+
+
+/* =========================
+   CARD
+========================= */
+
 .card {
-    backdrop-filter: blur(12px);
     border: none;
-    transition: transform 0.2s ease, box-shadow 0.25s ease;
+    border-radius: 24px;
+
+    background: rgba(255,255,255,0.72);
+
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+
+
+    transition:
+        transform 0.25s ease,
+        box-shadow 0.25s ease;
+
+    animation: fadeUp 0.5s ease;
 }
 
 .card:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 15px 30px rgba(0,0,0,0.08);
+    transform: translateY(-4px);
+
 }
 
+
+/* =========================
+   TYPOGRAPHY
+========================= */
+
+h3 {
+    font-size: 2rem;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    color: #111827;
+}
+
+.form-label {
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: #374151;
+}
+
+.text-muted {
+    color: #6b7280 !important;
+}
+
+
+/* =========================
+   INPUTS
+========================= */
+
 .form-control {
-    border: 1px solid var(--border);
-    padding: 12px 15px;
-    transition: all 0.2s ease;
+    border-radius: 14px;
+
+    border: 1px solid #d1d5db !important;
+
+    padding: 14px 16px;
+
+    background: rgba(255,255,255,0.9);
+
+    transition:
+        border-color 0.2s ease,
+        box-shadow 0.2s ease,
+        background 0.2s ease;
 }
 
 .form-control:focus {
-    border-color: var(--primary);
-    box-shadow: 0 0 8px rgba(92,106,196,0.3);
+    border-color: #6366f1 !important;
+
+    background: #ffffff;
+
+    box-shadow:
+        0 0 0 4px rgba(99,102,241,0.15);
+
     outline: none;
 }
 
-.btn-primary {
-    padding: 12px;
-    font-weight: 600;
+
+/* =========================
+   INPUT GROUPS
+========================= */
+
+.input-group .form-control {
+    border-radius: 14px 0 0 14px;
 }
 
+.input-group .btn {
+    border-radius: 0 14px 14px 0;
+
+    border: 1px solid #d1d5db;
+
+    background: rgba(255,255,255,0.9);
+
+    transition: all 0.2s ease;
+}
+
+.input-group .btn:hover {
+    background: #f3f4f6;
+}
+
+
+/* =========================
+   BUTTON
+========================= */
+
+.btn-primary {
+    border: none;
+
+    border-radius: 14px;
+
+    padding: 14px;
+
+    font-weight: 600;
+    font-size: 0.95rem;
+
+    background: linear-gradient(
+        135deg,
+        #6366f1,
+        #8b5cf6
+    );
+
+    transition:
+        transform 0.2s ease,
+        box-shadow 0.2s ease,
+        opacity 0.2s ease;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+
+    box-shadow:
+        0 12px 24px rgba(99,102,241,0.28);
+}
+
+.btn-primary:active {
+    transform: scale(0.98);
+}
+
+
+/* =========================
+   LINKS
+========================= */
+
+a {
+    color: #6366f1;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+a:hover {
+    color: #4f46e5;
+}
+
+
+/* =========================
+   ERRORS
+========================= */
+
 .text-danger {
-    margin-top: 5px;
+    margin-top: 6px;
+    font-size: 0.85rem;
+}
+
+
+/* =========================
+   ALERTS
+========================= */
+
+.alert-danger {
+    border: none;
+
+    border-radius: 14px;
+
+    background: rgba(239,68,68,0.08);
+
+    color: #b91c1c;
+}
+
+
+/* =========================
+   DARK MODE
+========================= */
+
+[data-theme="dark"] body {
+    background:
+        radial-gradient(circle at top left, rgba(139,92,246,0.12), transparent 28%),
+        radial-gradient(circle at bottom right, rgba(6,182,212,0.12), transparent 28%),
+        linear-gradient(135deg, #0f172a 0%, #111827 100%);
 }
 
 [data-theme="dark"] .card {
-    background: var(--card);
+    background: rgba(17,24,39,0.72);
+
+    box-shadow:
+        0 10px 30px rgba(0,0,0,0.45),
+        0 2px 10px rgba(0,0,0,0.2);
+}
+
+[data-theme="dark"] h3,
+[data-theme="dark"] .form-label {
+    color: #f9fafb;
+}
+
+[data-theme="dark"] .text-muted {
+    color: #9ca3af !important;
 }
 
 [data-theme="dark"] .form-control {
-    background: var(--input-bg);
-    color: var(--text);
-    border: 1px solid var(--input-border);
+    background: rgba(31,41,55,0.9);
+
+    border: 1px solid #374151 !important;
+
+    color: #f9fafb;
+}
+
+[data-theme="dark"] .form-control:focus {
+    background: rgba(31,41,55,1);
+
+    border-color: #818cf8 !important;
+
+    box-shadow:
+        0 0 0 4px rgba(129,140,248,0.18);
+}
+
+[data-theme="dark"] .input-group .btn {
+    background: rgba(31,41,55,0.9);
+
+    border-color: #374151;
+
+    color: #f9fafb;
+}
+
+[data-theme="dark"] .input-group .btn:hover {
+    background: rgba(55,65,81,1);
+}
+
+[data-theme="dark"] .alert-danger {
+    background: rgba(239,68,68,0.12);
+    color: #fca5a5;
+}
+
+
+/* =========================
+   ANIMATION
+========================= */
+
+@keyframes fadeUp {
+    from {
+        opacity: 0;
+        transform: translateY(14px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 </style>
-
 {% endblock %}

@@ -24,6 +24,11 @@ class FollowUserView(View):
             follower=request.user,
             following=user_to_follow
         )
+        display_name = (
+            f"{request.user.first_name} {request.user.last_name}".strip()
+            if request.user.first_name or request.user.last_name
+            else request.user.username
+        )
 
         if created:
             # Generate the correct profile URL
@@ -33,7 +38,7 @@ class FollowUserView(View):
             NotificationService.create_notification(
                 user=user_to_follow,        # recipient
                 actor=request.user,         # the follower
-                message=f"{request.user.username} started following you.",
+                message=f"{display_name} started following you.",
                 url=profile_url
             )
 

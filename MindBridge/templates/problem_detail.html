@@ -19,7 +19,7 @@
         <i class="fas fa-chevron-left"></i>
     </button>
       <!-- PROBLEM CARD -->
-      <div class="card shadow-sm mb-4 p-3" id="problem-{{ problem.id }}">
+      <div class="problem-card mb-4 p-3" id="problem-{{ problem.id }}" data-problem-id="{{ problem.id }}">
          <!-- RIGHT: category + status badges -->
          <div class="d-flex justify-content-end">
             {% if problem.category.name %}
@@ -33,7 +33,7 @@
         </div>
         <div class="card-body">
           <div class="d-flex align-items-center justify-content-between mb-3">
-            <a href="{% url 'profile' problem.author.id %}" class="d-flex text-decoration-none align-items-start">
+            <a href="{% url 'profile' problem.author.id %}" data-spa-link class="d-flex text-decoration-none align-items-start">
     
                 <!-- Avatar -->
                 {% if problem.author.avatar %}
@@ -49,11 +49,24 @@
 
                 <!-- Username + Time -->
                 <div class="d-flex flex-column">
-                    <strong class="small ">{{ problem.author.username }}</strong>
+                    
+                    <div class="d-flex align-items-center gap-1">
+                        {% if problem.author.is_verified_expert %}
+                          <i class="fas fa-shield-alt verified-expert" title="Verified Expert"></i>
+                        {% endif %}
+                        {% if problem.author.profile.first_name or problem.author.profile.last_name %}
+                          <strong>{{ problem.author.profile.first_name }} {{ problem.author.profile.last_name }}</strong>
+                        {% else %}
+                          <strong>{{ problem.author.username }}</strong>
+                        {% endif %}
+                    </div>
                     <small data-time="{{ problem.created_at|date:'c' }}"></small>
                 </div>
 
             </a>
+            
+              <!-- 👇 PRESENCE SYSTEM HERE -->
+              {% include "components/user_presence.html" with user=problem.author %}
 
             {% if user == problem.author %}
             <div class="dropdown">
@@ -67,9 +80,9 @@
             {% endif %}
             
           </div><hr>
-          <h3 class="text-center">{{ problem.title }}</h3>
+          <h5 class="text-center">{{ problem.title }}</h5>
           <div class="problem-content mb-3">
-              {{ problem.description|convert_mentions|linebreaks|safe }}
+              {{ problem.description|convert_mentions|linebreaks|linkify|safe }}
           </div>
 
           <!-- MEDIA -->
@@ -79,7 +92,7 @@
             {% if ".jpg" in file_url or ".jpeg" in file_url or ".png" in file_url or ".gif" in file_url %}
               <img src="{{ problem.file.url }}" style="width:300px; height:auto; cursor:pointer; border-radius:8px;" class="clickable-media" data-src="{{ problem.file.url }}">
             {% elif ".mp4" in file_url or ".mov" in file_url or ".avi" in file_url or ".mkv" in file_url or ".webm" in file_url %}
-              <video style="width:300px; height:auto; cursor:pointer; border-radius:8px;" controls class="clickable-media" data-src="{{ problem.file.url }}">
+              <video style="width:100%; max-width:600px; position:center; cursor:pointer; border-radius:8px;" controls class="clickable-media" data-src="{{ problem.file.url }}">
                 <source src="{{ problem.file.url }}">
               </video>
             {% elif ".mp3" in file_url or ".wav" in file_url or ".aac" in file_url %}
@@ -93,7 +106,7 @@
 
          <!-- METRICS & PROMOTIONS -->
           <div class="d-flex flex-wrap align-items-center gap-2 mb-3 metrics-row">
-
+            
             <!-- VOTES -->
             <div class="vote-box d-flex align-items-center gap-1">
               <div class="vote-btn vote-problem" data-id="{{ problem.id }}" data-value="1" title="UpVote">👍</div>
@@ -158,7 +171,7 @@
 
                 <button class="btn btn-warning btn-sm send-problem-tip-btn"
                         data-id="{{ problem.id }}" title="Tip this post">
-                  <i class="fas fa-coins"></i>
+                  
                   <span class="tip-text">Tip</span>
                 </button>
 
@@ -167,11 +180,18 @@
                   {{ problem.tips_received|abbreviate_number }}
                 </span>
               </div>
-              {% endif %}
+            {% endif %}
+              <!-- Ads placeholder (isolated, no layout interference) -->
 
+              <div id="adsPlaceholder-problem-{{ problem.id }}"
+                  data-problem-id="{{ problem.id }}">
+                  <!-- post content -->
+              {% include "partials/smart-card-ads.module.html" %}
+              </div>
+              
           </div>
-
-          <!-- ACTIONS -->
+          
+          
           <!-- COMMENTS -->
           <div class="mt-3">
             <button class="btn btn-sm btn-light mb-2" data-bs-toggle="collapse" data-bs-target="#comments-problem"  title="View comments">
@@ -200,7 +220,7 @@
                     <div class="d-flex align-items-start gap-2">
 
                         <!-- Avatar -->
-                        <a href="{% url 'profile' comment.user.id %}">
+                        <a href="{% url 'profile' comment.user.id %}" data-spa-link>
                             {% if comment.user.avatar %}
                                 <img src="{{ comment.user.avatar.url|default:'/static/img/default-avatar.png' }}"
                                     class="rounded-circle"
@@ -215,16 +235,26 @@
 
                         <!-- Username + Time + Content -->
                         <div class="d-flex flex-column">
-                            <a href="{% url 'profile' comment.user.id %}" class="text-decoration-none">
+                            <a href="{% url 'profile' comment.user.id %}" class="text-decoration-none" data-spa-link>
+                              {% if comment.user.is_verified_expert %}
+                                <i class="fas fa-shield-alt verified-expert" title="Verified Expert"></i>
+                              {% endif %}
+                              {% if comment.user.profile.first_name or comment.user.profile.last_name %}
+                                <strong>{{ comment.user.profile.first_name }} {{ comment.user.profile.last_name }}</strong>
+                              {% else %}
                                 <strong>{{ comment.user.username }}</strong>
+                              {% endif %}
                             </a>
 
                             <span class=" small">
                                 • <small data-time="{{ comment.created_at|date:'c' }}"></small>
+                                  <!-- 👇 PRESENCE SYSTEM HERE -->
+                                  {% include "components/user_presence.html" with user=comment.user %}
+
                             </span>
 
                             <div class="comment-content mt-1">
-                                {{ comment.content|convert_mentions|linebreaks|safe }}
+                                {{ comment.content|convert_mentions|linebreaks|linkify|safe }}
                             </div>
                         </div>
 
@@ -251,72 +281,106 @@
           </div>
 
         </div>
+
       </div>
 
       <!-- ANSWER FORM -->
-      {% if user.is_authenticated %}
-        <div class="answer-form-wrapper">
-          <div class="answer-form-card">
+      {% if user.is_authenticated and request.user != problem.author %}
+      <div class="answer-form-wrapper">
+        <div class="answer-form-card">
 
-            <h5 class="answer-form-title">
-              <i class="fas fa-pencil-alt"></i> Post Your Answer
-            </h5>
+          <h5 class="answer-form-title text-info">
+            <i class="fas fa-pencil-alt"></i> Post Your Answer
+          </h5>
 
-            <form method="post" action="{% url 'create_answer' problem.id %}" enctype="multipart/form-data" id="answerForm">
-              {% csrf_token %}
+          <form method="post" action="{% url 'create_answer' problem.id %}" enctype="multipart/form-data" id="answerForm">
+            {% csrf_token %}
 
-              <!-- TEXTAREA -->
-              <div class="form-row">
-                <textarea id="answerTextarea" name="content"
-                          placeholder="Write your answer..."
-                          rows="4" required
-                          class="answer-textarea"></textarea>
-                <span class="required-star">*</span>
+            <!-- 🔥 TOOLBAR -->
+            <div id="answerToolbar" class="inline-toolbar mb-2">
+              <div class="toolbar-group">
+                <button type="button" data-cmd="bold" title="Bold"><b>B</b></button>
+                <button type="button" data-cmd="italic" title="Italic"><i>I</i></button>
+                <button type="button" data-cmd="underline" title="Underline"><u>U</u></button>
               </div>
 
-              <!-- FILE UPLOAD -->
-              <div class="form-row">
-                <label class="upload-label">
-                  📷 Media
-                  {{ answer_form.file|add_class:"d-none" }}
-                </label>
+              <div class="toolbar-divider"></div>
+
+              <div class="toolbar-group">
+                <button type="button" data-action="link" title="Insert Link">🔗</button>
+                <button type="button" data-action="code" title="Code Block">&lt;/&gt;</button>
               </div>
 
-              <!-- PREVIEW -->
-              <div id="file-preview" class="file-preview"></div>
+              <div class="toolbar-divider"></div>
 
-              <!-- BUTTONS -->
-              <div class="answer-actions">
-                <button type="button" id="generateAnswerBtn" class="btn btn-secondary" title="Let AI Generate your answer">
-                  <i class="fas fa-paper-plane"></i>
-                  <span class="btn-text">AI Generate</span>
-                </button>
-
-                <button type="submit" class="btn btn-primary" title="Post your answer">
-                  <i class="fas fa-paper-plane"></i>
-                  <span class="btn-text">Post</span>
-                </button>
+              <div class="toolbar-group">
+                <button type="button" data-heading="h2" title="Heading 2">H2</button>
+                <button type="button" data-heading="h3" title="Heading 3">H3</button>
+                <button type="button" data-heading="h4" title="Heading 4">H4</button>
               </div>
 
-              <!-- Mentions -->
-              <ul id="mentionSuggestions" class="mention-list"></ul>
-            </form>
+              <div class="toolbar-divider"></div>
 
-          </div>
+              <div class="toolbar-group">
+                <button type="button" data-action="clear" title="Clear Formatting">✖</button>
+              </div>
+            </div>
+
+            <!-- 🔥 EDITOR -->
+            <div class="form-row">
+              <div id="answerEditor"
+                  contenteditable="true"
+                  class="answer-editor form-control"
+                  style="min-height:150px; padding:10px; border-radius:10px;">
+              </div>
+              <span class="required-star">*</span>
+            </div>
+
+            <!-- 🔥 HIDDEN INPUT (IMPORTANT FOR DJANGO) -->
+            <input type="hidden" name="content" id="hiddenContent">
+
+            <!-- FILE UPLOAD -->
+            <div class="form-row">
+              <label class="upload-label">
+                📷 Media
+                {{ answer_form.file|add_class:"d-none" }}
+              </label>
+            </div>
+
+            <!-- PREVIEW -->
+            <div id="file-preview" class="file-preview"></div>
+
+            <!-- BUTTONS -->
+            <div class="answer-actions">
+              <button type="button" id="generateAnswerBtn" class="btn btn-secondary" title="Let AI Generate your answer">
+                <i class="fas fa-paper-plane"></i>
+                <span class="btn-text">AI Generate</span>
+              </button>
+
+              <button type="submit" class="btn btn-primary" title="Post your answer">
+                <i class="fas fa-paper-plane"></i>
+                <span class="btn-text">Post</span>
+              </button>
+            </div>
+
+            <!-- Mentions -->
+            <ul id="mentionSuggestions" class="mention-list"></ul>
+          </form>
+
         </div>
+      </div>
       {% endif %}
-
       <!-- ANSWERS -->
-      <h4 class="mb-3"><i class="fas fa-reply-all"></i> Answers ({{ problem.answers.count|abbreviate_number }})</h4>
+      <h4 class="mb-3 text-info"><i class="fas fa-reply-all"></i> Answers ({{ problem.answers.count|abbreviate_number }})</h4>
       <div class="answers-container border rounded p-2 mb-4" id="answers-list">
         {% for answer in problem.answers.all|dictsortreversed:"created_at" %}
-        <div class="card shadow-sm mb-3 {% if answer.is_accepted %}accepted-answer{% endif %}" id="answer-{{ answer.id }}" data-votes="{{ answer.votes_score }}">
+        <div class="card mb-3 {% if answer.is_accepted %}accepted-answer{% endif %}" id="answer-{{ answer.id }}" data-votes="{{ answer.votes_score }}">
           <div class="card-body">
             <div class="d-flex justify-content-between align-items-center mb-2">
                 <div class="d-flex align-items-center gap-2 mb-2">
 
                     <!-- Avatar -->
-                    <a href="{% url 'profile' answer.author.id %}">
+                    <a href="{% url 'profile' answer.author.id %}" data-spa-link>
                         {% if answer.author.avatar %}
                             <img src="{{ answer.author.avatar.url|default:'/static/img/default-avatar.png' }}" 
                                 class="rounded-circle" 
@@ -331,12 +395,23 @@
 
                     <!-- Username + Time -->
                     <div class="d-flex flex-column small">
-                        <a href="{% url 'profile' answer.author.id %}" class="text-decoration-none ">
-                            <strong>{{ answer.author.username }}</strong>
+                        <a href="{% url 'profile' answer.author.id %}" class="text-decoration-none " data-spa-link>
+                            <div class="d-flex align-items-center gap-1">
+                                {% if answer.author.is_verified_expert %}
+                                  <i class="fas fa-shield-alt verified-expert" title="Verified Expert"></i>
+                                {% endif %}
+                                {% if answer.author.profile.first_name or answer.author.profile.last_name %}
+                                  <strong>{{ answer.author.profile.first_name }} {{ answer.author.profile.last_name }}</strong>
+                                {% else %}
+                                  <strong>{{ answer.author.username }}</strong>
+                                {% endif %}
+                            </div>
                         </a>
                         <span class=""><small data-time="{{ answer.created_at|date:'c' }}"></small></span>
                     </div>
 
+                      <!-- 👇 PRESENCE SYSTEM HERE -->
+                      {% include "components/user_presence.html" with user=answer.author %}
                 </div>
               {% if user == answer.author %}
               <div class="dropdown">
@@ -349,7 +424,7 @@
               {% endif %}
             </div>
 
-            <div class="answer-content mb-2">{{ answer.content|convert_mentions|linebreaks|safe }}</div>
+            <div class="answer-content mb-2">{{ answer.content|convert_mentions|linebreaks|linkify|safe }}</div>
 
             {% if answer.file %}
             {% with answer.file.url|lower as file_url %}
@@ -357,7 +432,7 @@
               {% if ".jpg" in file_url or ".jpeg" in file_url or ".png" in file_url or ".gif" in file_url %}
                 <img src="{{ answer.file.url }}" style="width:300px; height:auto; cursor:pointer; border-radius:8px;" class="answer-media clickable-media" data-src="{{ answer.file.url }}">
               {% elif ".mp4" in file_url or ".mov" in file_url or ".avi" in file_url or ".mkv" in file_url or ".webm" in file_url %}
-                <video style="width:300px; height:auto; cursor:pointer; border-radius:8px;" controls class="answer-media clickable-media" data-src="{{ answer.file.url }}">
+                <video style="width:100%; max-width:600px; position:center; cursor:pointer; border-radius:8px;" controls class="answer-media clickable-media" data-src="{{ answer.file.url }}">
                   <source src="{{ answer.file.url }}">
                 </video>
               {% elif ".mp3" in file_url or ".wav" in file_url or ".aac" in file_url %}
@@ -385,11 +460,21 @@
                   </span>
               {% endif %}
               {% if answer.is_accepted %}
-                  <span title="Acccepted answer" class="badge bg-success ms-2 text-white"><i class="fas fa-check-circle"></i> Accepted</span>
-              {% elif user == problem.author and answer.author != problem.author %}
-                  <form method="post" action="{% url 'accept_answer' answer.id %}" class="d-inline accept-answer-form">
+                  <span title="Accepted answer"
+                        class="badge bg-success ms-2 text-white">
+                      <i class="fas fa-check-circle"></i> Accepted
+                  </span>
+
+              {% elif user == problem.author and not problem.accepted_answer and answer.author != problem.author %}
+                  <form method="post"
+                        action="{% url 'accept_answer' answer.id %}"
+                        class="d-inline accept-answer-form">
                       {% csrf_token %}
-                      <button type="submit" title="Accept answer" class="btn btn-sm btn-success btn-icon ms-2 text-white">Accept</button>
+                      <button type="submit"
+                              title="Accept answer"
+                              class="btn btn-sm btn-success btn-icon ms-2 text-white">
+                          Accept
+                      </button>
                   </form>
               {% endif %}
               {% if request.user != answer.author %}
@@ -399,7 +484,7 @@
                             placeholder="$" title="Enter tip amount">
 
                       <button class="btn btn-warning btn-sm send-tip-btn" data-id="{{ answer.id }}" title="Tip this answer">
-                        <i class="fas fa-coins"></i>
+                       
                         <span class="tip-text">Tip</span>
                       </button>
 
@@ -410,7 +495,12 @@
                     </div>
                   {% endif %}
             </div>
+            <!-- Ads placeholder (isolated, no layout interference) -->
 
+              <div id="adsPlaceholder-answer-{{ answer.id }}"
+                  data-problem-id="{{ answer.problem.id }}">
+              </div>
+            
             <!-- ANSWER COMMENTS -->
             <div class="mt-3">
               <button title="View all comments" class="btn btn-sm comment-toggle-btn btn-light mb-2" data-bs-toggle="collapse" data-bs-target="#comments-{{ answer.id }}">
@@ -419,7 +509,7 @@
               <div class="collapse" id="comments-{{ answer.id }}">
                 <div class="border rounded p-3 comment-container bg-light">
                   {% if user.is_authenticated %}
-                  <div class="sticky-top bg-white py-2 mb-3 shadow-sm" style="z-index:1;">
+                  <div class="sticky-top bg-white py-2 mb-3 " style="z-index:1;">
                     <form class="comment-form d-flex flex-column gap-2" method="post" action="{% url 'create_comment' %}">
                       {% csrf_token %}
                       <input type="hidden" name="answer_id" value="{{ answer.id }}">
@@ -437,7 +527,7 @@
                     <div class="d-flex align-items-start gap-2">
     
                         <!-- Avatar -->
-                        <a href="{% url 'profile' comment.user.id %}">
+                        <a href="{% url 'profile' comment.user.id %}" data-spa-link>
                             {% if comment.user.avatar %}
                                 <img src="{{ comment.user.avatar.url|default:'/static/img/default-avatar.png' }}" 
                                     class="rounded-circle" 
@@ -452,16 +542,26 @@
 
                         <!-- Username + Time + Content -->
                         <div class="d-flex flex-column">
-                            <a href="{% url 'profile' comment.user.id %}" class="text-decoration-none ">
+                            <a href="{% url 'profile' comment.user.id %}" class="text-decoration-none " data-spa-link>
+                              {% if comment.user.is_verified_expert %}
+                                <i class="fas fa-shield-alt verified-expert" title="Verified Expert"></i>
+                              {% endif %}
+                              {% if comment.user.profile.first_name or comment.user.profile.last_name %}
+                                <strong>{{ comment.user.profile.first_name }} {{ comment.user.profile.last_name }}</strong>
+                              {% else %}
                                 <strong>{{ comment.user.username }}</strong>
+                              {% endif %}
                             </a>
 
                             <span class=" small">
                                 • <small data-time="{{ comment.created_at|date:'c' }}"></small>
+
+                                  <!-- 👇 PRESENCE SYSTEM HERE -->
+                                  {% include "components/user_presence.html" with user=comment.user %}
                             </span>
 
                             <div class="comment-answer-content mt-1">
-                                {{ comment.content|convert_mentions|linebreaks|safe }}
+                                {{ comment.content|convert_mentions|linebreaks|linkify|safe }}
                             </div>
                         </div>
 
@@ -488,7 +588,7 @@
             </div>
 
           </div>
-        </div>
+        </div><hr>
         {% endfor %}
       </div>
 
@@ -496,10 +596,10 @@
 
     <!-- SIDEBAR -->
     <div class="col-lg-5 sidebar-panel" id="problemSidebar"> <!-- wider sidebar -->
-      <div class="card mb-4 shadow-sm p-3">
+      <div class="card mb-4 p-3">
         <div class="card-body">
           <h5><i class="fas fa-info-circle"></i> Problem Info</h5>
-          <p><i class="fas fa-user"></i> <strong>Author:</strong> {{ problem.author.username }}</p>
+          <p><i class="fas fa-user"></i> <strong>Author:</strong> {% if problem.author.profile.first_name or problem.author.profile.last_name %} {{ problem.author.profile.first_name }} {{ problem.author.profile.last_name }}{% else %} {{ problem.author.username }}{% endif %} </p>
           <p><i class="fas fa-calendar-alt"></i> <strong>Created:</strong> <small data-time="{{ problem.created_at|date:'c' }}"></small></p>
           <p><i class="fas fa-folder"></i> <strong>Category:</strong> {{ problem.category }}</p>
           <p><i class="fas fa-tags"></i> <strong>Tags:</strong>
@@ -536,11 +636,14 @@
 </div>
 <script>
 document.addEventListener("DOMContentLoaded", () => {
+
     const btn = document.getElementById("generateAnswerBtn");
-    const textarea = document.getElementById("answerTextarea");
+    const editor = document.getElementById("answerEditor");
+    const hidden = document.getElementById("hiddenContent");
 
     btn.addEventListener("click", async () => {
-        textarea.value = "Generating AI answer...";
+
+        editor.innerText = "Generating AI answer...";
 
         try {
             const response = await fetch("{% url 'generate_ai_answer' problem.id %}", {
@@ -553,13 +656,20 @@ document.addEventListener("DOMContentLoaded", () => {
             });
 
             const data = await response.json();
-            textarea.value = data.answer || "Failed to generate AI answer.";
-            textarea.focus();
+
+            editor.innerText = data.answer || "Failed to generate AI answer.";
+
+            // IMPORTANT: sync hidden input for Django
+            hidden.value = editor.innerText;
+
+            editor.focus();
+
         } catch (error) {
-            textarea.value = "Error generating AI answer.";
+            editor.innerText = "Error generating AI answer.";
             console.error(error);
         }
     });
+
 });
 </script>
 
@@ -607,17 +717,40 @@ document.addEventListener("DOMContentLoaded", function() {
   // -------------------------
   // TIME FORMAT (FB STYLE)
   // -------------------------
-  const fbTimeSince = dateString => {
+  const fbTimeSince = (dateString) => {
+
     const now = new Date();
     const past = new Date(dateString);
-    const seconds = Math.floor((now - past)/1000);
-    if (seconds < 60) return `${seconds}s ago`;
-    if (seconds < 3600) return `${Math.floor(seconds/60)}m ago`;
-    if (seconds < 86400) return `${Math.floor(seconds/3600)}h ago`;
-    if (seconds < 604800) return `${Math.floor(seconds/86400)}d ago`;
-    return past.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+
+    const seconds = Math.floor((now - past) / 1000);
+    const minutes = Math.floor(seconds / 60);
+    const hours = Math.floor(minutes / 60);
+    const days = Math.floor(hours / 24);
+    const weeks = Math.floor(days / 7);
+    const months = Math.floor(days / 30);
+    const years = Math.floor(days / 365);
+
+    if (seconds < 10) return "now";
+    if (seconds < 60) return `${seconds}s`;
+    if (minutes < 60) return `${minutes}m`;
+    if (hours < 24) return `${hours}h`;
+    if (days < 7) return `${days}d`;
+    if (days < 30) return `${weeks}w`;
+    if (days < 365) return `${months}mo`;
+    if (years < 10) return `${years}y`;
+
+    // fallback for very old dates
+    return past.toLocaleDateString(undefined, {
+      year: "numeric",
+      month: "short",
+      day: "numeric"
+    });
   };
-  document.querySelectorAll("[data-time]").forEach(el => el.innerText = fbTimeSince(el.dataset.time));
+
+  // APPLY
+  document.querySelectorAll("[data-time]").forEach(el => {
+    el.innerText = fbTimeSince(el.dataset.time);
+  });
 
 document.addEventListener("DOMContentLoaded", function(){
   const fileInput = document.querySelector('input[type="file"]');
@@ -723,6 +856,44 @@ document.addEventListener("DOMContentLoaded", () => {
   mediaModalEl?.addEventListener("hidden.bs.modal", () => {
     mediaContainer.innerHTML = "";
   });
+
+const editor = document.getElementById("answerEditor");
+const toolbar = document.getElementById("answerToolbar");
+const hiddenInput = document.getElementById("hiddenContent");
+
+// attach your safe editor engine
+createSafeEditor(editor);
+
+// toolbar actions
+toolbar.querySelectorAll("[data-cmd]").forEach(btn => {
+  btn.onclick = () => editor.dispatchEvent(new Event(btn.dataset.cmd));
+});
+
+toolbar.querySelector('[data-action="link"]').onclick = () =>
+  editor.dispatchEvent(new Event("add-link"));
+
+toolbar.querySelector('[data-action="code"]').onclick = () =>
+  editor.dispatchEvent(new Event("add-code"));
+/*
+toolbar.querySelector('[data-action="quote"]').onclick = () =>
+  editor.dispatchEvent(new Event("toggle-quote"));*/
+
+toolbar.querySelector('[data-action="clear"]').onclick = () =>
+  editor.dispatchEvent(new Event("clear-format"));
+
+toolbar.querySelectorAll("[data-heading]").forEach(btn => {
+  btn.onclick = () => {
+    editor.dispatchEvent(
+      new CustomEvent("set-heading", { detail: btn.dataset.heading })
+    );
+  };
+});
+
+// 🔥 IMPORTANT: send HTML to backend
+document.getElementById("answerForm").addEventListener("submit", () => {
+  hiddenInput.value = editor.innerHTML;
+});
+
 
 // -------------------------
 // VOTING
@@ -858,160 +1029,308 @@ document.addEventListener("submit", async (e) => {
     }
 });
 
- const enableInlineEdit = type => {
-    document.addEventListener("click", e => {
-      const btn = e.target.closest(`.edit-${type}-btn`);
-      if (!btn) return;
-      e.preventDefault();
+function createSafeEditor(editorDiv) {
 
-      const id = btn.dataset.id;
-      const containerId = type === "answer-comment" ? `comment-answer-${id}` :
-                          type === "problem-comment" ? `comment-${id}` : `${type}-${id}`;
-      const element = document.getElementById(containerId);
-      if (!element) return;
+  function isInsideCodeBlock() {
+    const sel = window.getSelection();
+    if (!sel.rangeCount) return false;
 
-      const contentSelector = type === "problem-comment" ? ".comment-content" :
-                              type === "answer-comment" ? ".comment-answer-content" : `.${type}-content`;
-      const contentDiv = element.querySelector(contentSelector);
-      if (!contentDiv) return;
+    let node = sel.anchorNode;
+    while (node && node !== editorDiv) {
+      if (node.nodeType === 1 && (node.tagName === "CODE" || node.tagName === "PRE")) {
+        return true;
+      }
+      node = node.parentNode;
+    }
+    return false;
+  }
 
-      const originalHTML = contentDiv.innerHTML;
+  function safeExec(cmd, value = null) {
+    if (isInsideCodeBlock()) return;
+    document.execCommand(cmd, false, value);
+    editorDiv.focus();
+  }
 
-      // -----------------------
-      // Editable div
-      // -----------------------
-      const editorDiv = document.createElement("div");
-      editorDiv.contentEditable = "true";
-      editorDiv.className = "inline-editor form-control mb-2";
-      editorDiv.style.minHeight = "80px";
-      editorDiv.style.padding = "8px";
-      editorDiv.style.borderRadius = "10px";
-      editorDiv.style.background = 'var(--card)';
-      editorDiv.style.position = "relative";
-      editorDiv.innerHTML = originalHTML;
+  function queryState(cmd) {
+    try {
+      return document.queryCommandState(cmd);
+    } catch {
+      return false;
+    }
+  }
 
-      // Buttons
-      const saveBtn = document.createElement("button");
-      saveBtn.className = "btn btn-success btn-sm me-2";
-      saveBtn.innerText = "Save";
+  editorDiv._safeExec = safeExec;
 
-      const cancelBtn = document.createElement("button");
-      cancelBtn.className = "btn btn-secondary btn-sm";
-      cancelBtn.innerText = "Cancel";
+  editorDiv.addEventListener("focus", () => activeEditor = editorDiv);
+  editorDiv.addEventListener("mousedown", () => activeEditor = editorDiv);
 
-      const wrapper = document.createElement("div");
-      wrapper.append(editorDiv, saveBtn, cancelBtn);
-      contentDiv.replaceWith(wrapper);
+  /* ===== TOGGLE FORMATTING ===== */
 
-      // -----------------------
-      // Drag & resize images
-      // -----------------------
-      let selectedImg = null;
-      let startX, startY, startWidth, startHeight, offsetX, offsetY;
-      let isDragging = false;
-      let isResizing = false;
+  editorDiv.addEventListener("bold", () => safeExec("bold"));
+  editorDiv.addEventListener("italic", () => safeExec("italic"));
+  editorDiv.addEventListener("underline", () => safeExec("underline"));
 
-      editorDiv.addEventListener("click", e => {
-        if (e.target.tagName === "IMG") {
-          if (selectedImg) selectedImg.classList.remove("selected");
-          selectedImg = e.target;
-          selectedImg.classList.add("selected");
-        } else {
-          if (selectedImg) selectedImg.classList.remove("selected");
-          selectedImg = null;
-        }
-      });
+  /* ===== LINK ===== */
+  editorDiv.addEventListener("add-link", () => {
+    const url = prompt("Enter URL:");
+    if (url) safeExec("createLink", url);
+  });
 
-      editorDiv.addEventListener("mousedown", e => {
-        if (!selectedImg) return;
+  /* ===== CODE BLOCK ===== */
+  editorDiv.addEventListener("add-code", () => {
+    const sel = window.getSelection();
+    if (!sel.rangeCount) return;
 
-        const rect = selectedImg.getBoundingClientRect();
-        const offsetRight = e.clientX - rect.right;
-        const offsetBottom = e.clientY - rect.bottom;
+    const pre = document.createElement("pre");
+    const code = document.createElement("code");
 
-        // Resize if near bottom-right corner
-        if (offsetRight > -15 && offsetRight < 5 && offsetBottom > -15 && offsetBottom < 5) {
-          isResizing = true;
-          startX = e.clientX;
-          startY = e.clientY;
-          startWidth = selectedImg.offsetWidth;
-          startHeight = selectedImg.offsetHeight;
-          selectedImg.classList.add("resizing");
-        } else {
-          // Drag
-          isDragging = true;
-          offsetX = e.clientX - selectedImg.offsetLeft;
-          offsetY = e.clientY - selectedImg.offsetTop;
-          selectedImg.style.position = "absolute";
-          selectedImg.classList.add("dragging");
-        }
+    code.textContent = sel.toString() || "";
 
-        function onMouseMove(eMove) {
-          if (isResizing) {
-            const dx = eMove.clientX - startX;
-            const dy = eMove.clientY - startY;
-            selectedImg.style.width = startWidth + dx + "px";
-            selectedImg.style.height = startHeight + dy + "px";
-          } else if (isDragging) {
-            let x = eMove.clientX - offsetX;
-            let y = eMove.clientY - offsetY;
-            // Clamp inside editor
-            x = Math.max(0, Math.min(x, editorDiv.clientWidth - selectedImg.offsetWidth));
-            y = Math.max(0, Math.min(y, editorDiv.clientHeight - selectedImg.offsetHeight));
-            selectedImg.style.left = x + "px";
-            selectedImg.style.top = y + "px";
-          }
-        }
+    Object.assign(pre.style, {
+      background: "#f6f8fa",
+      padding: "10px",
+      borderRadius: "8px",
+      overflowX: "auto",
+      fontFamily: "monospace"
+    });
 
-        function onMouseUp() {
-          isDragging = false;
-          isResizing = false;
-          if (selectedImg) selectedImg.classList.remove("dragging", "resizing");
-          document.removeEventListener("mousemove", onMouseMove);
-          document.removeEventListener("mouseup", onMouseUp);
-        }
+    pre.appendChild(code);
 
-        document.addEventListener("mousemove", onMouseMove);
-        document.addEventListener("mouseup", onMouseUp);
-      });
+    const range = sel.getRangeAt(0);
+    range.deleteContents();
+    range.insertNode(pre);
+  });
 
-      // -----------------------
-      // Paste images
-      // -----------------------
-      editorDiv.addEventListener("paste", e => {
-        const items = (e.clipboardData || e.originalEvent.clipboardData).items;
-        for (const item of items) {
-          if (item.type.indexOf("image") !== -1) {
-            const file = item.getAsFile();
-            const reader = new FileReader();
-            reader.onload = ev => {
-              const img = document.createElement("img");
-              img.src = ev.target.result;
-              img.style.maxWidth = "200px";
-              img.style.borderRadius = "10px";
-              editorDiv.appendChild(img);
-            };
-            reader.readAsDataURL(file);
-            e.preventDefault();
-          }
-        }
-      });
+  /* ===== HEADINGS TOGGLE ===== */
+  editorDiv.addEventListener("set-heading", e => {
+    if (isInsideCodeBlock()) return;
 
-      // -----------------------
-      // Save / Cancel
-      // -----------------------
-      saveBtn.onclick = () => {
-        const payload = type === "problem" ? { description: editorDiv.innerHTML } : { content: editorDiv.innerHTML };
-        let url = type === "problem" ? `/problems/update/${id}/` :
-                  type === "answer" ? `/answers/update/${id}/` :
-                  type === "problem-comment" ? `/comments/problem/${id}/edit/` :
-                  `/comments/answer/${id}/edit/`;
+    const sel = window.getSelection();
+    if (!sel.rangeCount) return;
 
-        fetch(url, {
-          method: "POST",
-          headers: { "Content-Type": "application/json", "X-CSRFToken": csrfToken },
-          body: JSON.stringify(payload)
-        })
+    const node = sel.anchorNode.parentElement;
+    const level = e.detail;
+
+    if (node && node.tagName.toLowerCase() === level) {
+      safeExec("formatBlock", "p"); // toggle OFF
+    } else {
+      safeExec("formatBlock", level);
+    }
+  });
+
+  /* ===== QUOTE TOGGLE ===== 
+  editorDiv.addEventListener("toggle-quote", () => {
+    if (isInsideCodeBlock()) return;
+
+    const sel = window.getSelection();
+    if (!sel.rangeCount) return;
+
+    const node = sel.anchorNode.parentElement;
+
+    if (node && node.tagName === "BLOCKQUOTE") {
+      safeExec("formatBlock", "p");
+    } else {
+      safeExec("formatBlock", "blockquote");
+    }
+  });*/
+
+  /* ===== CLEAR ===== */
+  editorDiv.addEventListener("clear-format", () => {
+    if (isInsideCodeBlock()) return;
+
+    document.execCommand("removeFormat", false, null);
+
+    editorDiv.querySelectorAll("span, font").forEach(el => {
+      el.replaceWith(...el.childNodes);
+    });
+  });
+
+  return editorDiv;
+}
+
+
+function createToolbar(editorDiv) {
+
+  const toolbar = document.createElement("div");
+  toolbar.className = "inline-toolbar mb-2";
+
+  toolbar.innerHTML = `
+    <div class="toolbar-group">
+      <button title="Bold" data-cmd="bold"><b>B</b></button>
+      <button title="Italic" data-cmd="italic"><i>I</i></button>
+      <button title="Underline" data-cmd="underline"><u>U</u></button>
+    </div>
+
+    <div class="toolbar-divider"></div>
+
+    <div class="toolbar-group">
+      <button title="Insert Link" data-action="link">🔗</button>
+      <button title="Code Block" data-action="code">&lt;/&gt;</button>
+    </div>
+
+    <div class="toolbar-divider"></div>
+
+    <div class="toolbar-group">
+      <button title="Heading 2" data-heading="h2">H2</button>
+      <button title="Heading 3" data-heading="h3">H3</button>
+      <button title="Heading 4" data-heading="h4">H4</button>
+    </div>
+
+    <div class="toolbar-divider"></div>
+
+    <div class="toolbar-group">
+      <button title="Clear Formatting" data-action="clear">✖</button>
+    </div>
+  `;
+
+  /* ===== COMMAND BUTTONS (TOGGLE + ACTIVE UI) ===== */
+  toolbar.querySelectorAll("[data-cmd]").forEach(btn => {
+    btn.onclick = () => {
+      editorDiv.dispatchEvent(new Event(btn.dataset.cmd));
+      btn.classList.toggle("active");
+    };
+  });
+
+  toolbar.querySelector('[data-action="link"]').onclick = () =>
+    editorDiv.dispatchEvent(new Event("add-link"));
+
+  toolbar.querySelector('[data-action="code"]').onclick = () =>
+    editorDiv.dispatchEvent(new Event("add-code"));
+/*
+  toolbar.querySelector('[data-action="quote"]').onclick = e => {
+    editorDiv.dispatchEvent(new Event("toggle-quote"));
+    e.target.classList.toggle("active");
+  };*/
+
+  toolbar.querySelector('[data-action="clear"]').onclick = () =>
+    editorDiv.dispatchEvent(new Event("clear-format"));
+
+  toolbar.querySelectorAll("[data-heading]").forEach(btn => {
+    btn.onclick = () => {
+      editorDiv.dispatchEvent(
+        new CustomEvent("set-heading", { detail: btn.dataset.heading })
+      );
+
+      // active state reset
+      toolbar.querySelectorAll("[data-heading]").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+    };
+  });
+
+  return toolbar;
+}
+
+/* =========================================================
+   INLINE EDIT SYSTEM
+========================================================= */
+const enableInlineEdit = type => {
+
+  document.addEventListener("click", e => {
+
+    const btn = e.target.closest(`.edit-${type}-btn`);
+    if (!btn) return;
+
+    e.preventDefault();
+
+    const id = btn.dataset.id;
+
+    const containerId =
+      type === "answer-comment" ? `comment-answer-${id}` :
+      type === "problem-comment" ? `comment-${id}` :
+      `${type}-${id}`;
+
+    const element = document.getElementById(containerId);
+    if (!element) return;
+
+    const contentSelector =
+      type === "problem-comment" ? ".comment-content" :
+      type === "answer-comment" ? ".comment-answer-content" :
+      `.${type}-content`;
+
+    const contentDiv = element.querySelector(contentSelector);
+    if (!contentDiv) return;
+
+    const originalHTML = contentDiv.innerHTML;
+
+    /* =========================================================
+       EDITOR
+    ========================================================= */
+
+    const editorDiv = document.createElement("div");
+    editorDiv.contentEditable = "true";
+    editorDiv.className = "inline-editor form-control mb-2";
+    editorDiv.innerHTML = originalHTML;
+
+    Object.assign(editorDiv.style, {
+      minHeight: "120px",
+      padding: "10px",
+      borderRadius: "10px",
+      background: "var(--card)"
+    });
+
+    createSafeEditor(editorDiv);
+
+    /* =========================================================
+       ACTION BUTTONS (CREATE FIRST ⚠️)
+    ========================================================= */
+
+    const saveBtn = document.createElement("button");
+    saveBtn.className = "btn btn-success btn-sm me-2";
+    saveBtn.innerText = "Save";
+
+    const cancelBtn = document.createElement("button");
+    cancelBtn.className = "btn btn-secondary btn-sm";
+    cancelBtn.innerText = "Cancel";
+
+    const actions = document.createElement("div");
+    actions.className = "mt-2";
+    actions.append(saveBtn, cancelBtn);
+
+    /* =========================================================
+       WRAPPER (SINGLE INSTANCE ✅)
+    ========================================================= */
+
+    const wrapper = document.createElement("div");
+
+    // ✅ Toolbar ONLY for problem + answer
+    if (type === "answer" || type === "problem") {
+      const toolbar = createToolbar(editorDiv);
+      wrapper.append(toolbar);
+    }
+
+    // Always append editor + actions
+    wrapper.append(editorDiv, actions);
+
+    contentDiv.replaceWith(wrapper);
+
+    /* =========================================================
+       SAVE
+    ========================================================= */
+
+    saveBtn.onclick = () => {
+
+      const payload =
+        type === "problem"
+          ? { description: editorDiv.innerHTML }
+          : { content: editorDiv.innerHTML };
+
+      let url =
+        type === "problem"
+          ? `/problems/update/${id}/`
+          : type === "answer"
+          ? `/answers/update/${id}/`
+          : type === "problem-comment"
+          ? `/comments/problem/${id}/edit/`
+          : `/comments/answer/${id}/edit/`;
+
+      fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": csrfToken
+        },
+        body: JSON.stringify(payload)
+      })
         .then(r => r.json())
         .then(d => {
           if (d.status === "updated" || d.success) {
@@ -1019,21 +1338,33 @@ document.addEventListener("submit", async (e) => {
             newDiv.className = contentDiv.className;
             newDiv.innerHTML = editorDiv.innerHTML;
             wrapper.replaceWith(newDiv);
-          } else alert(d.error || "Update failed");
+          } else {
+            alert(d.error || "Update failed");
+          }
         })
         .catch(console.error);
-      };
+    };
 
-      cancelBtn.onclick = () => {
-        const originalDiv = document.createElement("div");
-        originalDiv.className = contentDiv.className;
-        originalDiv.innerHTML = originalHTML;
-        wrapper.replaceWith(originalDiv);
-      };
-    });
-  };
+    /* =========================================================
+       CANCEL
+    ========================================================= */
 
-  ["problem", "answer", "problem-comment", "answer-comment"].forEach(enableInlineEdit);
+    cancelBtn.onclick = () => {
+      const originalDiv = document.createElement("div");
+      originalDiv.className = contentDiv.className;
+      originalDiv.innerHTML = originalHTML;
+      wrapper.replaceWith(originalDiv);
+    };
+
+  });
+};
+
+/* =========================================================
+   APPLY TO ALL TYPES
+========================================================= */
+
+["problem", "answer", "problem-comment", "answer-comment"]
+  .forEach(enableInlineEdit);
 
   // -------------------------
   // DELETE HANDLER
@@ -1088,22 +1419,27 @@ document.addEventListener("submit", async (e) => {
   };
 
   ["problem", "answer", "problem-comment", "answer-comment"].forEach(enableDelete);
+// -------------------------
+// INITIAL SORT
+// -------------------------
+sortAnswers();
 
-  // -------------------------
-  // INITIAL SORT
-  // -------------------------
-  sortAnswers();
-
-  // -------------------------
-  // DISABLE ACCEPT BUTTONS IF ANSWER EXISTS
-  // -------------------------
-  const disableAcceptButtons = () => {
+// -------------------------
+// REMOVE ACCEPT BUTTONS IF ANSWER EXISTS
+// -------------------------
+const removeAcceptButtons = () => {
     const accepted = document.querySelector(".accepted-answer");
     if (!accepted) return;
-    document.querySelectorAll(".accept-answer-form button[type='submit']")
-      .forEach(btn => btn.disabled = true);
-  };
-  disableAcceptButtons();
+
+    document.querySelectorAll(".accept-answer-form").forEach(form => {
+        // keep only if inside accepted card (just in case)
+        if (!accepted.contains(form)) {
+            form.remove();
+        }
+    });
+};
+
+removeAcceptButtons();
 // -------------------------
 // MOBILE SIDEBAR TOGGLE
 // -------------------------
@@ -1303,6 +1639,121 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 </script>
 
+
+<script>
+function isImage(url) {
+    if (!url) return false;
+
+    const cleanUrl = url.split("?")[0].toLowerCase();
+
+    const imageExts = [
+        ".jpg", ".jpeg", ".png", ".webp",
+        ".gif", ".bmp", ".svg", ".avif"
+    ];
+
+    // direct file match
+    if (imageExts.some(ext => cleanUrl.endsWith(ext))) return true;
+
+    // CDN / API hints
+    if (
+        cleanUrl.includes("image") ||
+        cleanUrl.includes("cdn") ||
+        cleanUrl.includes("media")
+    ) return true;
+
+    return false;
+}
+
+function initAdsCarousel(root) {
+
+    const container = root.querySelector(".problem-ads");
+    if (!container) return;
+
+    let slides = Array.from(container.querySelectorAll(".ad-horizontal"));
+
+    // =====================================================
+    // FILTER ONLY IMAGE ADS (IMPORTANT ADDITION)
+    // =====================================================
+    slides = slides.filter(slide => {
+        const img = slide.querySelector("img");
+        const src = img?.getAttribute("src") || "";
+        return isImage(src);
+    });
+
+    if (slides.length <= 1) return;
+
+    let index = 0;
+
+    function shuffle(arr) {
+        for (let i = arr.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [arr[i], arr[j]] = [arr[j], arr[i]];
+        }
+        return arr;
+    }
+
+    function render() {
+        container.innerHTML = "";
+        slides.forEach(s => container.appendChild(s));
+    }
+
+    slides = shuffle(slides);
+    render();
+
+    function slide() {
+
+        index++;
+
+        if (index >= slides.length) {
+            index = 0;
+            slides = shuffle(slides);
+            render();
+        }
+
+        const width = slides[0].offsetWidth;
+        container.style.transform = `translateX(-${index * width}px)`;
+    }
+
+    let interval = setInterval(slide, 4000);
+
+    root.addEventListener("mouseenter", () => clearInterval(interval));
+    root.addEventListener("mouseleave", () => {
+        interval = setInterval(slide, 4000);
+    });
+}
+
+
+// =====================================================
+// FETCH ADS + INIT PER BLOCK
+// =====================================================
+
+document.querySelectorAll("[id^='adsPlaceholder-']").forEach(el => {
+
+    const problemId = el.dataset.problemId;
+    if (!problemId) return;
+
+    fetch(`/ads/${problemId}/`)
+        .then(res => res.json())
+        .then(data => {
+
+            // ❌ no ads → remove placeholder completely
+            if (!data.success || !data.html || !data.html.trim()) {
+                el.remove();
+                return;
+            }
+
+            // ✅ ads exist → inject
+            el.innerHTML = data.html;
+
+            // init carousel
+            initAdsCarousel(el);
+        })
+        .catch(() => {
+            el.remove(); // fail-safe cleanup
+        });
+});
+</script>
+
 <style>
 
 .inline-editor {
@@ -1414,7 +1865,7 @@ MOBILE SIDEBAR SLIDE-IN
 /* Card */
 .answer-form-card {
   border-radius: 18px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+
   padding: 18px;
   border: 1px solid rgba(0,0,0,0.1);
 }
@@ -1540,6 +1991,109 @@ MOBILE SIDEBAR SLIDE-IN
   .answer-actions .btn {
     padding: 6px;
   }
+}
+
+.inline-toolbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+
+  padding: 8px;
+  border-radius: 10px;
+  background: var(--card);
+  border: 1px solid rgba(0,0,0,0.08);
+
+  box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+}
+
+/* group buttons */
+.toolbar-group {
+  display: flex;
+  gap: 4px;
+}
+
+/* divider */
+.toolbar-divider {
+  width: 1px;
+  height: 20px;
+  background: rgba(0,0,0,0.1);
+  margin: 0 4px;
+}
+
+/* buttons */
+.inline-toolbar button {
+  border: none;
+  background: transparent;
+
+  padding: 6px 8px;
+  border-radius: 6px;
+
+  cursor: pointer;
+  font-size: 14px;
+
+  transition: all 0.2s ease;
+}
+
+/* hover */
+.inline-toolbar button:hover {
+  background: rgba(0,0,0,0.08);
+}
+
+/* active click */
+.inline-toolbar button:active {
+  transform: scale(0.95);
+}
+
+/* nicer typography buttons */
+.inline-toolbar button b,
+.inline-toolbar button i,
+.inline-toolbar button u {
+  pointer-events: none;
+}
+
+/* optional: dark mode support */
+body.dark .inline-toolbar {
+  background: #1e1e1e;
+  border-color: rgba(255,255,255,0.1);
+}
+
+body.dark .inline-toolbar button:hover {
+  background: rgba(255,255,255,0.1);
+}
+
+.inline-toolbar button {
+  position: relative;
+}
+
+/* ACTIVE STATE */
+.inline-toolbar button.active {
+  background: #0d6efd;
+  color: white;
+}
+
+/* TOOLTIP IMPROVED */
+.inline-toolbar button::after {
+  content: attr(title);
+  position: absolute;
+  bottom: -28px;
+  left: 50%;
+  transform: translateX(-50%);
+  
+  background: #333;
+  color: #fff;
+  font-size: 11px;
+  padding: 4px 6px;
+  border-radius: 4px;
+
+  opacity: 0;
+  pointer-events: none;
+  transition: 0.2s;
+  white-space: nowrap;
+}
+
+.inline-toolbar button:hover::after {
+  opacity: 1;
 }
 </style>
 {% endblock %}

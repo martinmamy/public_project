@@ -1,81 +1,147 @@
+
 /* =====================================
-MODERN CARD SYSTEM (2026 CLEAN UI)
+   MODERN CARD SYSTEM
 ===================================== */
 
-/* =========================
-CARD BASE
-========================= */
 .card,
 .problem-card,
 .answer-card {
-  background: var(--card);
-  border-radius: var(--radius);
-  border: 1px solid var(--border);
+  position: relative;
 
-  padding: clamp(12px, 1.8vw, 18px);
+  background:
+    linear-gradient(
+      to bottom,
+      rgba(255,255,255,0.03),
+      rgba(255,255,255,0.01)
+    ),
+    var(--card);
+
+  border: 1px solid rgba(255,255,255,0.06);
+
+  border-radius: 20px;
+
+  padding: clamp(14px, 1.8vw, 20px);
 
   display: flex;
   flex-direction: column;
-  gap: 12px;
-
-  box-shadow: var(--shadow-sm);
-  transition: all 0.25s ease;
+  gap: 14px;
 
   min-width: 0;
   overflow: hidden;
+
+  /* depth */
+  box-shadow:
+    0 1px 1px rgba(0,0,0,0.04),
+    0 8px 24px rgba(0,0,0,0.08),
+    0 16px 40px rgba(0,0,0,0.06);
+
+  transition:
+    transform 0.25s ease,
+    box-shadow 0.25s ease,
+    border-color 0.25s ease,
+    background 0.25s ease;
 }
 
-/* premium hover */
+/* subtle glow edge */
+.card::before,
+.problem-card::before,
+.answer-card::before {
+  content: "";
+
+  position: absolute;
+  inset: 0;
+
+  border-radius: inherit;
+
+  background:
+    linear-gradient(
+      135deg,
+      rgba(255,255,255,0.08),
+      transparent 40%
+    );
+
+  pointer-events: none;
+}
+
+/* hover */
 .card:hover,
 .problem-card:hover,
 .answer-card:hover {
-  transform: translateY(-3px);
-  box-shadow: var(--shadow-md);
+  transform: translateY(-4px);
+
+  border-color: rgba(255,255,255,0.12);
+
+  box-shadow:
+    0 2px 4px rgba(0,0,0,0.06),
+    0 12px 32px rgba(0,0,0,0.12),
+    0 24px 60px rgba(0,0,0,0.10);
 }
 
-/* spacing between cards */
+/* active press */
+.card:active,
+.problem-card:active,
+.answer-card:active {
+  transform: translateY(-1px) scale(0.995);
+}
+
+/* spacing */
 .problem-card + .problem-card {
-  margin-top: 16px;
+  margin-top: 18px;
 }
 
-/* =========================
-HEADER
-========================= */
+/* =====================================
+   HEADER
+===================================== */
+
 .card-header,
 .post-header {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  gap: 10px;
+  justify-content: space-between;
+
+  gap: 12px;
 }
 
-/* left */
 .header-left {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
+
   flex: 1;
   min-width: 0;
 }
 
-/* right */
 .header-right {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
 }
 
-.problem-main-content {
-  width: 100%;
-  overflow: hidden;
+/* =====================================
+   OPTIONAL MODERN ENHANCEMENTS
+===================================== */
+
+/* blur glass effect */
+.card.glass {
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+
+  background: rgba(255,255,255,0.04);
+}
+
+/* subtle inner border */
+.card.soft {
+  box-shadow:
+    inset 0 1px rgba(255,255,255,0.04),
+    0 8px 30px rgba(0,0,0,0.10);
 }
 /* =========================
-AVATAR (MODERN MINIMAL)
+   AVATAR (CLEAN & FLAT)
 ========================= */
 .avatar,
 .comment-avatar {
-  width: clamp(32px, 4vw, 40px);
-  height: clamp(32px, 4vw, 40px);
+  width: 38px;
+  height: 38px;
 
   border-radius: 50%;
   object-fit: cover;
@@ -89,40 +155,34 @@ AVATAR (MODERN MINIMAL)
 
   font-weight: 600;
   font-size: 13px;
-
-  transition: all 0.2s ease;
 }
 
-/* subtle hover */
 .avatar:hover {
-  transform: scale(1.05);
+  transform: scale(1.03);
 }
 
 /* =========================
-TEXT META
+   TEXT (HIERARCHY FIXED)
 ========================= */
-.header-left strong,
-.answer-meta strong {
+.header-left strong {
   font-size: 0.95rem;
   font-weight: 600;
   color: var(--text);
-
-  white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.header-left small,
-.answer-meta span {
+.header-left small {
   font-size: 0.8rem;
   color: var(--muted);
 }
 
 /* =========================
-TITLE
+   TITLE
 ========================= */
 .problem-title {
-  font-size: clamp(16px, 1.4vw, 18px);
+  font-size: clamp(15px, 1.3vw, 18px);
   font-weight: 600;
   line-height: 1.4;
 }
@@ -136,36 +196,31 @@ TITLE
 }
 
 /* =========================
-DESCRIPTION
+   DESCRIPTION
 ========================= */
 .problem-description,
 .card-body p {
-  font-size: 0.95rem;
+  font-size: 0.93rem;
   line-height: 1.6;
   color: var(--muted);
 }
 
 /* =========================
-BADGE (SOFT MODERN)
+   BADGE (CLEAN PILLS)
 ========================= */
 .category-badge {
-  font-size: 0.75rem;
-  padding: 5px 10px;
+  font-size: 0.72rem;
+  padding: 4px 10px;
   border-radius: 999px;
 
   background: var(--primary-soft);
   color: var(--primary);
 
   font-weight: 500;
-  transition: 0.2s;
-}
-
-.category-badge:hover {
-  transform: translateY(-1px);
 }
 
 /* =========================
-MEDIA
+   MEDIA (NO ZOOM ON HOVER - CLEANER UX)
 ========================= */
 .media-container img,
 .media-container video {
@@ -173,18 +228,10 @@ MEDIA
   max-height: 420px;
   border-radius: 12px;
   object-fit: cover;
-
-  transition: all 0.25s ease;
-}
-
-/* hover zoom */
-.media-container img:hover,
-.media-container video:hover {
-  transform: scale(1.02);
 }
 
 /* =========================
-ANSWER CARD
+   ANSWERS
 ========================= */
 .answer-card {
   border-left: 2px solid transparent;
@@ -199,13 +246,12 @@ ANSWER CARD
 }
 
 /* =========================
-ACTION BAR
+   ACTION BAR
 ========================= */
 .problem-stats {
   display: flex;
   flex-wrap: wrap;
-  align-items: center;
-  gap: 12px;
+  gap: 10px;
 
   padding-top: 10px;
   border-top: 1px solid var(--border);
@@ -213,159 +259,48 @@ ACTION BAR
 
 /* buttons */
 .vote-btn {
-  background: transparent;
+  background: none;
   border: none;
   color: var(--muted);
-  font-size: 14px;
 
   display: flex;
   align-items: center;
   gap: 4px;
 
-  transition: 0.2s;
+  font-size: 13px;
+
+  transition: color 0.2s ease;
 }
 
 .vote-btn:hover {
   color: var(--primary);
-  transform: translateY(-1px);
 }
 
-/* bookmark */
+/* active state */
 .save-btn i.active {
   color: var(--primary);
 }
 
 /* =========================
-RESPONSIVE
+   TIP BOX (SIMPLIFIED)
 ========================= */
-
-/* tablet */
-@media (max-width: 768px) {
-  .card,
-  .problem-card,
-  .answer-card {
-    padding: 14px;
-  }
-
-  .problem-title {
-    font-size: 16px;
-  }
-
-  .problem-description {
-    font-size: 14px;
-  }
-}
-
-/* mobile */
-@media (max-width: 480px) {
-
-  .problem-title {
-    font-size: 15px;
-  }
-
-  .problem-description {
-    font-size: 13px;
-  }
-
-  .media-container img,
-  .media-container video {
-    max-height: 260px;
-  }
-
-  .problem-stats {
-    gap: 8px;
-    font-size: 12px;
-  }
-}
-
-/* ultra small */
-@media (max-width: 360px) {
-
-  .avatar {
-    width: 28px;
-    height: 28px;
-  }
-
-  .category-badge {
-    font-size: 0.7rem;
-  }
-}
-
-
-.problem-tip-box {
-  flex-wrap: wrap;              /* allow wrapping on small screens */
-}
-
-/* Input */
-.problem-tip-amount {
-  width: 70px;
-  min-width: 50px;
-  max-width: 80px;
-  flex-shrink: 1;               /* allow shrinking */
-  padding: 2px 6px;
-  font-size: 0.8rem;
-}
-
-/* Button */
-.send-problem-tip-btn {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-
-  padding: 4px 8px;
-  font-size: 0.8rem;
-
-  flex-shrink: 1;               /* allow shrinking */
-}
-
-/* Badge stays readable */
-.problem-tip-box .badge {
-  font-size: 0.75rem;
-  padding: 4px 6px;
-}
-
-@media (max-width: 576px) {
-
-  .problem-tip-box {
-    gap: 6px;
-  }
-
-  .problem-tip-amount {
-    width: 50px;
-    font-size: 0.75rem;
-  }
-
-  .send-problem-tip-btn {
-    padding: 3px 6px;
-    font-size: 0.75rem;
-  }
-
-  /* Hide text, keep icon only */
-  .tip-text {
-    display: none;
-  }
-}
-
-/* Container */
+.problem-tip-box,
 .answer-tip-box {
   display: flex;
   align-items: center;
   gap: 6px;
-  flex-wrap: wrap;              /* allow wrapping on small screens */
+  flex-wrap: wrap;
 }
 
-/* Input */
+.problem-tip-amount,
 .answer-tip-box .tip-amount {
-  width: 65px;
-  min-width: 45px;
-  max-width: 75px;
-
-  flex-shrink: 1;
-  padding: 2px 6px;
+  width: 60px;
+  padding: 3px 6px;
   font-size: 0.8rem;
 }
 
-/* Button */
+/* buttons */
+.send-problem-tip-btn,
 .answer-tip-box .send-tip-btn {
   display: flex;
   align-items: center;
@@ -374,13 +309,43 @@ RESPONSIVE
   padding: 4px 8px;
   font-size: 0.8rem;
 
-  flex-shrink: 1;
   white-space: nowrap;
 }
 
-/* Badge */
-.answer-tip-box .badge {
-  font-size: 0.75rem;
-  padding: 4px 6px;
-  white-space: nowrap;
+/* hide text on small screens */
+@media (max-width: 576px) {
+  .tip-text {
+    display: none;
+  }
+}
+
+/* =========================
+   RESPONSIVE CLEANUP
+========================= */
+@media (max-width: 768px) {
+  .card,
+  .problem-card,
+  .answer-card {
+    padding: 14px;
+  }
+
+  .problem-title {
+    font-size: 15px;
+  }
+
+  .problem-description {
+    font-size: 13.5px;
+  }
+}
+
+@media (max-width: 480px) {
+  .avatar {
+    width: 30px;
+    height: 30px;
+  }
+
+  .problem-stats {
+    font-size: 12px;
+    gap: 8px;
+  }
 }

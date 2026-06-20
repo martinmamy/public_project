@@ -1,0 +1,293 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+
+<div class="container-fluid">
+
+    <!-- HEADER -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h4 class="mb-0 text-info">📅 Manage Availability</h4>
+
+        <a href="{% url 'slot_list' request.user.id %}" data-spa-link class="btn btn-secondary btn-sm">
+            ← Back to Slots
+        </a>
+    </div>
+
+    <div class="row g-3">
+
+        <!-- CALENDAR -->
+        <div class="col-lg-8">
+            <div class="card border-0">
+                <div class="card-body">
+                    <div id="calendar"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- CREATE FORM -->
+        <div class="col-lg-4">
+            <div class="card border-0">
+                <div class="card-body">
+
+                    <h5 class="mb-3">Create Slot</h5>
+
+                    <form method="post" action="{% url 'slot_create' %}">
+                        {% csrf_token %}
+
+                        <label>Start</label>
+                        <input type="datetime-local" name="start_time" id="start_time" class="form-control mb-2" required>
+
+                        <label>End</label>
+                        <input type="datetime-local" name="end_time" id="end_time" class="form-control mb-2" required>
+
+                        <label>Price</label>
+                        <input type="number" name="price" class="form-control mb-2" step="0.01">
+
+                        <label>Currency</label>
+                        <input type="text" name="currency" class="form-control mb-2">
+
+                        <label>Unit</label>
+                        <select name="unit" class="form-control mb-2">
+                            <option value="hour">Hour</option>
+                            <option value="session">Session</option>
+                        </select>
+
+                        <label>Description</label>
+                        <textarea name="description" class="form-control mb-3"></textarea>
+
+                        <button class="btn btn-primary w-100">➕ Create Slot</button>
+                    </form>
+
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- ================= MODAL ================= -->
+<div id="slotModal" class="modal-box">
+    <div class="modal-content">
+
+        <h5>Manage Slot</h5>
+
+        <input type="hidden" id="modal_slot_id">
+
+        <label>Start</label>
+        <input type="datetime-local" id="modal_start" class="form-control mb-2">
+
+        <label>End</label>
+        <input type="datetime-local" id="modal_end" class="form-control mb-2">
+
+        <label>Price</label>
+        <input type="number" id="modal_price" class="form-control mb-2">
+
+        <label>Currency</label>
+        <input type="text" id="modal_currency" class="form-control mb-2">
+
+        <label>Unit</label>
+        <select id="modal_unit" class="form-control mb-2">
+            <option value="hour">Hour</option>
+            <option value="session">Session</option>
+        </select>
+
+        <label>Description</label>
+        <textarea id="modal_desc" class="form-control mb-3"></textarea>
+
+        <button class="btn btn-success w-100 mb-2" onclick="updateSlot()">💾 Save Changes</button>
+        <button class="btn btn-danger w-100 mb-2" onclick="deleteSlot()">🗑 Delete Slot</button>
+        <button class="btn btn-light w-100" onclick="closeModal()">Close</button>
+
+    </div>
+</div>
+
+<!-- FULLCALENDAR -->
+<link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
+
+<script>
+
+function getCSRF() {
+    return document.querySelector('[name=csrfmiddlewaretoken]').value;
+}
+
+/* ===============================
+   🔥 DISPLAY OFFSET ONLY (CALENDAR)
+================================ */
+
+const DISPLAY_OFFSET = 2 * 60 * 60 * 1000; // -2 hours
+
+function shiftMinusTwo(date) {
+    if (!date) return null;
+    return new Date(new Date(date).getTime() - DISPLAY_OFFSET);
+}
+
+function formatInput(date) {
+    if (!date) return "";
+
+    const d = new Date(date);
+    const pad = n => String(n).padStart(2, '0');
+
+    return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+/* ===============================
+   CALENDAR
+================================ */
+
+document.addEventListener('DOMContentLoaded', function () {
+
+    const calendar = new FullCalendar.Calendar(
+        document.getElementById('calendar'),
+        {
+            initialView: 'timeGridWeek',
+            timeZone: 'local',
+            selectable: true,
+            height: 'auto',
+
+            /* ================= CREATE (NO SHIFT) ================= */
+            select(info) {
+
+                // 🔥 REAL TIME ONLY (NO OFFSET)
+                document.getElementById('start_time').value =
+                    info.startStr.slice(0, 16);
+
+                document.getElementById('end_time').value =
+                    info.endStr.slice(0, 16);
+            },
+
+            /* ================= EVENTS (SHIFT ONLY DISPLAY) ================= */
+            events(fetchInfo, success) {
+
+                fetch(`/slots/api/?user_id={{ request.user.id }}`)
+                    .then(r => r.json())
+                    .then(data => {
+
+                        const shifted = data.map(e => ({
+                            ...e,
+
+                            // 🔥 ONLY VISUAL SHIFT (-2 hours)
+                            start: shiftMinusTwo(e.start),
+                            end: shiftMinusTwo(e.end)
+                        }));
+
+                        success(shifted);
+                    });
+            },
+
+            /* ================= CLICK ================= */
+            eventClick(info) {
+
+                const e = info.event;
+
+                document.getElementById("slotModal").style.display = "flex";
+                document.getElementById("modal_slot_id").value = e.id;
+
+                // 🔥 IMPORTANT: NO SHIFT HERE (REAL DATA)
+                document.getElementById("modal_start").value =
+                    formatInput(e.start);
+
+                document.getElementById("modal_end").value =
+                    formatInput(e.end);
+
+                document.getElementById("modal_price").value =
+                    e.extendedProps.price || "";
+
+                document.getElementById("modal_currency").value =
+                    e.extendedProps.currency || "";
+
+                document.getElementById("modal_unit").value =
+                    e.extendedProps.unit || "hour";
+
+                document.getElementById("modal_desc").value =
+                    e.extendedProps.description || "";
+            }
+        }
+    );
+
+    calendar.render();
+    window.calendar = calendar;
+});
+
+/* ===============================
+   MODAL
+================================ */
+
+function closeModal() {
+    document.getElementById("slotModal").style.display = "none";
+}
+
+/* ===============================
+   UPDATE SLOT
+================================ */
+
+function updateSlot() {
+
+    const id = document.getElementById("modal_slot_id").value;
+
+    fetch(`/slots/${id}/update/`, {
+        method: "POST",
+        headers: {
+            "X-CSRFToken": getCSRF(),
+            "Content-Type": "application/x-www-form-urlencoded"
+        },
+        body: new URLSearchParams({
+            start_time: document.getElementById("modal_start").value,
+            end_time: document.getElementById("modal_end").value,
+            price: document.getElementById("modal_price").value,
+            currency: document.getElementById("modal_currency").value,
+            unit: document.getElementById("modal_unit").value,
+            description: document.getElementById("modal_desc").value
+        })
+    }).then(() => {
+        closeModal();
+        window.calendar.refetchEvents();
+    });
+}
+
+/* ===============================
+   DELETE SLOT
+================================ */
+
+function deleteSlot() {
+
+    const id = document.getElementById("modal_slot_id").value;
+
+    fetch(`/slots/${id}/delete/`, {
+        method: "POST",
+        headers: {
+            "X-CSRFToken": getCSRF()
+        }
+    }).then(() => {
+        closeModal();
+        window.calendar.refetchEvents();
+    });
+}
+
+</script>
+
+<style>
+
+#calendar { min-height: 600px; }
+
+.modal-box {
+    display:none;
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,0.5);
+    justify-content:center;
+    align-items:center;
+    z-index:9999;
+}
+
+.modal-content {
+    background:#fff;
+    padding:16px;
+    border-radius:10px;
+    width:380px;
+}
+
+</style>
+
+{% endblock %}

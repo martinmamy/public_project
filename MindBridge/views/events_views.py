@@ -1,24 +1,36 @@
+import datetime
 import uuid
 import json
 import os
+
+from django.utils import timezone
+from django.db.models import Q
 from django.views import View
 from django.shortcuts import render, redirect, get_object_or_404
-from django.views.generic import ListView, DetailView
-from django.contrib.auth.mixins import LoginRequiredMixin
+from django.views.generic import DeleteView, ListView, DetailView, UpdateView
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.http import JsonResponse, HttpResponseForbidden, FileResponse, Http404
-from django.urls import reverse
+from django.urls import reverse, reverse_lazy
 from django.db.models import Q, Count, Exists, OuterRef, Subquery, Prefetch
 from django.utils import timezone
 from django.conf import settings
+from MindBridge.predefined import PREDEFINED_CATEGORIES
+from MindBridge.services.notification_service import NotificationService
 from django.utils.decorators import method_decorator
 from django.contrib.auth.decorators import login_required
+from django.views.generic.edit import CreateView
 from MindBridge.models import (
     Event,
+    EventHub,
     EventParticipant,
     EventRecording,
     EventInvitation,
-    User
+    User,
+    EventReminder,
+    timedelta,
 )
+
+from MindBridge.forms import EventHubForm
 
 # -------------------------
 # CREATE EVENT
@@ -477,3 +489,144 @@ class LeaveEventView(View):
 
     def get(self, request, *args, **kwargs):
         return JsonResponse({"status":"error","error":"Invalid request"}, status=400)
+    
+
+@method_decorator(login_required, name="dispatch")
+class EventHubCreateView(LoginRequiredMixin, CreateView):
+
+    model = EventHub
+
+    form_class = EventHubForm
+
+    template_name = "eventhub.html"
+
+    success_url = reverse_lazy("eventhub_list")
+
+
+    def form_valid(self, form):
+
+        form.instance.host = self.request.user
+
+        return super().form_valid(form)
+
+
+
+@method_decorator(login_required, name="dispatch")
+class EventHubUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
+
+    model = EventHub
+
+    form_class = EventHubForm
+
+    template_name = "eventhub.html"
+
+    success_url = reverse_lazy("eventhub_list")
+
+
+    def test_func(self):
+
+        return self.get_object().host == self.request.user
+
+
+    def form_valid(self, form):
+
+        # 🔥 ensure host cannot be changed
+
+        form.instance.host = self.get_object().host
+
+        return super().form_valid(form)
+
+
+@method_decorator(login_required, name="dispatch")
+class EventHubDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
+    model = EventHub
+    success_url = reverse_lazy("eventhub_list")
+
+    def test_func(self):
+        return self.get_object().host == self.request.user
+
+
+@method_decorator(login_required, name="dispatch")
+class EventHubListView(LoginRequiredMixin, ListView):
+    model = EventHub
+    template_name = "eventhub.html"
+    context_object_name = "events"
+
+    def get_queryset(self):
+        qs = EventHub.objects.select_related("host")
+        
+        search = self.request.GET.get("search")
+        if search:
+            qs = qs.filter(
+                Q(title__icontains=search) |
+                Q(description__icontains=search)
+            )
+
+        sort = self.request.GET.get("sort", "upcoming")
+
+        if sort == "latest":
+            qs = qs.order_by("-created_at")
+        elif sort == "oldest":
+            qs = qs.order_by("created_at")
+        elif sort == "upcoming":
+            qs = qs.order_by("start_time")
+        elif sort == "ended":
+            qs = qs.order_by("-end_time")
+        elif sort == "ongoing":
+            qs = qs.order_by("start_time")
+        elif sort == "category":
+            qs = qs.order_by("category")
+        else:
+            qs = qs.order_by("start_time")
+        
+
+        return qs
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        user = self.request.user
+
+        # 🔥 THIS IS THE MISSING PIECE
+        reminder_event_ids = EventReminder.objects.filter(
+            user=user
+        ).values_list("event_id", flat=True)
+
+        context["now"] = timezone.now()
+        context["reminder_event_ids"] = list(reminder_event_ids)
+        context["category_choices"] = PREDEFINED_CATEGORIES
+        
+        return context
+    
+
+@method_decorator(login_required, name="dispatch")
+class SetEventReminderView(View):
+
+    def post(self, request, event_id):
+        try:
+            event = EventHub.objects.get(id=event_id)
+
+            reminder, created = EventReminder.objects.update_or_create(
+                user=request.user,
+                event=event,
+                defaults={
+                    "remind_at": event.start_time
+                }
+            )
+
+            if created:
+                NotificationService.create_notification(
+                    user=request.user,
+                    message=f"Reminder set for '{event.title}'",
+                    url=f"/events/hub/{event.id}/"
+                )
+
+            return JsonResponse({
+                "status": "ok",
+                "created": created,
+                "reminder_set": True,
+                "event_id": event.id
+            })
+
+        except EventHub.DoesNotExist:
+            return JsonResponse({"status": "error"}, status=404)

@@ -1,0 +1,421 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="container py-4">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h4 class="fw-semibold text-info">📋 My Availability Slots</h4>
+    </div>
+
+    <div class="slot-grid">
+
+        {% for slot in slots %}
+        {% with booking=slot.bookings.all|dictsortreversed:"created_at"|first %}
+
+        <div class="slot-card {% if slot.is_expired %}archived{% endif %}">
+
+            <!-- TIME -->
+            <div class="slot-time text-break">
+                {{ slot.start_time|date:"M d, Y g:i A" }} → {{ slot.end_time|date:"M d, Y g:i A" }}<br>
+                Price: {{ slot.price }} {{ slot.currency }} / {{ slot.unit }}
+            </div>
+
+            <div class="slot-body">
+
+                <!-- ACTIONS -->
+                <div class="slot-action">
+
+                    {% if slot.is_expired %}
+                        <button class="slot-btn disabled-btn w-100" disabled>⚪ Expired</button>
+
+                    {% else %}
+
+                        {% if booking and not booking.is_cancelled %}
+
+                            {% if booking.booked_by_id == request.user.id %}
+                                <form method="post" action="{% url 'cancel_booking_by_slot' booking.id %}">
+                                    {% csrf_token %}
+                                    <button class="slot-btn cancel-btn w-100">❌ Cancel Booking</button>
+                                </form>
+                            {% else %}
+                                <button class="slot-btn disabled-btn w-100" disabled>🔴 Booked</button>
+                            {% endif %}
+
+                        {% else %}
+                            <form method="post" action="{% url 'book_slot' slot.id %}">
+                                {% csrf_token %}
+                                <button class="slot-btn book-btn w-100">🟢 Book Now</button>
+                            </form>
+                        {% endif %}
+
+                    {% endif %}
+
+                </div>
+
+                <!-- STATUS -->
+                <span class="status-badge d-inline-block mt-2">
+                    {% if slot.is_expired %}
+                        Expired
+                    {% elif booking and not booking.is_cancelled %}
+                        Booked
+                    {% else %}
+                        Available
+                    {% endif %}
+                </span>
+
+                <!-- ACTION BUTTONS -->
+                <div class="slot-actions flex-wrap">
+
+                    {% if slot.description %}
+                    <button class="icon-btn"
+                        onclick="openInfo(
+                            '{{ slot.start_time|date:'M d, Y g:i A' }}',
+                            '{{ slot.end_time|date:'M d, Y g:i A' }}',
+                            '{{ slot.description|escapejs }}',
+                            {% if booking and not booking.is_cancelled %}true{% else %}false{% endif %},
+                            {{ slot.is_expired|yesno:'true,false' }},
+                            '{{ slot.price }}',
+                            '{{ slot.currency }}',
+                            '{{ slot.unit }}'
+                        )">
+                        ℹ️
+                    </button>
+                    {% endif %}
+
+                    {% if slot.expert_id == request.user.id %}
+                    <div class="dropdown">
+                        <button class="icon-btn" data-bs-toggle="dropdown">⋯</button>
+
+                        <ul class="dropdown-menu dropdown-menu-end">
+
+                            <li>
+                                <button class="dropdown-item"
+                                    onclick="openEdit(
+                                        '{{ slot.id }}',
+                                        '{{ slot.start_time|date:'c' }}',
+                                        '{{ slot.end_time|date:'c' }}',
+                                        '{{ slot.price }}',
+                                        '{{ slot.currency }}',
+                                        '{{ slot.unit }}',
+                                        '{{ slot.description|escapejs }}'
+                                    )">
+                                    ✏️ Edit
+                                </button>
+                            </li>
+
+                            <li>
+                                <form method="post" action="{% url 'slot_delete' slot.id %}">
+                                    {% csrf_token %}
+                                    <button class="dropdown-item text-danger">🗑 Delete</button>
+                                </form>
+                            </li>
+
+                        </ul>
+                    </div>
+                    {% endif %}
+
+                </div>
+
+                {% if slot.description %}
+                <div class="slot-desc text-break">
+                    {{ slot.description|truncatechars:25 }}
+                </div>
+                {% endif %}
+
+            </div>
+        </div>
+
+        {% endwith %}
+        {% endfor %}
+
+    </div>
+</div>
+
+<!-- ================= INFO MODAL ================= -->
+<div id="infoModal" class="modal-box">
+    <div class="modal-content">
+
+        <h5 class="mb-3">📅 Slot Details</h5>
+
+        <p><strong>Time:</strong> <span id="info_time"></span></p>
+        <p><strong>Status:</strong> <span id="info_status"></span></p>
+
+        <p>
+            <strong>Price:</strong>
+            <span id="info_price"></span>
+            <span id="info_currency"></span>
+            <span id="info_unit"></span>
+        </p>
+
+        <hr>
+
+        <p id="info_desc"></p>
+
+        <button class="btn btn-dark w-100 mt-3" onclick="closeInfo()">Close</button>
+    </div>
+</div>
+
+<!-- ================= EDIT MODAL ================= -->
+<div id="editPanel" class="modal-box">
+    <div class="modal-content">
+
+        <h5>Edit Slot</h5>
+
+        <form id="editForm" method="post">
+            {% csrf_token %}
+
+            <input type="datetime-local" id="edit_start" name="start_time" class="form-control mb-2">
+            <input type="datetime-local" id="edit_end" name="end_time" class="form-control mb-2">
+
+            <input type="number" id="edit_price" name="price" class="form-control mb-2" step="0.01">
+
+            <input type="text" id="edit_currency" name="currency" class="form-control mb-2">
+
+            <select id="edit_unit" name="unit" class="form-control mb-2">
+                <option value="hour">Per Hour</option>
+                <option value="session">Per Session</option>
+            </select>
+
+            <textarea id="edit_desc" name="description" class="form-control mb-2"></textarea>
+
+            <button class="btn btn-success w-100">💾 Save</button>
+        </form>
+
+        <button class="btn btn-light w-100 mt-2" onclick="closeEdit()">Close</button>
+
+    </div>
+</div>
+
+<!-- ================= STYLE ================= -->
+<style>
+
+.slot-grid{
+    display:grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap:12px;
+}
+
+/* MOBILE TWEAK */
+@media (max-width: 576px){
+    .slot-grid{
+        grid-template-columns: 1fr;
+    }
+
+    .slot-card{
+        padding:10px;
+    }
+
+    .slot-actions{
+        justify-content: flex-start;
+        flex-wrap: wrap;
+    }
+
+    .slot-time{
+        font-size:13px;
+    }
+
+    .slot-btn{
+        width:100%;
+    }
+}
+
+/* TABLET */
+@media (min-width: 577px) and (max-width: 992px){
+    .slot-grid{
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* MODAL RESPONSIVE */
+.modal-content{
+    width:90%;
+    max-width:420px;
+}
+
+@media (max-width: 576px){
+    .modal-content{
+        width:95%;
+        padding:12px;
+    }
+}
+
+.slot-card{
+    border:1px solid #eee;
+    border-radius:14px;
+    padding:12px;
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+    background: var(--card);
+    color: var(--text);
+}
+
+.slot-card.archived{
+    opacity:0.5;
+    pointer-events:none;
+}
+
+.slot-time{
+    font-weight:600;
+    font-size:14px;
+    padding:6px 10px;
+    border-radius:10px;
+    background: var(--card);
+    color: var(--text);
+    text-align:center;
+}
+
+.slot-btn{
+    border:none;
+    font-weight:500;
+    padding:6px 10px;
+    border-radius:10px;
+}
+
+.book-btn{
+    color:#16a34a;
+    background:#dcfce7;
+}
+
+.cancel-btn{
+    color:#dc2626;
+    background:#fee2e2;
+}
+
+.disabled-btn{
+    color:#6b7280;
+    background:#e5e7eb;
+    cursor:not-allowed;
+}
+
+.status-badge{
+    font-size:11px;
+    padding:3px 8px;
+    border-radius:999px;
+    background: var(--card);
+    color: var(--text);
+}
+
+.slot-actions{
+    display:flex;
+    gap:6px;
+    margin-left:auto;
+}
+
+.icon-btn{
+    border:none;
+    background:#f3f4f6;
+    width:30px;
+    height:30px;
+    border-radius:8px;
+    cursor:pointer;
+}
+
+.icon-btn:hover{
+    background:#111827;
+    color:#fff;
+}
+
+.slot-desc{
+    font-size:12px;
+    color:#6b7280;
+}
+
+.modal-box{
+    display:none;
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,0.5);
+    justify-content:center;
+    align-items:center;
+    z-index:9999;
+}
+
+.modal-content{
+    background: var(--card-solid);
+    color: var(--text);
+    padding:16px;
+    border-radius:12px;
+    width:90%;
+    max-width:420px;
+}
+
+</style>
+
+<!-- ================= SCRIPT ================= -->
+<script>
+
+/* ===============================
+   HELPERS
+================================ */
+
+// format ISO / Django datetime into datetime-local WITHOUT timezone shift
+function toDateTimeLocal(value) {
+    if (!value) return "";
+
+    // If Django sends ISO string with timezone, strip timezone safely
+    const clean = value.replace('Z', '').split('+')[0];
+
+    const d = new Date(clean);
+
+    if (isNaN(d.getTime())) return "";
+
+    const pad = (n) => String(n).padStart(2, "0");
+
+    return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+function capitalize(str) {
+    return str ? str.charAt(0).toUpperCase() + str.slice(1) : "";
+}
+
+/* ===============================
+   INFO MODAL
+================================ */
+
+function openInfo(start, end, desc, booked, archived, price, currency, unit) {
+
+    document.getElementById("infoModal").style.display = "flex";
+
+    document.getElementById("info_time").innerText = `${start} → ${end}`;
+    document.getElementById("info_desc").innerText = desc?.trim() || "No description";
+
+    document.getElementById("info_status").innerText =
+        archived ? "⚪ Expired"
+        : booked ? "🔴 Booked"
+        : "🟢 Available";
+
+    document.getElementById("info_price").innerText = price || "0";
+    document.getElementById("info_currency").innerText = currency || "";
+    document.getElementById("info_unit").innerText = unit ? `/${unit}` : "";
+}
+
+function closeInfo() {
+    document.getElementById("infoModal").style.display = "none";
+}
+
+/* ===============================
+   EDIT MODAL (FIXED 0 DRIFT)
+================================ */
+
+function openEdit(id, start, end, price, currency, unit, desc) {
+
+    document.getElementById("editPanel").style.display = "flex";
+    document.getElementById("editForm").action = `/slots/${id}/update/`;
+
+    // 🔥 CRITICAL FIX: DO NOT let JS re-interpret timezone
+    document.getElementById("edit_start").value = toDateTimeLocal(start);
+    document.getElementById("edit_end").value = toDateTimeLocal(end);
+
+    document.getElementById("edit_price").value = price || "";
+    document.getElementById("edit_currency").value = currency || "";
+    document.getElementById("edit_unit").value = unit || "hour";
+    document.getElementById("edit_desc").value = desc || "";
+}
+
+function closeEdit() {
+    document.getElementById("editPanel").style.display = "none";
+}
+
+</script>
+{% endblock %}

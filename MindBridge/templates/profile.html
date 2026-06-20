@@ -9,8 +9,6 @@
 ========================== */
 body {
     font-family: 'Inter', 'Segoe UI', sans-serif;
-    background: #f5f7fa;
-    color: #333;
 }
 
 /* ==========================
@@ -18,7 +16,8 @@ body {
 ========================== */
 .card, .stat-card, .recent-activity-card {
     border-radius: 16px;
-    background: #fff;
+    background: var(--card);
+    color: var(--text);
     box-shadow: 0 6px 20px rgba(0,0,0,0.05);
     transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
@@ -136,7 +135,8 @@ body {
    Recent Activity Feed
 ========================== */
 .recent-activity-card {
-    background: #fff;
+    background: var(--card);
+    color: var(--text);
     border-radius: 16px;
     padding: 1rem;
 }
@@ -228,7 +228,7 @@ body {
     <!-- LEFT PROFILE PANEL -->
     <div class="col-md-4 mb-4">
       <div class="sticky-sidebar">
-        <div class="card shadow-sm border-0 text-center">
+        <div class="card border-0 text-center">
           <div class="card-body">
 
             {% if profile_user.avatar %}
@@ -241,14 +241,31 @@ body {
             {% endif %}
 
             <h6 class="fw-bold mb-1">
+                {% if profile_user.profile.first_name or profile_user.profile.last_name %}
+                {{ profile_user.profile.first_name }} {{ profile_user.profile.last_name }}
+                {% else %}  
                 {{ profile_user.username }}
+                {% endif %}
                 {% if profile_user.is_verified_expert %}
-                <i class="fas fa-check-circle"></i>
+                <i class="fas fa-shield-alt verified-expert" title="Verified Expert"></i>
                 {% endif %}
             </h6>
 
-            <p>
-                Reputation: <b>{{ profile.reputation_score|abbreviate_number }}</b>
+            <p class="d-flex align-items-center gap-2 mb-0">
+
+                <!-- INFO ICON (ONLY OWNER SEES SCORE) -->
+                {% if request.user == profile_user %}
+                    <span class="text-primary"
+                        role="button"
+                        data-bs-toggle="collapse"
+                        data-bs-target="#repScore{{ profile.id }}"
+                        aria-expanded="false"
+                        title="Click to view your exact reputation score">
+                        <i class="fa-solid fa-circle-info"></i>
+                    </span>
+                {% endif %}
+
+                <!-- TIER DISPLAY -->
                 {% if profile.tier == "Beginner" %}
                     <span class="badge bg-secondary text-light">{{ profile.tier }}</span>
                     <span class="text-warning">★</span>
@@ -265,8 +282,20 @@ body {
                     <span class="badge bg-warning text-dark">{{ profile.tier }}</span>
                     <span class="text-warning">★★★★★</span>
                 {% endif %}
+
             </p>
 
+            <!-- ========================= -->
+            <!-- COLLAPSIBLE SCORE (OWNER ONLY) -->
+            <!-- ========================= -->
+            {% if request.user == profile_user %}
+            <div class="collapse mt-1" id="repScore{{ profile.id }}">
+                <small class="text-muted">
+                    Reputation Score:
+                    <b>{{ profile.reputation_score|abbreviate_number }}</b>
+                </small>
+            </div>
+            {% endif %}
             <div class="d-flex justify-content-around mb-3">
                 <div>
                     <p class="fw-bold mb-0 clickable-count" id="followersCount">{{ profile_user.followers.count|abbreviate_number }}
@@ -286,17 +315,61 @@ body {
             </div>
             {% endif %}
             <div class="mt-2 d-flex gap-2 align-items-center">
+
                 {% if request.user == profile_user %}
-                    <a href="{% url 'update_profile' %}" class="btn btn-outline-primary flex-grow-1">
-                        <i class="fas fa-edit"></i> Edit
+
+                    <!-- Edit -->
+                    <a href="{% url 'update_profile' %}"
+                    data-spa-link
+                    class="btn flex-grow-1 text-primary">
+                        <i class="fas fa-pen"></i> Profile
                     </a>
 
-                    {% if not profile_user.is_verified_expert and request.user.id == profile_user.id %}
-                        <button id="verify-expert-btn" class="btn btn-outline-primary flex-grow-1" title="Verify your profile">
+                    <!-- NOT VERIFIED -->
+                    {% if not profile_user.is_verified_expert %}
+
+                        <button 
+                            id="verify-expert-btn"
+                            class="btn btn-outline-primary flex-grow-1"
+                            title="Verify your profile"
+                            data-user-id="{{ profile_user.id }}" data-spa-link>
                             🔰 (${{ status.verification_fee }})
                         </button>
+
+                    <!-- VERIFIED -->
+                    {% else %}
+
+                        <div class="d-flex align-items-center gap-1">
+
+                            <button
+                                id="toggle-recurring-btn"
+                                type="button"
+                                class="btn btn-sm
+                                    {% if profile.is_verification_recurring %}
+                                        btn-success
+                                    {% else %}
+                                        btn-outline-secondary
+                                    {% endif %}"
+                            >
+                                {% if profile.is_verification_recurring %}
+                                    🔁 ON
+                                {% else %}
+                                    🔁 OFF
+                                {% endif %}
+                            </button>
+
+                            <!-- Info icon -->
+                            <i class="fas fa-circle-info text-muted"
+                            data-bs-toggle="tooltip"
+                            data-bs-placement="top"
+                            title="Enable recurring billing to automatically renew your expert verification every month without losing your badge. ON= active OFF= inactive"></i>
+
+                        </div>
+
                     {% endif %}
+
                 {% endif %}
+
             </div>
             <!-- Alert container -->
             <div id="verify-alert-container" class="mt-2"></div>
@@ -310,7 +383,7 @@ body {
     <div class="col-md-8">
 
       <!-- ABOUT -->
-      <div class="card shadow-sm border-0 mb-4">
+      <div class="card border-0 mb-4">
         <div class="card-body">
 
           <h5 class="fw-bold mb-3">About</h5>
@@ -318,7 +391,13 @@ body {
           {% if profile_user.bio %}
           <p>{{ profile_user.bio }}</p>
           {% else %}
-          <p class="">No bio added.</p>
+          <p class="">No bio added.
+            {% if request.user == profile_user %}
+                <a href="{% url 'update_profile' %}" data-spa-link class="flex-grow-1">
+                    Add Bio
+                </a>
+            {% endif %}
+          </p>
           {% endif %}
 
           {% if profile_user.profile.profession %}
@@ -327,7 +406,7 @@ body {
 
           {% if profile_user.profile.website %}
           <p><b>Website:</b> 
-          <a href="{{ profile_user.profile.website }}" target="_blank">
+          <a href="{{ profile_user.profile.website }}" target="_blank" data-spa-link>
           {{ profile_user.profile.website }}
           </a>
           </p>
@@ -337,10 +416,124 @@ body {
           <p><b>Country:</b> {{ profile_user.profile.country }}</p>
           {% endif %}
           {% if request.user == profile_user %}
-          <a href="{% url 'link_paypal_account' %}" class="btn ">
-            Connect PayPal
-          </a>
-          {% endif %}
+            
+            {% if profile_user.email %}
+
+                <p><b>Email:</b> {{ profile_user.email }}</p>
+
+                <!-- EDIT BUTTON -->
+                <button type="button"
+                        id="revealEmailEditBtn"
+                        class="btn text-primary">
+                    <i class="fas fa-pen"></i> Edit Email
+                </button>
+
+                <!-- STEP 1: PASSWORD -->
+                <div id="emailPasswordSection" style="display:none;" class="mt-3">
+
+                    <input type="password"
+                        id="emailVerifyPassword"
+                        class="form-control mb-2"
+                        placeholder="Enter your password">
+
+                    <button type="button"
+                            id="verifyEmailPasswordBtn"
+                            class="btn btn-warning w-100">
+                        Verify Password
+                    </button>
+
+                    <div id="emailPasswordError" class="text-danger mt-2"></div>
+                </div>
+
+                <!-- STEP 2: NEW EMAIL -->
+                <div id="newEmailSection" style="display:none;" class="mt-3">
+
+                    <input type="email"
+                        id="newEmailInput"
+                        class="form-control mb-2"
+                        placeholder="Enter new email">
+
+                    <button type="button"
+                            id="sendOtpBtn"
+                            class="btn btn-primary w-100">
+                        Send OTP to New Email
+                    </button>
+
+                    <div id="newEmailError" class="text-danger mt-2"></div>
+                </div>
+
+                <!-- STEP 3: OTP MODAL -->
+                <div id="otpSection" style="display:none;" class="mt-3">
+
+                    <input type="text"
+                        id="otpInput"
+                        class="form-control mb-2"
+                        placeholder="Enter OTP sent to new email">
+
+                    <button type="button"
+                            id="verifyOtpBtn"
+                            class="btn btn-success w-100">
+                        Verify & Update Email
+                    </button>
+
+                    <div id="otpError" class="text-danger mt-2"></div>
+                </div>
+
+            {% endif %}
+            <div class="mt-3">
+                
+            <a href="{% url 'link_paypal_account' %}" data-spa-link class="btn text-primary">
+                Connect PayPal
+            </a>
+
+                <!-- Hidden by default -->
+                <button
+                    type="btn"
+                    id="revealDeleteBtn"
+                    class="btn text-danger">
+                    <i class="fas fa-eye"></i> Delete Account
+                </button>
+
+                <!-- Password verification -->
+                <div id="passwordVerifySection" style="display:none;" class="mt-3">
+
+                    <input
+                        type="password"
+                        id="deletePassword"
+                        class="form-control mb-2"
+                        placeholder="Enter your password">
+
+                    <button
+                        type="button"
+                        id="verifyPasswordBtn"
+                        class="btn btn-warning">
+                        Verify Password
+                    </button>
+
+                    <div id="passwordError" class="text-danger mt-2"></div>
+
+                </div>
+
+                <!-- Actual delete form -->
+                <form
+                    id="deleteForm"
+                    method="POST"
+                    action="{% url 'delete_profile' %}"
+                    style="display:none;"
+                    class="mt-3"
+                    onsubmit="return confirm('This will permanently delete your account. Continue?');">
+
+                    {% csrf_token %}
+
+                    <button type="submit" class="btn btn-danger">
+                        Permanently Delete Account
+                    </button>
+
+                </form>
+
+            </div>
+
+        {% endif %}
         </div>
       </div>
 
@@ -380,14 +573,14 @@ body {
       </div>
 
       <!-- RECENT ACTIVITY -->
-      <div class="shadow-sm border-0 recent-activity-card">
+      <div class="border-0 recent-activity-card">
         <div class="card-body">
 
-          <h5 class="fw-bold mb-3">Recent Activity</h5>
+          <h5 class="fw-bold mb-3 text-info">Recent Activity</h5>
 
           <div id="recentActivity" class="recent-activity"></div>
 
-          <div id="loadMoreBtn" class="btn btn-outline-secondary w-100 load-more-btn">
+          <div id="loadMoreBtn" class="btn btn-outline-secondary w-50 load-more-btn">
           Load More
           </div>
 
@@ -397,6 +590,276 @@ body {
     </div>
   </div>
 </div>
+
+<script>
+
+const revealBtn = document.getElementById("revealEmailEditBtn");
+
+const passwordSection = document.getElementById("emailPasswordSection");
+const newEmailSection = document.getElementById("newEmailSection");
+const otpSection = document.getElementById("otpSection");
+
+const passwordInput = document.getElementById("emailVerifyPassword");
+const newEmailInput = document.getElementById("newEmailInput");
+const otpInput = document.getElementById("otpInput");
+
+const passErr = document.getElementById("emailPasswordError");
+const emailErr = document.getElementById("newEmailError");
+const otpErr = document.getElementById("otpError");
+
+/* =========================
+   CSRF SAFE HELPER
+========================= */
+function getCSRF() {
+    return document.querySelector('[name=csrfmiddlewaretoken]')?.value;
+}
+
+/* =========================
+   STEP 1
+========================= */
+revealBtn?.addEventListener("click", () => {
+    passwordSection.style.display = "block";
+});
+
+/* =========================
+   STEP 2: PASSWORD VERIFY
+========================= */
+document.getElementById("verifyEmailPasswordBtn")?.addEventListener("click", async () => {
+
+    const res = await fetch("{% url 'verify_password_ajax' %}", {
+        method: "POST",
+        headers: {
+            "X-CSRFToken": getCSRF(),
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            password: passwordInput.value
+        })
+    });
+
+    const data = await res.json();
+
+    if (data.valid) {
+        passwordSection.style.display = "none";
+        newEmailSection.style.display = "block";
+    } else {
+        passErr.textContent = "Incorrect password.";
+    }
+});
+
+/* =========================
+   STEP 3: SEND OTP
+========================= */
+document.getElementById("sendOtpBtn")?.addEventListener("click", async () => {
+
+    const res = await fetch("{% url 'send_new_email_otp' %}", {
+        method: "POST",
+        headers: {
+            "X-CSRFToken": getCSRF(),
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            email: newEmailInput.value
+        })
+    });
+
+    const data = await res.json();
+
+    if (data.otp_sent) {
+        newEmailSection.style.display = "none";
+        otpSection.style.display = "block";
+    } else {
+        emailErr.textContent = "Failed to send OTP.";
+    }
+});
+
+/* =========================
+   STEP 4: VERIFY OTP ONLY
+========================= */
+document.getElementById("verifyOtpBtn")?.addEventListener("click", async () => {
+
+    const res = await fetch("{% url 'verify_email_otp' %}", {
+        method: "POST",
+        headers: {
+            "X-CSRFToken": getCSRF(),
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            otp: otpInput.value
+        })
+    });
+
+    const data = await res.json();
+
+    if (data.valid) {
+
+        // FINAL UPDATE (NO EMAIL SENT HERE)
+        const updateRes = await fetch("{% url 'update_email' %}", {
+            method: "POST",
+            headers: {
+                "X-CSRFToken": getCSRF()
+            }
+        });
+
+        if (updateRes.ok) {
+            window.location.reload();
+        }
+
+    } else {
+        otpErr.textContent = "Invalid OTP.";
+    }
+});
+
+</script>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+
+    const revealBtn = document.getElementById("revealDeleteBtn");
+    const verifySection = document.getElementById("passwordVerifySection");
+    const verifyBtn = document.getElementById("verifyPasswordBtn");
+    const passwordInput = document.getElementById("deletePassword");
+    const deleteForm = document.getElementById("deleteForm");
+    const errorBox = document.getElementById("passwordError");
+
+    if (!revealBtn) return;
+
+    revealBtn.addEventListener("click", () => {
+        verifySection.style.display = "block";
+    });
+
+    verifyBtn.addEventListener("click", async () => {
+
+        errorBox.textContent = "";
+
+        const password = passwordInput.value.trim();
+
+        if (!password) {
+            errorBox.textContent = "Password required.";
+            return;
+        }
+
+        try {
+
+            const response = await fetch(
+                "{% url 'verify_delete_password' %}",
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-CSRFToken":
+                            document.querySelector(
+                                'meta[name="csrf-token"]'
+                            ).content
+                    },
+                    body: JSON.stringify({
+                        password: password
+                    })
+                }
+            );
+
+            const data = await response.json();
+
+            if (data.success) {
+
+                verifySection.style.display = "none";
+                revealBtn.style.display = "none";
+                deleteForm.style.display = "block";
+
+            } else {
+
+                errorBox.textContent =
+                    "Incorrect password.";
+
+            }
+
+        } catch (err) {
+
+            console.error(err);
+
+            errorBox.textContent =
+                "Verification failed.";
+
+        }
+
+    });
+
+});
+</script>
+
+<script>
+
+document.addEventListener("click", async function (e) {
+
+    const btn = e.target.closest("#toggle-recurring-btn");
+
+    if (!btn) return;
+
+    btn.disabled = true;
+
+    try {
+
+        const response = await fetch(
+            "{% url 'toggle_verification_recurring' %}",
+            {
+                method: "POST",
+                headers: {
+                    "X-CSRFToken": "{{ csrf_token }}",
+                    "Content-Type": "application/json",
+                },
+            }
+        );
+
+        const data = await response.json();
+
+        if (!data.success) {
+            alert(data.message || "Unable to update recurring status.");
+            return;
+        }
+
+        // Toggle UI state
+        if (data.recurring) {
+
+            btn.classList.remove("btn-outline-secondary");
+            btn.classList.add("btn-success");
+
+            btn.innerHTML = "🔁 Monthly ON";
+
+        } else {
+
+            btn.classList.remove("btn-success");
+            btn.classList.add("btn-outline-secondary");
+
+            btn.innerHTML = "🔁 Monthly OFF";
+        }
+
+    } catch (error) {
+
+        console.error(error);
+        alert("Something went wrong.");
+
+    } finally {
+
+        btn.disabled = false;
+    }
+
+});
+document.addEventListener("DOMContentLoaded", function () {
+
+    var tooltipTriggerList = [].slice.call(
+        document.querySelectorAll('[data-bs-toggle="tooltip"]')
+    );
+
+    tooltipTriggerList.forEach(function (el) {
+
+        new bootstrap.Tooltip(el, {
+            trigger: "click"
+        });
+
+    });
+
+});
+</script>
 <script>
 const DEFAULT_AVATAR = "{% static 'images/default_avatar.png' %}";
 </script>
@@ -531,7 +994,7 @@ document.addEventListener("DOMContentLoaded", function() {
         <div class="activity-item">
             <div class="card shadow-sm">
                 <div class="card-body">
-                    <h6><a href="${item.url}">${item.title}</a></h6>
+                    <h6><a href="${item.url}" data-spa-link>${item.title}</a></h6>
                     <div class="activity-meta mt-2">
                         <span class="badge"><i class="fas fa-arrow-up"></i> ${abbreviateNumber(item.votes)}</span>
                         <span class="badge"><i class="fas fa-eye"></i> ${abbreviateNumber(item.views)}</span>
@@ -554,7 +1017,7 @@ document.addEventListener("DOMContentLoaded", function() {
             <div class="activity-item">
                 <div class="card shadow-sm">
                     <div class="card-body">
-                        <h6>Answer provided on <a href="${item.problemUrl}">${item.problemTitle}</a></h6>
+                        <h6>Answer provided on <a href="${item.problemUrl}" data-spa-link>${item.problemTitle}</a></h6>
                         ${body}
                         <small class="">${item.date}</small>
                     </div>
@@ -566,7 +1029,7 @@ document.addEventListener("DOMContentLoaded", function() {
         <div class="activity-item">
             <div class="card shadow-sm">
                 <div class="card-body">
-                    <h6>Bounty earned from <a href="${item.problemUrl}">${item.problemTitle}</a></h6>
+                    <h6>Bounty earned from <a href="${item.problemUrl}" data-spa-link>${item.problemTitle}</a></h6>
                     <span class="badge bg-success text-light"><i class="fas fa-dollar-sign"></i> $${abbreviateNumber(item.amount)}</span><br>
                     <small class="">${item.date}</small>
                 </div>
@@ -577,7 +1040,7 @@ document.addEventListener("DOMContentLoaded", function() {
         <div class="activity-item">
             <div class="card shadow-sm">
                 <div class="card-body">
-                    <h6>Tip received from <a href="${item.problemUrl}">${item.problemTitle}</a></h6>
+                    <h6>Tip received from <a href="${item.problemUrl}" data-spa-link>${item.problemTitle}</a></h6>
                     <p>${item.answerContent || ""}</p>
                     <span class="badge bg-warning text-light"><i class="fas fa-dollar-sign"></i> $${abbreviateNumber(item.amount)}</span><br>
                     <small class="">${item.date}</small>
@@ -587,11 +1050,11 @@ document.addEventListener("DOMContentLoaded", function() {
 
         followers: item => `
         <div class="activity-item">
-            <div class="card shadow-sm mb-2">
+            <div class="card mb-2">
                 <div class="card-body d-flex align-items-center gap-3">
                     <img src="${getAvatar(item)}" class="rounded-circle" style="width:50px;height:50px;object-fit:cover;">
                     <div>
-                        <h6 class="mb-0"><a href="/auth/profile/${item.id}/">${item.username}</a></h6>
+                        <h6 class="mb-0"><a href="/auth/profile/${item.id}/" data-spa-link>${item.username}</a></h6>
                     </div>
                 </div>
             </div>
@@ -599,11 +1062,11 @@ document.addEventListener("DOMContentLoaded", function() {
 
         following: item => `
         <div class="activity-item">
-            <div class="card shadow-sm mb-2">
+            <div class="card mb-2">
                 <div class="card-body d-flex align-items-center gap-3">
                     <img src="${getAvatar(item)}" class="rounded-circle" style="width:50px;height:50px;object-fit:cover;">
                     <div>
-                        <h6 class="mb-0"><a href="/auth/profile/${item.id}/">${item.username}</a></h6>
+                        <h6 class="mb-0"><a href="/auth/profile/${item.id}/" data-spa-link>${item.username}</a></h6>
                     </div>
                 </div>
             </div>
@@ -670,34 +1133,76 @@ document.addEventListener("DOMContentLoaded", function() {
     // Infinite Scroll
     // -------------------------
     let isFetching = false;
-    let noMoreData = false; // stop when no more items
-
-    const recentActivity = document.getElementById("recentActivity");
-
-    recentActivity.addEventListener("scroll", async () => {
+    let noMoreData = false;
+    // -------------------------
+    // LOAD PAGE FUNCTION
+    // -------------------------
+    async function loadPage() {
         if (isFetching || noMoreData) return;
 
-        // Check if user scrolled near the bottom
-        const { scrollTop, scrollHeight, clientHeight } = recentActivity;
-        if (scrollTop + clientHeight >= scrollHeight - 20) { // 20px threshold
-            isFetching = true;
-            currentPage++;
-            const items = await fetchActivity(currentType, currentPage);
+        isFetching = true;
 
-            if (!items.length) {
-                noMoreData = true; // stop fetching
-                return;
-            }
+        const items = await fetchActivity(currentType, currentPage);
 
-            items.forEach(item => {
-                recentActivity.insertAdjacentHTML("beforeend", templates[currentType](item));
-            });
-
-            // Allow next fetch
+        if (!items.length) {
+            noMoreData = true;
+            loadMoreBtn.style.display = "none";
             isFetching = false;
+            return;
+        }
+
+        items.forEach(item => {
+            activityContainer.insertAdjacentHTML(
+                "beforeend",
+                templates[currentType](item)
+            );
+        });
+
+        currentPage++;
+
+        // show/hide button
+        loadMoreBtn.style.display = items.length < pageSize ? "none" : "block";
+
+        isFetching = false;
+    }
+
+    // -------------------------
+    // SCROLL LOAD
+    // -------------------------
+    activityContainer.addEventListener("scroll", () => {
+        if (isFetching || noMoreData) return;
+
+        const { scrollTop, scrollHeight, clientHeight } = activityContainer;
+
+        if (scrollTop + clientHeight >= scrollHeight - 20) {
+            loadPage();
         }
     });
 
+    // -------------------------
+    // BUTTON LOAD
+    // -------------------------
+    loadMoreBtn.addEventListener("click", () => {
+        loadPage();
+    });
+
+    // -------------------------
+    // RESET + SWITCH TYPE
+    // -------------------------
+    function resetAndLoad(type) {
+        currentType = type;
+        currentPage = 1;
+        noMoreData = false;
+        activityContainer.innerHTML = "";
+        loadPage();
+    }
+
+    // stat cards
+    statCards.forEach(card => {
+        card.addEventListener("click", () => {
+            resetAndLoad(card.dataset.type);
+        });
+    });
     // -------------------------
     // Initial Load
     // -------------------------
@@ -754,57 +1259,88 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (!btn || !alertContainer) return;
 
+    const getCookie = (name) => {
+        const value = `; ${document.cookie}`;
+        const parts = value.split(`; ${name}=`);
+        if (parts.length === 2) return parts.pop().split(";").shift();
+    };
+
     btn.addEventListener("click", async () => {
         btn.disabled = true;
-        alertContainer.innerHTML = ""; // clear previous alerts
+        alertContainer.innerHTML = "";
 
         try {
-            const userId = btn.dataset.userId || '{{ request.user.id }}';
+            const userId = btn.dataset.userId;
+
+            if (!userId) {
+                throw new Error("Missing userId on button (data-user-id)");
+            }
+
             const response = await fetch(`/ajax/verify-expert/${userId}/`, {
                 method: "POST",
                 headers: {
-                    "X-CSRFToken": "{{ csrf_token }}",
+                    "X-CSRFToken": getCookie("csrftoken"),
+                    "Content-Type": "application/json",
                     "Accept": "application/json",
                 },
+                credentials: "same-origin",
             });
 
             const data = await response.json();
 
-            let alertType = "info";
-            if (!data.success) {
-                alertType = "danger"; // red for errors
-            } else if (data.success) {
-                alertType = "success"; // green for success
+            const isSuccess = data.success === true;
+            const alertType = isSuccess ? "success" : "danger";
+
+            const message = data.message || data.error || "Unknown response";
+
+            let linkHTML = "";
+            if (data.url) {
+                linkHTML = `
+                    <div class="mt-2">
+                        <a href="${data.url}" class="alert-link" data-spa-link>
+                            View details →
+                        </a>
+                    </div>
+                `;
             }
 
-            // Create alert
             const alert = document.createElement("div");
             alert.className = `alert alert-${alertType} alert-dismissible fade show`;
-            alert.role = "alert";
             alert.innerHTML = `
-                ${data.error || data.message}
+                <div>${message}</div>
+                ${linkHTML}
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             `;
+
             alertContainer.appendChild(alert);
 
-            // Auto-dismiss after 5 seconds
             setTimeout(() => {
-                const bsAlert = bootstrap.Alert.getOrCreateInstance(alert);
-                bsAlert.close();
+                bootstrap.Alert.getOrCreateInstance(alert).close();
             }, 5000);
 
-            // If success, remove the button
-            if (data.success) {
+            if (isSuccess) {
                 btn.remove();
+            } else {
+                btn.disabled = false;
+            }
+
+            if (isSuccess && data.redirect_url) {
+                setTimeout(() => {
+                    window.location.href = data.redirect_url;
+                }, 1500);
             }
 
         } catch (err) {
+            console.error(err);
+
             const alert = document.createElement("div");
             alert.className = "alert alert-danger alert-dismissible fade show";
-            alert.role = "alert";
-            alert.innerHTML = `An error occurred. Please try again. <button type="button" class="btn-close" data-bs-dismiss="alert"></button>`;
+            alert.innerHTML = `
+                Network error. Please try again.
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+
             alertContainer.appendChild(alert);
-        } finally {
             btn.disabled = false;
         }
     });

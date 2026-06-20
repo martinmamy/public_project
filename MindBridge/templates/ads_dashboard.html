@@ -1,273 +1,685 @@
 {% extends "base.html" %}
 {% load static %}
-{% block title %}Ads Administration | Fancylearn{% endblock %}
+{% load custom_tags %}
+{% load mention_tags %}
 
 {% block content %}
+
 <div class="container py-4">
 
-  <!-- =======================
-       TABS NAVIGATION
-  ======================= -->
-  <ul class="nav nav-tabs mb-4" id="adsTabs">
-    <li class="nav-item">
-      <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#myAds">
-        My Ads
-      </button>
-    </li>
-    {% if request.user.is_staff %}
-    <li class="nav-item">
-      <button class="nav-link" data-bs-toggle="tab" data-bs-target="#adminAds">
-        Admin Panel
-      </button>
-    </li>
-    {% endif %}
-  </ul>
+    <!-- ===================================================== -->
+    <!-- HEADER -->
+    <!-- ===================================================== -->
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
 
-  <div class="tab-content">
+        <div>
 
-    <!-- =====================================================
-       🔹 TAB 1: ADVERTISER DASHBOARD
-    ====================================================== -->
-    <div class="tab-pane fade show active" id="myAds">
+            <h3 class="fw-bold mb-1 text-info">
+                📊 Ads Dashboard
+            </h3>
 
-      <!-- ===================
-           KPI CARDS
-      =================== -->
-      <div class="row g-3 mb-4">
-        <div class="col-md-3">
-          <div class="card shadow-sm p-3">
-            <small class="">Total Ads</small>
-            <h4>{{ ads|length }}</h4>
-          </div>
-        </div>
-        <div class="col-md-3">
-          <div class="card shadow-sm p-3">
-            <small class="">Clicks</small>
-            <h4>{{ stats.total_clicks|default:0 }}</h4>
-          </div>
-        </div>
-        <div class="col-md-3">
-          <div class="card shadow-sm p-3">
-            <small class="">Impressions</small>
-            <h4>{{ stats.total_impressions|default:0 }}</h4>
-          </div>
-        </div>
-        <div class="col-md-3">
-          <div class="card shadow-sm p-3">
-            <small class="">Revenue</small>
-            <h4>$ {{ stats.total_revenue|default:0 }}</h4>
-          </div>
-        </div>
-      </div>
+            <p class="mb-0 text-info">
+                Manage campaigns, drafts, recurring subscriptions & ad spending
+            </p>
 
-      <!-- ===================
-           ADS GRID HEADER WITH CREATE BUTTON
-      =================== -->
-      <div class="d-flex justify-content-between align-items-center mb-3">
-        <h5 class="mb-0">My Ads</h5>
-        <a href="{% url 'create_ad' %}" class="btn btn-primary btn-sm">
-          + Create New Ad
+        </div>
+
+        <a href="{% url 'create_ad' %}"
+           class="btn btn-outline-primary rounded-pill px-4">
+
+            + Create
+
         </a>
-      </div>
 
-      <!-- ===================
-           ADS GRID
-      =================== -->
-      <div class="row g-4">
-        {% for ad in ads %}
-        <div class="col-lg-4 col-md-6">
-          <div class="card shadow-sm h-100 border-0">
+    </div>
 
-            <div class="position-relative">
-              <img src="{{ ad.image.url }}" class="w-100 rounded-top" style="height:180px; object-fit:cover;">
-              <!-- STATUS BADGE -->
-              <span class="badge position-absolute top-0 end-0 m-2
-                {% if ad.status == 'active' %} bg-success
-                {% elif ad.status == 'pending' %} bg-warning text-dark
-                {% elif ad.status == 'expired' %} bg-secondary
-                {% else %} bg-danger {% endif %}
-              ">
-                {{ ad.status|title }}
-              </span>
-            </div>
+    <!-- ===================================================== -->
+    <!-- STATUS SUMMARY -->
+    <!-- ===================================================== -->
+    <div class="row g-3 mb-4">
 
-            <div class="card-body d-flex flex-column">
+        <div class="col-lg col-md-4 col-6">
 
-              <!-- URL -->
-              <p class="small text-truncate mb-2">🔗 {{ ad.target_url }}</p>
+            <div class="card bg-primary-subtle border-0 rounded-4">
 
-              <!-- METRICS -->
-              <div class="d-flex justify-content-between small mb-2">
-                <span>👁 {{ ad.impressions }}</span>
-                <span>🖱 {{ ad.clicks }}</span>
-              </div>
+                <div class="card-body">
 
-              <!-- CTR BAR -->
-              {% with ctr=0 %}
-                {% if ad.impressions > 0 %}
-                  {% widthratio ad.clicks ad.impressions 100 as ctr %}
-                {% endif %}
-                <div class="mb-2">
-                  <div class="d-flex justify-content-between small">
-                    <span>CTR</span>
-                    <span>{{ ctr }}%</span>
-                  </div>
-                  <div class="progress" style="height:6px;">
-                    <div class="progress-bar" style="width: {{ ctr }}%;"></div>
-                  </div>
+                    <small class="text-muted">
+                        All Ads
+                    </small>
+
+                    <h4 class="fw-bold mb-0">
+                        {{ tab_stats.all.count|abbreviate_number }}
+                    </h4>
+
                 </div>
-              {% endwith %}
-
-              <!-- PENDING PAYMENT ALERT -->
-              {% if ad.status == 'pending' %}
-              <div class="alert alert-warning py-1 px-2 small">
-                Awaiting payment or approval
-              </div>
-              {% endif %}
-
-              <!-- DATES -->
-              <div class="small  mt-auto">
-                <div>Start: {{ ad.start_at|date:"M d, Y" }}</div>
-                <div>End: {{ ad.expires_at|date:"M d, Y" }}</div>
-              </div>
 
             </div>
-          </div>
-        </div>
-        {% empty %}
-        <div class="col-12 text-center py-5">
-          <h5>No ads yet</h5>
-          <p class="">Create your first ad 🚀</p>
-        </div>
-        {% endfor %}
-      </div>
 
-      <!-- ===================
-           PROBLEM ADS
-      =================== -->
-      {% if problem_ads %}
-      <h5 class="mt-5">Sponsored for this problem</h5>
-      <div class="row g-3">
-        {% for ad in problem_ads %}
-        <div class="col-md-4">
-          <div class="card shadow-sm h-100">
-            <img src="{{ ad.image.url }}" class="card-img-top" style="height:150px; object-fit:cover;">
-            <div class="card-body">
-              <a href="{{ ad.target_url }}" target="_blank" onclick="trackAdClick('{{ ad.id }}')">
-                Visit Ad
-              </a>
-              {% with pctr=0 %}
-                {% if ad.impressions > 0 %}
-                  {% widthratio ad.clicks ad.impressions 100 as pctr %}
-                {% endif %}
-                <div class="mt-2 small ">CTR: {{ pctr }}%</div>
-              {% endwith %}
-            </div>
-          </div>
         </div>
-        {% endfor %}
-      </div>
-      {% endif %}
+
+        <div class="col-lg col-md-4 col-6">
+
+            <div class="card bg-success-subtle border-0 rounded-4">
+
+                <div class="card-body">
+
+                    <small class="text-muted">
+                        Active
+                    </small>
+
+                    <h4 class="fw-bold mb-0">
+                        {{ tab_stats.active.count|abbreviate_number }}
+                    </h4>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="col-lg col-md-4 col-6">
+
+            <div class="card bg-warning-subtle border-0 rounded-4">
+
+                <div class="card-body">
+
+                    <small class="text-muted">
+                        Pending
+                    </small>
+
+                    <h4 class="fw-bold mb-0">
+                        {{ tab_stats.pending.count|abbreviate_number }}
+                    </h4>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="col-lg col-md-4 col-6">
+
+            <div class="card bg-secondary-subtle border-0 rounded-4">
+
+                <div class="card-body">
+
+                    <small class="text-muted">
+                        Drafts
+                    </small>
+
+                    <h4 class="fw-bold mb-0">
+                        {{ tab_stats.draft.count|abbreviate_number }}
+                    </h4>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="col-lg col-md-4 col-6">
+
+            <div class="card bg-dark-subtle border-0 rounded-4">
+
+                <div class="card-body">
+
+                    <small class="text-muted">
+                        Expired
+                    </small>
+
+                    <h4 class="fw-bold mb-0">
+                        {{ tab_stats.expired.count|abbreviate_number }}
+                    </h4>
+
+                </div>
+
+            </div>
+
+        </div>
 
     </div>
 
-    <!-- =====================================================
-       🔥 TAB 2: ADMIN DASHBOARD
-    ====================================================== -->
-    {% if request.user.is_staff %}
-    <div class="tab-pane fade" id="adminAds">
+    <!-- ===================================================== -->
+    <!-- NAVIGATION -->
+    <!-- ===================================================== -->
+    <ul class="nav nav-pills flex-wrap gap-2 mb-4">
 
-      <!-- ===================
-           ADMIN KPI
-      =================== -->
-      <div class="row g-3 mb-4">
-        <div class="col-md-3">
-          <div class="card shadow-sm p-3">
-            <small class="">Total Ads</small>
-            <h4>{{ admin_ads|length }}</h4>
-          </div>
-        </div>
-        <div class="col-md-3">
-          <div class="card shadow-sm p-3">
-            <small class="">Clicks</small>
-            <h4>{{ admin_stats.total_clicks|default:0 }}</h4>
-          </div>
-        </div>
-        <div class="col-md-3">
-          <div class="card shadow-sm p-3">
-            <small class="">Impressions</small>
-            <h4>{{ admin_stats.total_impressions|default:0 }}</h4>
-          </div>
-        </div>
-        <div class="col-md-3">
-          <div class="card shadow-sm p-3">
-            <small class="">Revenue</small>
-            <h4>$ {{ admin_stats.total_revenue|default:0 }}</h4>
-          </div>
-        </div>
-      </div>
+        <li class="nav-item">
 
-      <!-- ADMIN ADS TABLE -->
-      <div class="card shadow-sm">
-        <div class="table-responsive">
-          <table class="table table-hover align-middle mb-0">
-            <thead class="table-light">
-              <tr>
-                <th>Ad</th>
-                <th>Advertiser</th>
-                <th>Status</th>
-                <th>Clicks</th>
-                <th>Impressions</th>
-                <th>CTR</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for ad in admin_ads %}
-              <tr>
-                <td><img src="{{ ad.image.url }}" width="60" class="rounded"></td>
-                <td>{{ ad.advertiser_name }}</td>
-                <td>
-                  <span class="badge
-                    {% if ad.status == 'active' %} bg-success
-                    {% elif ad.status == 'pending' %} bg-warning text-dark
-                    {% elif ad.status == 'expired' %} bg-secondary
-                    {% else %} bg-danger {% endif %}
-                  ">
-                    {{ ad.status|title }}
-                  </span>
-                </td>
-                <td>{{ ad.clicks }}</td>
-                <td>{{ ad.impressions }}</td>
-                <td>
-                  {% with ctr=0 %}
-                    {% if ad.impressions > 0 %}
-                      {% widthratio ad.clicks ad.impressions 100 as ctr %}
-                    {% endif %}
-                    <div class="progress" style="height:6px;">
-                      <div class="progress-bar" style="width: {{ ctr }}%;"></div>
+            <button class="nav-link active rounded-pill px-4"
+                    data-bs-toggle="tab"
+                    data-bs-target="#all">
+
+                All Ads
+
+            </button>
+
+        </li>
+
+        <li class="nav-item">
+
+            <button class="nav-link rounded-pill px-4"
+                    data-bs-toggle="tab"
+                    data-bs-target="#active">
+
+                Active
+
+            </button>
+
+        </li>
+
+        <li class="nav-item">
+
+            <button class="nav-link rounded-pill px-4"
+                    data-bs-toggle="tab"
+                    data-bs-target="#pending">
+
+                Pending
+
+            </button>
+
+        </li>
+
+        <li class="nav-item">
+
+            <button class="nav-link rounded-pill px-4"
+                    data-bs-toggle="tab"
+                    data-bs-target="#draft">
+
+                Drafts
+
+            </button>
+
+        </li>
+
+        <li class="nav-item">
+
+            <button class="nav-link rounded-pill px-4"
+                    data-bs-toggle="tab"
+                    data-bs-target="#expired">
+
+                Expired
+
+            </button>
+
+        </li>
+
+    </ul>
+
+    <!-- ===================================================== -->
+    <!-- TAB CONTENT -->
+    <!-- ===================================================== -->
+    <div class="tab-content">
+
+        <!-- ================================================= -->
+        <!-- ALL ADS -->
+        <!-- ================================================= -->
+        <div class="tab-pane fade show active" id="all">
+
+            <!-- TAB KPI -->
+            <div class="row g-3 mb-4">
+
+                <div class="col-lg-3 col-md-6">
+
+                    <div class="card border-0 rounded-4">
+
+                        <div class="card-body">
+
+                            <small class="text-muted">
+                                Total Spending
+                            </small>
+
+                            <h4 class="fw-bold text-danger mb-0">
+                                $ {{ tab_stats.all.spending|abbreviate_number }}
+                            </h4>
+
+                        </div>
+
                     </div>
-                    <small>{{ ctr }}%</small>
-                  {% endwith %}
-                </td>
-                <td>
-                  {% if ad.status == "pending" %}
-                    <button class="btn btn-sm btn-success">Approve</button>
-                    <button class="btn btn-sm btn-danger">Reject</button>
-                  {% else %}
-                    <span class=" small">N/A</span>
-                  {% endif %}
-                </td>
-              </tr>
-              {% endfor %}
-            </tbody>
-          </table>
+
+                </div>
+
+                <div class="col-lg-3 col-md-6">
+
+                    <div class="card border-0 rounded-4">
+
+                        <div class="card-body">
+
+                            <small class="text-muted">
+                                Total Clicks
+                            </small>
+
+                            <h4 class="fw-bold mb-0">
+                                {{ tab_stats.all.clicks }}
+                            </h4>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <div class="col-lg-3 col-md-6">
+
+                    <div class="card border-0 rounded-4">
+
+                        <div class="card-body">
+
+                            <small class="text-muted">
+                                Total Impressions
+                            </small>
+
+                            <h4 class="fw-bold mb-0">
+                                {{ tab_stats.all.impressions|abbreviate_number }}
+                            </h4>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <div class="col-lg-3 col-md-6">
+
+                    <div class="card border-0 rounded-4">
+
+                        <div class="card-body">
+
+                            <small class="text-muted">
+                                Total Campaigns
+                            </small>
+
+                            <h4 class="fw-bold mb-0">
+                                {{ tab_stats.all.count|abbreviate_number }}
+                            </h4>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            {% include "partials/ad_grid.html" with ads=all_ads %}
+
         </div>
-      </div>
+
+        <!-- ================================================= -->
+        <!-- ACTIVE -->
+        <!-- ================================================= -->
+        <div class="tab-pane fade" id="active">
+
+            <div class="row g-3 mb-4">
+
+                <div class="col-lg-3 col-md-6">
+
+                    <div class="card border-0 rounded-4">
+
+                        <div class="card-body">
+
+                            <small class="text-muted">
+                                Active Spending
+                            </small>
+
+                            <h4 class="fw-bold text-danger mb-0">
+                                $ {{ tab_stats.active.spending|abbreviate_number }}
+                            </h4>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <div class="col-lg-3 col-md-6">
+
+                    <div class="card border-0 rounded-4">
+
+                        <div class="card-body">
+
+                            <small class="text-muted">
+                                Active Clicks
+                            </small>
+
+                            <h4 class="fw-bold mb-0">
+                                {{ tab_stats.active.clicks|abbreviate_number }}
+                            </h4>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <div class="col-lg-3 col-md-6">
+
+                    <div class="card border-0 rounded-4">
+
+                        <div class="card-body">
+
+                            <small class="text-muted">
+                                Active Impressions
+                            </small>
+
+                            <h4 class="fw-bold mb-0">
+                                {{ tab_stats.active.impressions|abbreviate_number }}
+                            </h4>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <div class="col-lg-3 col-md-6">
+
+                    <div class="card border-0 rounded-4">
+
+                        <div class="card-body">
+
+                            <small class="text-muted">
+                                Active Ads
+                            </small>
+
+                            <h4 class="fw-bold mb-0">
+                                {{ tab_stats.active.count|abbreviate_number }}
+                            </h4>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            {% include "partials/ad_grid.html" with ads=active_ads %}
+
+        </div>
+
+        <!-- ================================================= -->
+        <!-- PENDING -->
+        <!-- ================================================= -->
+        <div class="tab-pane fade" id="pending">
+
+            <div class="row g-3 mb-4">
+
+                <div class="col-lg-3 col-md-6">
+
+                    <div class="card border-0 rounded-4">
+
+                        <div class="card-body">
+
+                            <small class="text-muted">
+                                Pending Spending
+                            </small>
+
+                            <h4 class="fw-bold text-danger mb-0">
+                                $ {{ tab_stats.pending.spending|abbreviate_number }}
+                            </h4>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <div class="col-lg-3 col-md-6">
+
+                    <div class="card border-0 rounded-4">
+
+                        <div class="card-body">
+
+                            <small class="text-muted">
+                                Pending Clicks
+                            </small>
+
+                            <h4 class="fw-bold mb-0">
+                                {{ tab_stats.pending.clicks|abbreviate_number }}
+                            </h4>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <div class="col-lg-3 col-md-6">
+
+                    <div class="card border-0 rounded-4">
+
+                        <div class="card-body">
+
+                            <small class="text-muted">
+                                Pending Impressions
+                            </small>
+
+                            <h4 class="fw-bold mb-0">
+                                {{ tab_stats.pending.impressions|abbreviate_number }}
+                            </h4>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <div class="col-lg-3 col-md-6">
+
+                    <div class="card border-0 rounded-4">
+
+                        <div class="card-body">
+
+                            <small class="text-muted">
+                                Pending Ads
+                            </small>
+
+                            <h4 class="fw-bold mb-0">
+                                {{ tab_stats.pending.count|abbreviate_number }}
+                            </h4>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            {% include "partials/ad_grid.html" with ads=pending_ads %}
+
+        </div>
+
+        <!-- ================================================= -->
+        <!-- DRAFT -->
+        <!-- ================================================= -->
+        <div class="tab-pane fade" id="draft">
+
+            <div class="row g-3 mb-4">
+
+                <div class="col-lg-3 col-md-6">
+
+                    <div class="card border-0 rounded-4">
+
+                        <div class="card-body">
+
+                            <small class="text-muted">
+                                Draft Spending
+                            </small>
+
+                            <h4 class="fw-bold text-danger mb-0">
+                                $ {{ tab_stats.draft.spending|abbreviate_number }}
+                            </h4>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <div class="col-lg-3 col-md-6">
+
+                    <div class="card border-0 rounded-4">
+
+                        <div class="card-body">
+
+                            <small class="text-muted">
+                                Draft Clicks
+                            </small>
+
+                            <h4 class="fw-bold mb-0">
+                                {{ tab_stats.draft.clicks|abbreviate_number }}
+                            </h4>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <div class="col-lg-3 col-md-6">
+
+                    <div class="card border-0 rounded-4">
+
+                        <div class="card-body">
+
+                            <small class="text-muted">
+                                Draft Impressions
+                            </small>
+
+                            <h4 class="fw-bold mb-0">
+                                {{ tab_stats.draft.impressions|abbreviate_number }}
+                            </h4>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <div class="col-lg-3 col-md-6">
+
+                    <div class="card border-0 rounded-4">
+
+                        <div class="card-body">
+
+                            <small class="text-muted">
+                                Draft Ads
+                            </small>
+
+                            <h4 class="fw-bold mb-0">
+                                {{ tab_stats.draft.count|abbreviate_number }}
+                            </h4>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            {% include "partials/ad_grid.html" with ads=draft_ads %}
+
+        </div>
+
+        <!-- ================================================= -->
+        <!-- EXPIRED -->
+        <!-- ================================================= -->
+        <div class="tab-pane fade" id="expired">
+
+            <div class="row g-3 mb-4">
+
+                <div class="col-lg-3 col-md-6">
+
+                    <div class="card border-0 rounded-4">
+
+                        <div class="card-body">
+
+                            <small class="text-muted">
+                                Expired Spending
+                            </small>
+
+                            <h4 class="fw-bold text-danger mb-0">
+                                $ {{ tab_stats.expired.spending|abbreviate_number }}
+                            </h4>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <div class="col-lg-3 col-md-6">
+
+                    <div class="card border-0 rounded-4">
+
+                        <div class="card-body">
+
+                            <small class="text-muted">
+                                Expired Clicks
+                            </small>
+
+                            <h4 class="fw-bold mb-0">
+                                {{ tab_stats.expired.clicks|abbreviate_number }}
+                            </h4>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <div class="col-lg-3 col-md-6">
+
+                    <div class="card border-0 rounded-4">
+
+                        <div class="card-body">
+
+                            <small class="text-muted">
+                                Expired Impressions
+                            </small>
+
+                            <h4 class="fw-bold mb-0">
+                                {{ tab_stats.expired.impressions|abbreviate_number }}
+                            </h4>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <div class="col-lg-3 col-md-6">
+
+                    <div class="card border-0 rounded-4">
+
+                        <div class="card-body">
+
+                            <small class="text-muted">
+                                Expired Ads
+                            </small>
+
+                            <h4 class="fw-bold mb-0">
+                                {{ tab_stats.expired.count|abbreviate_number }}
+                            </h4>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            {% include "partials/ad_grid.html" with ads=expired_ads %}
+
+        </div>
 
     </div>
-    {% endif %}
 
-  </div>
 </div>
+
 {% endblock %}

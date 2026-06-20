@@ -3,36 +3,26 @@ document.addEventListener("DOMContentLoaded", function () {
     const themeToggle = document.getElementById('theme-toggle');
     const root = document.documentElement;
 
-    // Get saved theme OR fallback to system preference
-    let theme = localStorage.getItem('theme');
+    if (!themeToggle) return;
 
-    if (!theme) {
-        theme = window.matchMedia('(prefers-color-scheme: dark)').matches
-            ? 'dark'
-            : 'light';
-    }
+    // set correct button label immediately
+    const theme = root.getAttribute('data-theme');
 
-    // Apply theme globally (works for ALL users)
-    root.setAttribute('data-theme', theme);
+    themeToggle.textContent =
+        theme === 'dark' ? '☀️ Theme' : '🌙 Theme';
 
-    // Update button text ONLY if it exists (logged-in users)
-    if (themeToggle) {
+    themeToggle.addEventListener('click', () => {
+
+        const newTheme =
+            root.getAttribute('data-theme') === 'dark'
+                ? 'light'
+                : 'dark';
+
+        root.setAttribute('data-theme', newTheme);
+        localStorage.setItem('theme', newTheme);
+
         themeToggle.textContent =
-            theme === 'dark' ? '☀️ Theme' : '🌙 Theme';
-
-        // Attach event safely
-        themeToggle.addEventListener('click', () => {
-            const newTheme =
-                root.getAttribute('data-theme') === 'dark'
-                    ? 'light'
-                    : 'dark';
-
-            root.setAttribute('data-theme', newTheme);
-            localStorage.setItem('theme', newTheme);
-
-            themeToggle.textContent =
-                newTheme === 'dark' ? '☀️ Theme' : '🌙 Theme';
-        });
-    }
+            newTheme === 'dark' ? '☀️ Theme' : '🌙 Theme';
+    });
 
 });

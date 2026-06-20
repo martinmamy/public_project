@@ -5,6 +5,10 @@ from django.shortcuts import redirect
 from django.urls import resolve, Resolver404, reverse
 from django.utils.deprecation import MiddlewareMixin
 from django.urls import resolve, Resolver404
+from datetime import timedelta
+
+from django.core.cache import cache
+from django.utils import timezone
 
 
 # =========================
@@ -12,6 +16,8 @@ from django.urls import resolve, Resolver404
 # =========================
 from django.conf import settings
 from django.shortcuts import redirect, reverse
+
+from MindBridge.models import Advertisement
 
 
 class RedirectNonExistingURLsMiddleware:
@@ -127,7 +133,7 @@ class SecureHeadersMiddleware(MiddlewareMixin):
 # =========================
 class ContentSecurityPolicyMiddleware:
     """
-    Strong CSP header for external integrations (Stripe, PayPal, etc.)
+    Strong CSP header with proper CDN + source map handling
     """
 
     def __init__(self, get_response):
@@ -138,35 +144,31 @@ class ContentSecurityPolicyMiddleware:
         response = self.get_response(request)
 
         response["Content-Security-Policy"] = (
+
             "default-src 'self'; "
 
+            # =========================
+            # CONNECT (XHR / fetch / websockets)
+            # =========================
             "connect-src 'self' "
-            "https://studies-buddy.com "
-            "wss://studies-buddy.com "
             "https://nominatim.openstreetmap.org "
-            "https://va.tawk.to "
-            "wss://*.tawk.to "
             "https://translate.google.com "
             "https://translate-pa.googleapis.com "
             "https://checkout.stripe.com "
             "https://hooks.stripe.com "
             "https://*.js.stripe.com "
             "https://www.paypal.com "
-            "https://*.paypal.com; "
+            "https://*.paypal.com "
+            "https://cdn.jsdelivr.net; "
 
-            "style-src 'self' 'unsafe-inline' "
-            "https://cdnjs.cloudflare.com "
-            "https://cdn.jsdelivr.net "
-            "https://fonts.googleapis.com; "
-
-            "font-src 'self' data: "
-            "https://fonts.gstatic.com "
-            "https://cdnjs.cloudflare.com; "
-
+            # =========================
+            # SCRIPTS
+            # =========================
             "script-src 'self' 'unsafe-inline' "
             "https://code.jquery.com "
             "https://cdn.jsdelivr.net "
             "https://cdnjs.cloudflare.com "
+            "https://cdn.quilljs.com "
             "https://js.stripe.com "
             "https://translate.google.com "
             "https://pagead2.googlesyndication.com "
@@ -175,12 +177,34 @@ class ContentSecurityPolicyMiddleware:
             "https://www.paypal.com "
             "https://*.paypal.com; "
 
-            "img-src 'self' data: "
+            # =========================
+            # STYLES
+            # =========================
+            "style-src 'self' 'unsafe-inline' "
+            "https://cdn.jsdelivr.net "
+            "https://cdnjs.cloudflare.com "
+            "https://cdn.quilljs.com "
+            "https://fonts.googleapis.com; "
+
+            # =========================
+            # FONTS
+            # =========================
+            "font-src 'self' data: "
+            "https://fonts.gstatic.com "
+            "https://cdnjs.cloudflare.com; "
+
+            # =========================
+            # IMAGES
+            # =========================
+            "img-src 'self' data: blob: "
             "https://www.google.com "
             "https://fonts.gstatic.com "
             "https://translate.googleapis.com "
             "https://www.paypalobjects.com; "
 
+            # =========================
+            # FRAMES
+            # =========================
             "frame-src 'self' "
             "https://js.stripe.com "
             "https://checkout.stripe.com "
@@ -189,8 +213,11 @@ class ContentSecurityPolicyMiddleware:
             "https://www.paypal.com "
             "https://*.paypal.com; "
 
+            # =========================
+            # OTHER
+            # =========================
             "object-src 'none'; "
-            "media-src 'self';"
+            "media-src 'self' blob:; "
         )
 
         return response
@@ -216,3 +243,101 @@ class IgnoreBrokenPipeMiddleware:
             if e.errno == errno.EPIPE:
                 return HttpResponseServerError("Client disconnected")
             raise
+        
+
+
+from datetime import timedelta
+from django.core.cache import cache
+from django.utils import timezone
+
+class RecurringAdsMiddleware:
+
+    CACHE_KEY = "recurring_ads_check"
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+
+        if not cache.get(self.CACHE_KEY):
+
+            cache.set(self.CACHE_KEY, True, timeout=300)
+
+            now = timezone.now()
+
+            # =====================================================
+            # EXPIRED ADS (FOR RENEWAL)
+            # =====================================================
+            expired_ads = Advertisement.objects.filter(
+                is_recurring=True,
+                stop_recurring=False,
+                is_deleted=False,
+                expires_at__isnull=False,
+                recurring_every__isnull=False,
+                expires_at__lte=now
+            )
+
+            for ad in expired_ads:
+
+                # Extra protection against bad data
+                if not ad.expires_at or not ad.recurring_every:
+                    continue
+
+                while ad.expires_at <= now:
+                    ad.expires_at += timedelta(
+                        days=ad.recurring_every
+                    )
+
+                ad.status = "active"
+                ad.save(update_fields=["expires_at", "status"])
+
+            # =====================================================
+            # LAST DAY CHECK (24 HOURS BEFORE EXPIRY)
+            # =====================================================
+            last_day_ads = Advertisement.objects.filter(
+                is_recurring=True,
+                stop_recurring=False,
+                is_deleted=False,
+                status="active",
+                expires_at__isnull=False,
+                expires_at__gt=now,
+                expires_at__lte=now + timedelta(hours=24)
+            )
+
+            last_day_ads.update(
+                is_expiring_soon=True
+            )
+
+            # =====================================================
+            # LAST MINUTE CHECK (30 MINUTES BEFORE EXPIRY)
+            # =====================================================
+            urgent_ads = Advertisement.objects.filter(
+                is_recurring=True,
+                stop_recurring=False,
+                is_deleted=False,
+                status="active",
+                expires_at__isnull=False,
+                expires_at__gt=now,
+                expires_at__lte=now + timedelta(minutes=30)
+            )
+
+            urgent_ads.update(
+                is_urgent_expiry=True
+            )
+
+            # =====================================================
+            # RESET FLAGS FOR OTHER ADS
+            # =====================================================
+            Advertisement.objects.exclude(
+                id__in=last_day_ads.values_list("id", flat=True)
+            ).update(
+                is_expiring_soon=False
+            )
+
+            Advertisement.objects.exclude(
+                id__in=urgent_ads.values_list("id", flat=True)
+            ).update(
+                is_urgent_expiry=False
+            )
+
+        return self.get_response(request)

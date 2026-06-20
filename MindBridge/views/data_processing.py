@@ -14,3 +14,11 @@ class PrivacyPartialView(TemplateView):
 
 class TermsPartialView(TemplateView):
     template_name = "legal/partial/terms_partial.html"
+    
+    
+class TransparentInfo(TemplateView):
+    template_name = "legal/transparent_info.html"
+    
+
+class FAQView(TemplateView):
+    template_name = "legal/faq.html"

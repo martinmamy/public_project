@@ -34,12 +34,12 @@
       <div id="events-container">
         {% if events %}
           {% for event in events %}
-          <div class="card shadow-sm mb-3 event-card">
+          <div class="card mb-3 event-card">
             <div class="card-body">
               <div class="d-flex justify-content-between align-items-start mb-2">
                 <div>
                   <h4 class="mb-1">{{ event.title }}</h4>
-                  <p class="mb-1">Hosted by {{ event.host.username }}</p>
+                  <p class="mb-1">Hosted by {% if event.host.profile.first_name or event.host.profile.last_name %}{{ event.host.profile.first_name }} {{ event.host.profile.last_name }}{% else %}{{ event.host.username }}{% endif %}</p>
                 </div>
                 {% if event.is_live %}
                 <span class="badge bg-danger">
@@ -52,7 +52,7 @@
 
               <div class="d-flex justify-content-end gap-2">
                 {% if request.user == event.host %}
-                <a href="{% url 'event_detail' event.id %}" class="btn btn-sm btn-warning" title="Manage Live">
+                <a href="{% url 'event_detail' event.id %}" data-spa-link class="btn btn-sm btn-warning" title="Manage Live">
                   <i class="fa fa-video"></i>
                 </a>
                 {% elif request.user in event.participants.all or event.is_public %}
@@ -105,7 +105,7 @@ RECORDED EVENTS (VIDEO GRID)
 
 <div class="col-lg-6 col-xl-4">
 
-<div class="card border-0 shadow-sm rounded-4 h-100">
+<div class="card border-0 rounded-4 h-100">
 
 <video
 autoplay
@@ -122,7 +122,7 @@ style="aspect-ratio:16/9;object-fit:cover;background:black;">
 </h6>
 
 <p class="text-muted small mb-0">
-Hosted by {{ event.host.username }}
+Hosted by {% if event.host.profile.first_name or event.host.profile.last_name %}{{ event.host.profile.first_name }} {{ event.host.profile.last_name }}{% else %}{{ event.host.username }}{% endif %}
 </p>
 
 </div>

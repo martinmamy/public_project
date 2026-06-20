@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="container py-5" style="max-width: 720px;">
+
+    <!-- HEADER -->
+    <div class="mb-4 text-center">
+        <h2 class="fw-bold text-danger">Report User</h2>
+
+        <p class="text-muted mb-0">
+            Reporting as: <strong> {% if request.user.profile.first_name or request.user.profile.last_name %}{{ request.user.profile.first_name }} {{ request.user.profile.last_name }}{% else %}{{ request.user.username }}{% endif %}</strong>
+        </p>
+    </div>
+
+    <!-- ALERTS -->
+    {% if success %}
+        <div class="alert alert-success border-0 rounded-3">
+            {{ success }}
+        </div>
+    {% endif %}
+
+    {% if error %}
+        <div class="alert alert-danger border-0 rounded-3">
+            {{ error }}
+        </div>
+    {% endif %}
+
+    <!-- RULES BOX -->
+    <div class="p-3 mb-4 rounded-4 shadow-sm"
+         style="background: rgba(255, 243, 205, 0.6);
+                border: 1px solid rgba(255, 193, 7, 0.3);">
+
+        <h6 class="fw-bold text-warning mb-2">
+            ⚠️ Reporting Rules
+        </h6>
+
+        <ul class="mb-0 small text-dark">
+            <li>Only report users for <strong>valid reasons</strong> (spam, abuse, harassment, fake profiles).</li>
+            <li>Do not submit false or revenge reports.</li>
+            <li>Include evidence when possible to help moderators review faster.</li>
+            <li>Misuse of the report system may lead to <strong>restriction or suspension</strong>.</li>
+        </ul>
+
+    </div>
+
+    <!-- FORM -->
+    <div class="p-4 rounded-4 shadow-sm"
+         style="background: rgba(255,255,255,0.7);
+                backdrop-filter: blur(10px);
+                border: 1px solid rgba(0,0,0,0.06);">
+
+        <form method="POST" enctype="multipart/form-data">
+
+            {% csrf_token %}
+
+            <!-- USER INPUT -->
+            <div class="mb-3">
+                <label class="form-label fw-semibold text-danger">
+                    Username of user you are reporting
+                </label>
+
+                <input type="text"
+                       name="reported_username"
+                       class="form-control rounded-3"
+                       placeholder="Enter username or first and last names..."
+                       required>
+            </div>
+
+            <!-- REASON -->
+            <div class="mb-4">
+                <label class="form-label fw-semibold">Reason</label>
+                <textarea name="reason"
+                          rows="5"
+                          class="form-control border-0 rounded-3 p-3"
+                          placeholder="Explain why you're reporting this user..."
+                          required></textarea>
+            </div>
+
+            <!-- EVIDENCE -->
+            <div class="mb-4">
+                <label class="form-label fw-semibold">Evidence (optional)</label>
+                <input type="file"
+                       name="evidence_image"
+                       class="form-control border-0 rounded-3 p-2">
+            </div>
+
+            <!-- BUTTON -->
+            <button type="submit"
+                    class="btn btn-danger w-100 py-2 rounded-3 fw-semibold shadow-sm">
+                Submit Report
+            </button>
+
+        </form>
+    </div>
+
+</div>
+
+{% endblock %}

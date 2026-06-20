@@ -1,0 +1,1149 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+
+<div class="container py-4">
+
+  <!-- HEADER -->
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+      <h3 class="fw-bold mb-0 text-info">Event Hub</h3>
+      <small class="text-info">Discover and manage live events</small>
+    </div>
+
+    <button class="btn btn-primary btn-sm rounded-pill px-3"
+            data-bs-toggle="modal"
+            data-bs-target="#createEventModal">
+      + Create
+    </button>
+  </div>
+
+  <!-- TABS -->
+  <ul class="nav nav-pills mb-3" id="eventTabs">
+    <li class="nav-item">
+      <button class="nav-link active" data-tab="all">All Events</button>
+    </li>
+
+    {% if user.is_authenticated %}
+    <li class="nav-item">
+      <button class="nav-link" data-tab="mine">My Events</button>
+    </li>
+    {% endif %}
+  </ul>
+
+  <!-- FILTERS -->
+  <div class="row g-2 mb-4">
+    <div class="col-md-6">
+      <input id="searchInput"
+             type="text"
+             class="form-control form-control-sm"
+             placeholder="Search events...">
+    </div>
+
+    <div class="col-md-4">
+      <select id="sortSelect" class="form-select form-select-sm">
+        <option value="all">All Events</option>
+        <option value="upcoming">Upcoming</option>
+        <option value="ongoing">Ongoing</option>
+        <option value="ended">Ended</option>
+        <option value="latest">Latest</option>
+        <option value="oldest">Oldest</option>
+        <option value="category">Category</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- GRID -->
+  <div class="row g-3"
+       id="eventGrid"
+       data-current-user="{{ request.user.id }}">
+
+    {% for event in events %}
+    <div class="col-md-6 col-lg-4 event-card"
+         data-id="{{ event.id }}"
+         data-category="{{ event.category }}"
+         data-reminded="{% if event.id in reminder_event_ids %}1{% else %}0{% endif %}"
+         data-title="{{ event.title|lower }}"
+         data-description="{{ event.description|default:''|lower }}"
+         data-start="{{ event.start_time|date:'Y-m-d H:i:s' }}"
+         data-end="{{ event.end_time|date:'Y-m-d H:i:s' }}"
+         data-created="{{ event.created_at|date:'Y-m-d H:i:s' }}"
+         data-host="{{ event.host.id }}">
+
+      <div class="card border-0 rounded-4 h-100">
+        <div class="card-body d-flex flex-column">
+
+          <div class="d-flex gap-2 flex-wrap mb-2">
+
+            <span class="badge status-badge bg-secondary">
+              Loading...
+            </span>
+
+            <span class="badge rounded-pill bg-info text-dark fw-semibold">
+              {{ event.get_category_display }}
+            </span>
+
+          </div>
+
+          <h5 class="fw-bold">{{ event.title }}</h5>
+
+          <p class="text-muted small">
+            {{ event.description|default:"No description"|truncatechars:120 }}
+          </p>
+
+          <div class="small text-muted mb-1">
+            <i class="fa fa-clock me-1"></i>
+            {{ event.start_time|date:"M d, Y H:i" }} →
+            {{ event.end_time|date:"M d, Y H:i"|default:"Open End" }}
+          </div>
+
+          <div class="small fw-semibold mb-2 countdown text-primary">
+            Loading...
+          </div>
+          
+          {% if event.meeting_url %}
+          <a href="{{ event.meeting_url }}"
+             target="_blank"
+             class="btn btn-outline-primary btn-sm rounded-pill w-100 join-btn"
+             data-start="{{ event.start_time|date:'Y-m-d H:i:s' }}"
+             data-end="{{ event.end_time|date:'Y-m-d H:i:s' }}">
+            Join Event
+          </a>
+          <button class="btn btn-light btn-sm rounded-pill w-100 mt-2 reminder-btn">
+            ⏰ Set Reminder
+          </button>
+          {% else %}
+          <button class="btn btn-light btn-sm rounded-pill w-100" disabled>
+            No Meeting Link
+          </button>
+          {% endif %}
+
+          <div class="text-muted small mt-3">
+            Hosted by <strong> {% if event.host.profile.first_name or event.host.profile.last_name %}{{ event.host.profile.first_name }} {{ event.host.profile.last_name }}{% else %}{{ event.host.username }}{% endif %}</strong>
+          </div>
+           <!-- ACTIONS -->
+          {% if request.user == event.host %}
+          <div class="mt-auto d-flex gap-2">
+
+            <button class="btn btn-warning btn-sm flex-fill rounded-pill"
+                    data-bs-toggle="modal"
+                    data-bs-target="#editModal{{ event.id }}">
+              Edit
+            </button>
+
+            <button class="btn btn-danger btn-sm flex-fill rounded-pill"
+                    data-bs-toggle="modal"
+                    data-bs-target="#deleteModal{{ event.id }}">
+              Delete
+            </button>
+
+          </div>
+          {% endif %}
+
+        </div>
+      </div>
+    </div>
+
+    <!-- EDIT MODAL -->
+    {% if request.user == event.host %}
+    <div class="modal fade" id="editModal{{ event.id }}" tabindex="-1">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4">
+
+          <form method="post" action="{% url 'eventhub_update' event.id %}">
+            {% csrf_token %}
+
+            <div class="modal-header">
+              <h5 class="modal-title">Edit Event</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body">
+
+              <select name="category" class="form-control mb-2" required>
+                {% for key, value in category_choices %}
+                  <option value="{{ key }}"
+                          {% if event.category == key %}selected{% endif %}>
+                    {{ value }}
+                  </option>
+                {% endfor %}
+              </select>
+
+              <input type="text" name="title"
+                     value="{{ event.title }}"
+                     class="form-control mb-2" required>
+
+              <textarea name="description"
+                        class="form-control mb-2">{{ event.description }}</textarea>
+
+              <label class="small text-muted">Start</label>
+              <input type="datetime-local" name="start_time"
+                     value="{{ event.start_time|date:'Y-m-d\\TH:i' }}"
+                     class="form-control mb-2" required>
+
+              <label class="small text-muted">End</label>
+              <input type="datetime-local" name="end_time"
+                     value="{{ event.end_time|date:'Y-m-d\\TH:i' }}"
+                     class="form-control mb-2">
+
+              <input type="url" name="meeting_url"
+                     value="{{ event.meeting_url }}"
+                     class="form-control"
+                     placeholder="Meeting link">
+              <div class="invalid-feedback">
+                Only Zoom, Google Meet, Microsoft Teams, or Webex links are allowed.
+              </div>
+            </div>
+
+            <div class="modal-footer">
+              <button class="btn btn-primary w-100 rounded-pill">
+                Save Changes
+              </button>
+            </div>
+
+          </form>
+
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- DELETE MODAL -->
+    {% if request.user == event.host %}
+    <div class="modal fade" id="deleteModal{{ event.id }}" tabindex="-1">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4">
+
+          <form method="post" action="{% url 'eventhub_delete' event.id %}">
+            {% csrf_token %}
+
+            <div class="modal-header">
+              <h5 class="modal-title text-danger">Delete Event</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body">
+              <h6 class="fw-bold">{{ event.title }}</h6>
+              <p class="text-muted small">This action cannot be undone.</p>
+            </div>
+
+            <div class="modal-footer">
+              <button class="btn btn-danger w-100 rounded-pill">
+                Delete Event
+              </button>
+            </div>
+
+          </form>
+
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+      {% if forloop.counter|divisibleby:3 %}
+        {% if google_ads_available %}
+
+          <div class="page-google-ad-grid">
+
+            {% for i in "123" %}
+              <div class="page-google-ad">
+                <ins class="adsbygoogle"
+                    style="display:block"
+                    data-ad-client="ca-pub-XXXXXXXXXXXX"
+                    data-ad-slot="XXXXXXXXXX"
+                    data-ad-format="auto"
+                    data-full-width-responsive="true"></ins>
+              </div>
+            {% endfor %}
+
+          </div>
+
+        {% endif %}
+      {% endif %}
+
+    {% endfor %}
+  </div>
+</div>
+
+
+<!-- CREATE MODAL -->
+<div class="modal fade" id="createEventModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content rounded-4">
+
+      <form method="post" action="{% url 'eventhub_create' %}">
+        {% csrf_token %}
+
+        <div class="modal-header">
+          <h5 class="modal-title">Create Event</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+
+        <div class="modal-body">
+          <select name="category" class="form-control mb-2" required>
+            <option value="">Select category</option>
+            {% for key, value in category_choices %}
+              <option value="{{ key }}">{{ value }}</option>
+            {% endfor %}
+          </select>
+
+          <input type="text" name="title" class="form-control mb-2" placeholder="Title" required>
+          <textarea name="description" class="form-control mb-2" placeholder="Description"></textarea>
+          <input type="datetime-local" name="start_time" class="form-control mb-2" required>
+          <input type="datetime-local" name="end_time" class="form-control mb-2">
+          <input type="url" name="meeting_url" class="form-control" placeholder="Meeting link">
+          <div class="invalid-feedback">
+            Only Zoom, Google Meet, Microsoft Teams, or Webex links are allowed.
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button class="btn btn-success w-100 rounded-pill">Create Event</button>
+        </div>
+
+      </form>
+
+    </div>
+  </div>
+</div>
+<!-- ================= JS ================= -->
+
+<style>
+
+/* =====================================================
+   GOOGLE ADS GRID WRAPPER
+===================================================== */
+
+.page-google-ad-grid {
+
+    display: grid;
+
+    grid-template-columns: repeat(3, 1fr); /* desktop = 3 */
+    gap: 16px;
+
+    width: 100%;
+}
+
+/* each ad card */
+.page-google-ad {
+
+    width: 100%;
+    min-height: 250px;
+
+    background: #fff;
+
+    border: 1px solid #e5e7eb;
+    border-radius: 18px;
+
+    overflow: hidden;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 12px;
+
+    position: relative;
+
+    box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.page-google-ad:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+}
+
+/* sponsored label */
+.page-google-ad::before {
+
+    content: "Sponsored";
+
+    position: absolute;
+    top: 10px;
+    right: 10px;
+
+    background: #f3f4f6;
+    color: #6b7280;
+
+    font-size: 10px;
+    font-weight: 600;
+
+    padding: 4px 8px;
+    border-radius: 999px;
+}
+
+/* AdSense block */
+.page-google-ad ins.adsbygoogle {
+    width: 100% !important;
+    min-height: 220px !important;
+    display: block !important;
+}
+
+/* =====================================================
+   RESPONSIVE BREAKPOINTS
+===================================================== */
+
+/* tablet → 2 columns */
+@media (max-width: 992px) {
+
+    .page-google-ad-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* mobile → 1 column */
+@media (max-width: 576px) {
+
+    .page-google-ad-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .page-google-ad {
+        min-height: 180px;
+    }
+
+    .page-google-ad ins.adsbygoogle {
+        min-height: 160px !important;
+    }
+}
+
+/* =====================================================
+   RESPONSIVE MODAL SYSTEM
+   Works on:
+   - large screens
+   - tablets
+   - mobile
+   - fixed/sticky navbars
+===================================================== */
+
+/* -----------------------------------------------------
+   MODAL LAYERING
+----------------------------------------------------- */
+
+.modal {
+    z-index: 1065 !important;
+}
+
+.modal-backdrop {
+    z-index: 1060 !important;
+}
+
+/* navbar should stay below modal */
+.navbar,
+.navbar.fixed-top,
+.navbar.sticky-top {
+    z-index: 1030;
+}
+
+/* -----------------------------------------------------
+   DESKTOP + GLOBAL
+----------------------------------------------------- */
+
+.modal-dialog {
+
+    /* prevents modal touching top */
+    margin-top: 90px;
+
+    /* smooth centering */
+    margin-bottom: 2rem;
+
+    /* responsive width */
+    max-width: 600px;
+}
+
+/* smoother appearance */
+.modal-content {
+
+    border: none;
+    border-radius: 22px;
+
+    overflow: hidden;
+
+    box-shadow: 0 10px 40px rgba(0,0,0,0.12);
+}
+
+/* keep content scrollable */
+.modal-body {
+
+    max-height: calc(100vh - 220px);
+    overflow-y: auto;
+
+    padding: 1.25rem;
+}
+
+/* cleaner footer */
+.modal-footer {
+    border-top: 1px solid #f1f1f1;
+}
+
+/* -----------------------------------------------------
+   LARGE TABLETS
+----------------------------------------------------- */
+
+@media (max-width: 992px) {
+
+    .modal-dialog {
+
+        max-width: 92%;
+        margin-top: 80px;
+    }
+}
+
+/* -----------------------------------------------------
+   MOBILE
+----------------------------------------------------- */
+
+@media (max-width: 768px) {
+
+    .modal-dialog {
+
+        width: calc(100% - 1rem);
+        max-width: calc(100% - 1rem);
+
+        margin-top: 75px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .modal-content {
+        border-radius: 18px;
+    }
+
+    .modal-body {
+
+        max-height: 70vh;
+
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    /* prevent iOS zoom */
+    .modal input,
+    .modal textarea,
+    .modal select,
+    .modal button {
+
+        font-size: 16px !important;
+    }
+
+    /* stacked footer buttons */
+    .modal-footer {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .modal-footer .btn {
+        width: 100%;
+    }
+}
+
+/* -----------------------------------------------------
+   EXTRA SMALL DEVICES
+----------------------------------------------------- */
+
+@media (max-width: 480px) {
+
+    .modal-dialog {
+
+        width: calc(100% - 0.75rem);
+        max-width: calc(100% - 0.75rem);
+
+        margin-top: 70px;
+    }
+
+    .modal-header,
+    .modal-body,
+    .modal-footer {
+
+        padding: 0.9rem;
+    }
+
+    .modal-title {
+        font-size: 1rem;
+    }
+
+    .modal-content {
+        border-radius: 16px;
+    }
+}
+
+/* -----------------------------------------------------
+   FIX BOOTSTRAP CENTERED MODALS
+----------------------------------------------------- */
+
+.modal.modal-dialog-centered .modal-dialog {
+    display: flex;
+    align-items: flex-start;
+    min-height: 100%;
+}
+</style>
+
+<script>
+
+/* =====================================================
+   INIT GOOGLE ADS (GENERIC)
+===================================================== */
+
+document.addEventListener("DOMContentLoaded", function () {
+
+    const ads = document.querySelectorAll(".page-google-ad ins.adsbygoogle");
+
+    if (!ads.length) return;
+
+    ads.forEach(ad => {
+
+        try {
+
+            // prevent duplicate initialization
+            if (!ad.dataset.loaded) {
+
+                (adsbygoogle = window.adsbygoogle || []).push({});
+
+                ad.dataset.loaded = "true";
+            }
+
+        } catch (err) {
+
+            console.error("Google AdSense error:", err);
+        }
+    });
+});
+
+</script>
+
+<script>
+function getCookie(name) {
+  let cookieValue = null;
+  if (document.cookie && document.cookie !== '') {
+    const cookies = document.cookie.split(';');
+    for (let i = 0; i < cookies.length; i++) {
+      const cookie = cookies[i].trim();
+      if (cookie.substring(0, name.length + 1) === (name + '=')) {
+        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+        break;
+      }
+    }
+  }
+  return cookieValue;
+}
+let currentTab = "all";
+
+function parseTime(str) {
+  if (!str) return null;
+  return new Date(str.replace(" ", "T"));
+}
+
+function format(ms) {
+  if (ms <= 0) return "0s";
+  const s = Math.floor(ms / 1000);
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  const sec = s % 60;
+  return `${h}h ${m}m ${sec}s`;
+}
+
+
+const ALLOWED_DOMAINS = [
+  "zoom.us",
+  "meet.google.com",
+  "teams.microsoft.com",
+  "teams.live.com",
+  "webex.com",
+  "meetings.webex.com",
+];
+
+function isValidMeetingUrl(url) {
+  if (!url || url.trim() === "") return true; // optional field
+
+  try {
+    const parsed = new URL(url);
+
+    if (parsed.protocol !== "https:") return false;
+
+    const host = parsed.hostname.replace("www.", "");
+
+    return ALLOWED_DOMAINS.some(domain => host === domain);
+
+  } catch (e) {
+    return false;
+  }
+}
+
+function attachMeetingUrlValidation() {
+
+  const forms = document.querySelectorAll("form");
+
+  forms.forEach(form => {
+
+    const urlInput = form.querySelector('input[name="meeting_url"]');
+    const submitBtn = form.querySelector('button[type="submit"], button:not([type])');
+
+    if (!urlInput || !submitBtn) return;
+
+    function validate() {
+      const value = urlInput.value.trim();
+
+      const valid = isValidMeetingUrl(value);
+
+      if (!valid) {
+        urlInput.classList.add("is-invalid");
+        submitBtn.disabled = true;
+        submitBtn.classList.add("opacity-50");
+      } else {
+        urlInput.classList.remove("is-invalid");
+        submitBtn.disabled = false;
+        submitBtn.classList.remove("opacity-50");
+      }
+    }
+
+    urlInput.addEventListener("input", validate);
+    validate(); // initial run
+  });
+}
+
+attachMeetingUrlValidation();
+
+/* ================= STATUS UI ================= */
+function updateUI() {
+  const now = new Date();
+
+  document.querySelectorAll(".event-card").forEach(card => {
+    const start = parseTime(card.dataset.start);
+    const end = parseTime(card.dataset.end);
+
+    const badge = card.querySelector(".status-badge");
+    const countdown = card.querySelector(".countdown");
+    const btn = card.querySelector(".join-btn");
+
+    if (!start) return;
+
+    /* ---------- UPCOMING ---------- */
+    if (now < start) {
+      badge.textContent = "Upcoming";
+      badge.className = "badge bg-primary status-badge text-light";
+      countdown.textContent = "Starts in " + format(start - now);
+
+      if (btn) {
+        btn.textContent = "Starts Soon";
+        btn.className = "btn btn-outline-primary btn-sm rounded-pill w-100 join-btn";
+        btn.style.pointerEvents = "none";
+        btn.style.opacity = "0.6";
+      }
+    }
+
+    /* ---------- ENDED ---------- */
+    else if (end && now > end) {
+      badge.textContent = "Ended";
+      badge.className = "badge bg-secondary status-badge text-light";
+      countdown.textContent = "Event ended";
+
+      if (btn) {
+        btn.textContent = "Ended";
+        btn.className = "btn btn-outline-primary btn-sm rounded-pill w-100 join-btn";
+        btn.style.pointerEvents = "none";
+        btn.style.opacity = "0.6";
+      }
+    }
+
+    /* ---------- ONGOING ---------- */
+    else {
+      badge.textContent = "Ongoing";
+      badge.className = "badge bg-success status-badge text-light";
+      countdown.textContent = end
+        ? "Ends in " + format(end - now)
+        : "Ongoing";
+
+      if (btn) {
+        btn.textContent = "Join Event";
+        btn.className = "btn btn-outline-primary btn-sm rounded-pill w-100 join-btn";
+        btn.style.pointerEvents = "auto";
+        btn.style.opacity = "1";
+      }
+    }
+  });
+}
+
+/* ================= MAIN FILTER + SORT ================= */
+function applyFilterLive() {
+
+  const now = new Date();
+
+  const search =
+    document.getElementById("searchInput")
+      .value
+      .toLowerCase()
+      .trim();
+
+  const sort =
+    document.getElementById("sortSelect").value;
+
+  const grid =
+    document.getElementById("eventGrid");
+
+  const currentUser =
+    grid.dataset.currentUser;
+
+  let cards =
+    Array.from(document.querySelectorAll(".event-card"));
+
+  /* =====================================================
+     STATUS HELPER
+  ===================================================== */
+  function getStatus(start, end) {
+
+    if (!start) return "unknown";
+
+    if (now < start) {
+      return "upcoming";
+    }
+
+    if (end && now > end) {
+      return "ended";
+    }
+
+    return "ongoing";
+  }
+
+  /* =====================================================
+     STEP 1: SEARCH + TAB FILTER
+  ===================================================== */
+  cards.forEach(card => {
+
+    const title =
+      card.dataset.title || "";
+
+    const description =
+      card.dataset.description || "";
+
+    const category =
+      card.dataset.category || "";
+
+    // 🔥 CATEGORY INCLUDED
+    const searchableText =
+      `${title} ${description} ${category}`.toLowerCase();
+
+    const matchesSearch =
+      searchableText.includes(search);
+
+    let matchesTab = true;
+
+    // 🔥 MY EVENTS TAB
+    if (currentTab === "mine") {
+      matchesTab =
+        String(card.dataset.host) === String(currentUser);
+    }
+
+    // default visible
+    const visible =
+      matchesSearch && matchesTab;
+
+    card.style.display = visible ? "" : "none";
+  });
+
+  /* =====================================================
+     STEP 2: KEEP ONLY VISIBLE
+  ===================================================== */
+  cards = cards.filter(card =>
+    card.style.display !== "none"
+  );
+
+  /* =====================================================
+     STEP 3: STATUS FILTERS
+  ===================================================== */
+  if (["upcoming", "ongoing", "ended"].includes(sort)) {
+
+    cards.forEach(card => {
+
+      const start =
+        parseTime(card.dataset.start);
+
+      const end =
+        parseTime(card.dataset.end);
+
+      const status =
+        getStatus(start, end);
+
+      if (status !== sort) {
+        card.style.display = "none";
+      }
+    });
+
+    cards = cards.filter(card =>
+      card.style.display !== "none"
+    );
+  }
+
+  /* =====================================================
+     STEP 4: CATEGORY FILTER
+  ===================================================== */
+  else if (sort === "category") {
+
+    cards.sort((a, b) => {
+
+      const aCategory =
+        (a.dataset.category || "").toLowerCase();
+
+      const bCategory =
+        (b.dataset.category || "").toLowerCase();
+
+      return aCategory.localeCompare(bCategory);
+    });
+  }
+
+  /* =====================================================
+     STEP 5: SORTING
+  ===================================================== */
+  else {
+
+    cards.sort((a, b) => {
+
+      const aStart =
+        parseTime(a.dataset.start);
+
+      const bStart =
+        parseTime(b.dataset.start);
+
+      const aCreated =
+        parseTime(a.dataset.created);
+
+      const bCreated =
+        parseTime(b.dataset.created);
+
+      // latest first
+      if (sort === "latest") {
+        return bCreated - aCreated;
+      }
+
+      // oldest first
+      if (sort === "oldest") {
+        return aCreated - bCreated;
+      }
+
+      // default chronological
+      return aStart - bStart;
+    });
+  }
+
+  /* =====================================================
+     STEP 6: REORDER DOM
+  ===================================================== */
+  cards.forEach(card => {
+    grid.appendChild(card);
+  });
+
+  /* =====================================================
+     STEP 7: EMPTY STATE
+  ===================================================== */
+  const visibleCards =
+    cards.filter(card =>
+      card.style.display !== "none"
+    );
+
+  let empty =
+    document.getElementById("emptyEvents");
+
+  if (!visibleCards.length) {
+
+    if (!empty) {
+
+      empty = document.createElement("div");
+
+      empty.id = "emptyEvents";
+
+      empty.className =
+        "col-12 text-center text-muted py-5";
+
+      empty.innerHTML = `
+        <div class="card border-0 rounded-4 p-5">
+          <h5 class="mb-2">No events found</h5>
+          <p class="mb-0">
+            Try changing filters or search keywords.
+          </p>
+        </div>
+      `;
+
+      grid.appendChild(empty);
+    }
+
+  } else if (empty) {
+
+    empty.remove();
+  }
+}
+
+/* ================= TAB SWITCH ================= */
+document.querySelectorAll("#eventTabs .nav-link").forEach(btn => {
+  btn.addEventListener("click", () => {
+
+    document.querySelectorAll("#eventTabs .nav-link")
+      .forEach(b => b.classList.remove("active"));
+
+    btn.classList.add("active");
+    currentTab = btn.dataset.tab;
+
+    applyFilterLive();
+  });
+});
+
+/* ================= EVENTS ================= */
+document.getElementById("searchInput").addEventListener("input", applyFilterLive);
+document.getElementById("sortSelect").addEventListener("change", applyFilterLive);
+
+
+const REMINDER_OFFSET_MS = 5 * 60 * 1000;
+let activeReminders = new Map();
+
+/* ================= PERMISSION ================= */
+function requestNotificationPermission() {
+  if ("Notification" in window && Notification.permission !== "granted") {
+    Notification.requestPermission();
+  }
+}
+
+/* ================= INIT UI ONLY ================= */
+function initReminderButtons() {
+
+  const now = Date.now();
+
+  document.querySelectorAll(".event-card").forEach(card => {
+
+    const btn = card.querySelector(".reminder-btn");
+    if (!btn) return;
+
+    const start = parseTime(card.dataset.start);
+    const isSet = card.dataset.reminded === "1";
+
+    if (!start) return;
+
+    const isUpcoming = now < start.getTime();
+
+    if (isSet) {
+      btn.textContent = "Reminder Set ✅";
+      btn.className = "btn btn-success btn-sm rounded-pill w-100 reminder-btn";
+      btn.disabled = true;
+      return;
+    }
+
+    if (!isUpcoming) {
+      btn.textContent = "Not available";
+      btn.className = "btn btn-light btn-sm rounded-pill w-100 reminder-btn";
+      btn.style.opacity = "0.5";
+      btn.disabled = true;
+      return;
+    }
+
+    btn.textContent = "⏰ Set Reminder";
+    btn.className = "btn btn-light btn-sm rounded-pill w-100 reminder-btn";
+    btn.disabled = false;
+    btn.style.opacity = "1";
+  });
+}
+
+/* ================= CLICK → SCHEDULE ONLY ================= */
+document.addEventListener("click", async (e) => {
+
+  const btn = e.target.closest(".reminder-btn");
+  if (!btn) return;
+
+  const card = btn.closest(".event-card");
+
+  const eventId = card.dataset.id;
+  const title = card.dataset.title;
+  const start = parseTime(card.dataset.start);
+
+  if (!eventId || !start) return;
+
+  const now = Date.now();
+
+  if (now >= start.getTime()) {
+    btn.textContent = "Not available";
+    btn.disabled = true;
+    btn.style.opacity = "0.5";
+    return;
+  }
+
+  requestNotificationPermission();
+
+  /* ---------- SAVE TO BACKEND ---------- */
+  try {
+    const res = await fetch(`/events/hub/${eventId}/reminder/`, {
+      method: "POST",
+      headers: {
+        "X-CSRFToken": getCookie("csrftoken"),
+        "Content-Type": "application/json"
+      }
+    });
+
+    if (!res.ok) throw new Error("Failed");
+
+    /* ---------- MARK UI ---------- */
+    card.dataset.reminded = "1";
+    initReminderButtons();
+
+  } catch (err) {
+    console.error("Reminder failed:", err);
+    return;
+  }
+
+  /* ---------- SCHEDULE IN MEMORY ONLY ---------- */
+  const triggerTime = start.getTime() - REMINDER_OFFSET_MS;
+
+  activeReminders.set(eventId, {
+    title,
+    triggerTime,
+    fired: false
+  });
+});
+
+/* ================= LIVE CHECKER ================= */
+function checkLiveReminders() {
+
+  const now = Date.now();
+
+  activeReminders.forEach((reminder, id) => {
+
+    if (reminder.fired) return;
+
+    /* 🔥 ONLY TRIGGERS AFTER USER CLICK */
+    if (now >= reminder.triggerTime) {
+
+      reminder.fired = true;
+
+      if ("Notification" in window && Notification.permission === "granted") {
+        new Notification("🔔 Event Reminder", {
+          body: `${reminder.title} starts in 5 minutes!`,
+        });
+      }
+
+      const btn = document.querySelector(
+        `.event-card[data-id="${id}"] .reminder-btn`
+      );
+
+      if (btn) {
+        btn.textContent = "Sent 🔔";
+        btn.className = "btn btn-secondary btn-sm rounded-pill w-100 reminder-btn";
+        btn.disabled = true;
+        btn.style.opacity = "0.6";
+      }
+    }
+  });
+}
+
+/* ================= START ================= */
+initReminderButtons();
+
+/* 🔥 IMPORTANT: nothing is restored from DOM anymore */
+setInterval(checkLiveReminders, 1000);
+
+/* ================= INIT ================= */
+setInterval(updateUI, 1000);
+updateUI();
+applyFilterLive();
+
+</script>
+
+{% endblock %}

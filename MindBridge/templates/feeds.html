@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load mention_tags %}
 {% block title %}Feeds | Fancylearn{% endblock %}
 
 {% block extra_css %}
@@ -87,7 +88,7 @@ html, body {
         <div class="tab-pane fade show active" id="top">
             <div class="row g-4">
                 <div class="col-lg-4">
-                    <div class="card shadow-sm h-100">
+                    <div class="card h-100">
                         <div class="card-body d-flex flex-column">
                             <form id="filterTopForm" class="mb-3">
                                 <select id="monthTop" class="form-select mb-2">
@@ -118,7 +119,7 @@ html, body {
                                             data-votes="{{ problem.votes_score }}"
                                             data-comments="{{ problem.answers_total }}"
                                             data-url="{% url 'problem_detail' problem.id %}"
-                                            data-content="{{ problem.description|escapejs }}">
+                                            data-content="{{ problem.description }}">
                                         {{ problem.title|truncatechars:40 }}
                                     </button>
                                     {% endfor %}
@@ -132,7 +133,7 @@ html, body {
 
                 <!-- Detail + Charts -->
                 <div class="col-lg-8">
-                    <div class="card shadow-sm h-100 card-detail-charts">
+                    <div class="card h-100 card-detail-charts">
                         <div class="card-body" id="topDetail">
                             <p class="">Select a problem to view details.</p>
                         </div>
@@ -148,7 +149,7 @@ html, body {
         <div class="tab-pane fade" id="trending">
             <div class="row g-4">
                 <div class="col-lg-4">
-                    <div class="card shadow-sm h-100">
+                    <div class="card h-100">
                         <div class="card-body d-flex flex-column">
                             <form id="filterTrendingForm" class="mb-3">
                                 <select id="monthTrending" class="form-select mb-2">
@@ -179,7 +180,7 @@ html, body {
                                             data-votes="{{ problem.votes_score }}"
                                             data-comments="{{ problem.answers_total }}"
                                             data-url="{% url 'problem_detail' problem.id %}"
-                                            data-content="{{ problem.description|escapejs }}">
+                                            data-content="{{ problem.description }}">
                                         {{ problem.title|truncatechars:40 }}
                                     </button>
                                     {% endfor %}
@@ -192,7 +193,7 @@ html, body {
                 </div>
 
                 <div class="col-lg-8">
-                    <div class="card shadow-sm h-100 card-detail-charts">
+                    <div class="card h-100 card-detail-charts">
                         <div class="card-body" id="trendingDetail">
                             <p class="">Select a problem to view details.</p>
                         </div>
@@ -209,7 +210,7 @@ html, body {
         <div class="tab-pane fade" id="personalized">
             <div class="row g-4">
                 <div class="col-lg-4">
-                    <div class="card shadow-sm h-100">
+                    <div class="card h-100">
                         <div class="card-body d-flex flex-column">
                             <form id="filterPersonalForm" class="mb-3">
                                 <select id="monthPersonal" class="form-select mb-2">
@@ -236,11 +237,11 @@ html, body {
                                             data-date="{{ problem.created_at|date:'M d, Y' }}"
                                             data-month="{{ problem.created_at|date:'n' }}"
                                             data-year="{{ problem.created_at|date:'Y' }}"
-                                            data-views="{{ problem.views }}"
-                                            data-votes="{{ problem.votes_score }}"
-                                            data-comments="{{ problem.answers_total }}"
+                                            data-views="{{ problem.views|abbreviate_number }}"
+                                            data-votes="{{ problem.votes_score|abbreviate_number }}"
+                                            data-comments="{{ problem.answers_total|abbreviate_number }}"
                                             data-url="{% url 'problem_detail' problem.id %}"
-                                            data-content="{{ problem.description|escapejs }}">
+                                            data-content="{{ problem.description }}">
                                         {{ problem.title|truncatechars:40 }}
                                     </button>
                                     {% endfor %}
@@ -253,7 +254,7 @@ html, body {
                 </div>
 
                 <div class="col-lg-8">
-                    <div class="card shadow-sm h-100 card-detail-charts">
+                    <div class="card h-100 card-detail-charts">
                         <div class="card-body" id="personalDetail">
                             <p class="">Select a problem to view details.</p>
                         </div>
@@ -272,31 +273,31 @@ html, body {
             <!-- Summary Cards -->
             <div class="row g-3 mb-4">
                 <div class="col-md-4">
-                    <div class="card finance-card shadow-sm p-3">
+                    <div class="card finance-card p-3">
                         <h6 class="mb-1">Tips Earned</h6>
-                        <h3 class="text-success">{{ financial_summary.tips.earned }}</h3>
+                        <h3 class="text-success">{{ financial_summary.tips.earned|abbreviate_number }}</h3>
                     </div>
                 </div>
 
                 <div class="col-md-4">
-                    <div class="card finance-card shadow-sm p-3">
+                    <div class="card finance-card p-3">
                         <h6 class="mb-1">Tips Spent</h6>
-                        <h3 class="text-danger">{{ financial_summary.tips.spent }}</h3>
+                        <h3 class="text-danger">{{ financial_summary.tips.spent|abbreviate_number }}</h3>
                     </div>
                 </div>
 
                 <div class="col-md-4">
-                    <div class="card finance-card shadow-sm p-3">
+                    <div class="card finance-card p-3">
                         <h6 class="mb-1">Net</h6>
                         <h3>
-                            {{ financial_summary.tips.net }}
+                            {{ financial_summary.tips.net|abbreviate_number }}
                         </h3>
                     </div>
                 </div>
             </div>
 
             <!-- Chart -->
-            <div class="card shadow-sm p-3">
+            <div class="card p-3">
                 <h5 class="mb-3">Tips Earnings vs Spending</h5>
                 <canvas id="tipsChart"></canvas>
             </div>
@@ -311,31 +312,31 @@ html, body {
             <!-- Summary Cards -->
             <div class="row g-3 mb-4">
                 <div class="col-md-4">
-                    <div class="card finance-card shadow-sm p-3">
+                    <div class="card finance-card p-3">
                         <h6 class="mb-1">Bounties Earned</h6>
-                        <h3 class="text-success">{{ financial_summary.bounties.earned }}</h3>
+                        <h3 class="text-success">{{ financial_summary.bounties.earned|abbreviate_number }}</h3>
                     </div>
                 </div>
 
                 <div class="col-md-4">
-                    <div class="card finance-card shadow-sm p-3">
+                    <div class="card finance-card p-3">
                         <h6 class="mb-1">Bounties Spent</h6>
-                        <h3 class="text-danger">{{ financial_summary.bounties.spent }}</h3>
+                        <h3 class="text-danger">{{ financial_summary.bounties.spent|abbreviate_number }}</h3>
                     </div>
                 </div>
 
                 <div class="col-md-4">
-                    <div class="card finance-card shadow-sm p-3">
+                    <div class="card finance-card p-3">
                         <h6 class="mb-1">Net</h6>
                         <h3>
-                            {{ financial_summary.bounties.net }}
+                            {{ financial_summary.bounties.net|abbreviate_number }}
                         </h3>
                     </div>
                 </div>
             </div>
 
             <!-- Chart -->
-            <div class="card shadow-sm p-3">
+            <div class="card p-3">
                 <h5 class="mb-3">Bounties Earnings vs Spending</h5>
                 <canvas id="bountiesChart"></canvas>
             </div>
@@ -466,9 +467,9 @@ function setupTabFilteringAndCharts(sidebarId, detailId, monthId, yearId, chartI
                 <hr>
                 <div>${btn.dataset.content}</div>
                 <div class="mt-3">
-                    <span class="badge bg-primary">${btn.dataset.votes} votes</span>
-                    <span class="badge bg-secondary">${btn.dataset.comments} comments</span>
-                    <span class="badge bg-info">${btn.dataset.views} views</span>
+                    <span class="badge bg-outline-primary">${btn.dataset.votes} votes</span>
+                    <span class="badge bg-outline-secondary">${btn.dataset.comments} comments</span>
+                    <span class="badge bg-outline-info">${btn.dataset.views} views</span>
                 </div>
             `;
         });

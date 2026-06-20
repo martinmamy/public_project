@@ -1,0 +1,665 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+
+<div class="container py-5">
+
+    <!-- ===================================== -->
+    <!-- PAGE HEADER -->
+    <!-- ===================================== -->
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-5">
+
+        <div>
+            <h2 class="fw-bold mb-1">
+                🚀 Create Advertisement
+            </h2>
+
+            <p class="text-muted mb-0">
+                Launch campaigns, save drafts, enable recurring ads and track promotion spending.
+            </p>
+        </div>
+
+        <div class="d-flex gap-2">
+
+            <span class="badge bg-primary-subtle text-primary px-3 py-2 rounded-pill">
+                ${{ price_per_day }} / day
+            </span>
+
+            <span class="badge bg-success-subtle text-success px-3 py-2 rounded-pill">
+                Secure Payment Enabled
+            </span>
+
+        </div>
+
+    </div>
+
+    <div class="row g-4">
+
+        <!-- ===================================== -->
+        <!-- CREATE FORM -->
+        <!-- ===================================== -->
+        <div class="col-lg-7">
+
+            <form id="adForm"
+                  class="card border-0 rounded-4 overflow-hidden">
+
+                {% csrf_token %}
+
+                <!-- HEADER -->
+                <div class="p-4 border-bottom bg-light">
+
+                    <h5 class="fw-bold mb-1">
+                        Advertisement Details
+                    </h5>
+
+                    <small class="text-muted">
+                        Fill all required information for your campaign
+                    </small>
+
+                </div>
+
+                <!-- BODY -->
+                <div class="p-4">
+
+                    <!-- TITLE -->
+                    <div class="mb-4">
+
+                        <label class="form-label fw-semibold">
+                            Ad Title
+                        </label>
+
+                        <input type="text"
+                               id="adTitle"
+                               class="form-control form-control-lg rounded-3"
+                               placeholder="Example: Learn Django in 30 Days">
+
+                    </div>
+
+                    <!-- DESCRIPTION -->
+                    <div class="mb-4">
+
+                        <label class="form-label fw-semibold">
+                            Description
+                        </label>
+
+                        <textarea id="adDesc"
+                                  class="form-control rounded-3"
+                                  rows="4"
+                                  placeholder="Describe your advertisement..."></textarea>
+
+                    </div>
+
+                    <!-- URL -->
+                    <div class="mb-4">
+
+                        <label class="form-label fw-semibold">
+                            Target URL
+                        </label>
+
+                        <input type="url"
+                               id="adUrl"
+                               class="form-control rounded-3"
+                               placeholder="https://example.com">
+
+                    </div>
+
+                    <!-- CATEGORY -->
+                    <div class="mb-4">
+
+                        <label class="form-label fw-semibold">
+                            Advertisement Category
+                        </label>
+
+                        <select id="adCategory"
+                                class="form-select rounded-3">
+
+                            {% for value, label in categories %}
+
+                                <option value="{{ value }}">
+                                    {{ label }}
+                                </option>
+
+                            {% endfor %}
+
+                        </select>
+
+                    </div>
+
+                    <!-- IMAGE -->
+                    <div class="mb-4">
+
+                        <label class="form-label fw-semibold">
+                            Advertisement Image
+                        </label>
+
+                        <input type="file"
+                               id="adImage"
+                               class="form-control rounded-3"
+                               accept="image/*">
+
+                        <small class="text-muted">
+                            Recommended size: 1200x600
+                        </small>
+
+                    </div>
+
+                    <!-- DURATION -->
+                    <div class="mb-4">
+
+                        <label class="form-label fw-semibold">
+                            Campaign Duration
+                        </label>
+
+                        <select id="duration"
+                                class="form-select rounded-3">
+
+                            <option value="3">
+                                3 Days
+                            </option>
+
+                            <option value="7" selected>
+                                7 Days
+                            </option>
+
+                            <option value="14">
+                                14 Days
+                            </option>
+
+                            <option value="30">
+                                30 Days
+                            </option>
+
+                        </select>
+
+                    </div>
+
+                    <!-- RECURRING -->
+                    <div class="mb-4">
+
+                        <div class="card border rounded-4 bg-light-subtle">
+
+                            <div class="card-body">
+
+                                <div class="form-check form-switch mb-3">
+
+                                    <input class="form-check-input"
+                                           type="checkbox"
+                                           id="recurringEnabled">
+
+                                    <label class="form-check-label fw-semibold"
+                                           for="recurringEnabled">
+
+                                        Enable Recurring Advertisement
+
+                                    </label>
+
+                                </div>
+
+                                <div id="recurringOptions"
+                                     style="display:none;">
+
+                                    <label class="form-label small fw-semibold">
+                                        Renewal Cycle
+                                    </label>
+
+                                    <select id="recurringDays"
+                                            class="form-select rounded-3">
+
+                                        <option value="3">
+                                            Every 3 Days
+                                        </option>
+
+                                        <option value="7" selected>
+                                            Every 7 Days
+                                        </option>
+
+                                        <option value="14">
+                                            Every 14 Days
+                                        </option>
+
+                                        <option value="30">
+                                            Every 30 Days
+                                        </option>
+
+                                    </select>
+
+                                    <small class="text-muted d-block mt-2">
+                                        Your ad will automatically renew after expiration.
+                                    </small>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                    <!-- PRICE -->
+                    <div class="card border-0 bg-primary-subtle rounded-4 mb-4">
+
+                        <div class="card-body d-flex justify-content-between align-items-center">
+
+                            <div>
+
+                                <small class="text-muted d-block">
+                                    Estimated Campaign Spending
+                                </small>
+
+                                <h3 class="fw-bold mb-0">
+                                    $<span id="pricePreview">0.00</span>
+                                </h3>
+
+                            </div>
+
+                            <div class="text-end">
+
+                                <small class="text-muted d-block">
+                                    Duration
+                                </small>
+
+                                <h6 class="fw-bold mb-0">
+                                    <span id="durationPreview">7</span> Days
+                                </h6>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                    <!-- ACTIONS -->
+                    <div class="d-grid gap-3">
+
+                        <!-- PAY -->
+                        <button type="button"
+                                id="publishBtn"
+                                class="btn btn-success btn-lg rounded-3">
+
+                            💳 Pay & Publish Advertisement
+
+                        </button>
+
+                        <!-- DRAFT -->
+                        <button type="button"
+                                id="draftBtn"
+                                class="btn btn-outline-primary btn-lg rounded-3">
+
+                            💾 Save as Draft
+
+                        </button>
+
+                    </div>
+
+                </div>
+
+            </form>
+
+        </div>
+
+        <!-- ===================================== -->
+        <!-- LIVE PREVIEW -->
+        <!-- ===================================== -->
+        <div class="col-lg-5">
+
+            <div class="card border-0 rounded-4 overflow-hidden sticky-top"
+                 style="top:20px;">
+
+                <div class="p-4 border-bottom bg-light">
+
+                    <h5 class="fw-bold mb-1">
+                        Live Preview
+                    </h5>
+
+                    <small class="text-muted">
+                        See how your ad will appear
+                    </small>
+
+                </div>
+
+                <div class="p-4">
+
+                    <div class="border rounded-4 overflow-hidden">
+
+                        <!-- IMAGE -->
+                        <img id="previewImg"
+                             src="{% static 'logo/favicon-32.png' %}"
+                             class="w-100"
+                             style="height:220px; object-fit:cover;">
+
+                        <!-- BODY -->
+                        <div class="p-3">
+
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+
+                                <span class="badge bg-primary"
+                                      id="previewCategory">
+
+                                    Technology
+
+                                </span>
+
+                                <span class="badge bg-success">
+                                    Sponsored
+                                </span>
+
+                            </div>
+
+                            <h5 class="fw-bold mb-2"
+                                id="previewTitle">
+
+                                Your Advertisement Title
+
+                            </h5>
+
+                            <p class="text-muted small mb-3"
+                               id="previewDesc">
+
+                                Your ad description will appear here...
+
+                            </p>
+
+                            <a href="#"
+                               class="small text-decoration-none"
+                               id="previewUrl">
+
+                                https://example.com
+
+                            </a>
+
+                            <!-- METRICS -->
+                            <div class="mt-4 pt-3 border-top">
+
+                                <div class="row text-center">
+
+                                    <div class="col-4">
+                                        <small class="text-muted d-block">
+                                            Duration
+                                        </small>
+
+                                        <strong id="previewDuration">
+                                            7d
+                                        </strong>
+                                    </div>
+
+                                    <div class="col-4">
+                                        <small class="text-muted d-block">
+                                            Cost
+                                        </small>
+
+                                        <strong>
+                                            $<span id="previewPrice">14.00</span>
+                                        </strong>
+                                    </div>
+
+                                    <div class="col-4">
+                                        <small class="text-muted d-block">
+                                            Recurring
+                                        </small>
+
+                                        <strong id="previewRecurring">
+                                            No
+                                        </strong>
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<!-- ===================================== -->
+<!-- JAVASCRIPT -->
+<!-- ===================================== -->
+<script>
+
+const PRICE_PER_DAY = parseFloat("{{ price_per_day|default:'2.00' }}");
+
+// =====================================
+// ELEMENTS
+// =====================================
+const titleInput = document.getElementById("adTitle");
+const descInput = document.getElementById("adDesc");
+const urlInput = document.getElementById("adUrl");
+const categoryInput = document.getElementById("adCategory");
+const imageInput = document.getElementById("adImage");
+const durationInput = document.getElementById("duration");
+
+const recurringToggle = document.getElementById("recurringEnabled");
+const recurringOptions = document.getElementById("recurringOptions");
+const recurringDays = document.getElementById("recurringDays");
+
+// =====================================
+// PREVIEW
+// =====================================
+const previewTitle = document.getElementById("previewTitle");
+const previewDesc = document.getElementById("previewDesc");
+const previewUrl = document.getElementById("previewUrl");
+const previewCategory = document.getElementById("previewCategory");
+const previewImg = document.getElementById("previewImg");
+
+const previewDuration = document.getElementById("previewDuration");
+const previewPrice = document.getElementById("previewPrice");
+const previewRecurring = document.getElementById("previewRecurring");
+
+// =====================================
+// KPI
+// =====================================
+const pricePreview = document.getElementById("pricePreview");
+const durationPreview = document.getElementById("durationPreview");
+
+// =====================================
+// UPDATE PRICE
+// =====================================
+function updatePrice() {
+
+    const days = parseInt(durationInput.value);
+
+    const total = (days * PRICE_PER_DAY).toFixed(2);
+
+    pricePreview.innerText = total;
+
+    previewPrice.innerText = total;
+
+    durationPreview.innerText = days;
+
+    previewDuration.innerText = days + "d";
+}
+
+durationInput.addEventListener("change", updatePrice);
+
+updatePrice();
+
+// =====================================
+// LIVE PREVIEW
+// =====================================
+titleInput.addEventListener("input", () => {
+    previewTitle.innerText =
+        titleInput.value || "Your Advertisement Title";
+});
+
+descInput.addEventListener("input", () => {
+    previewDesc.innerText =
+        descInput.value || "Your ad description will appear here...";
+});
+
+urlInput.addEventListener("input", () => {
+
+    previewUrl.innerText =
+        urlInput.value || "https://example.com";
+
+    previewUrl.href =
+        urlInput.value || "#";
+});
+
+categoryInput.addEventListener("change", () => {
+    previewCategory.innerText = categoryInput.value;
+});
+
+// =====================================
+// IMAGE PREVIEW
+// =====================================
+imageInput.addEventListener("change", function () {
+
+    if (!this.files[0]) return;
+
+    const reader = new FileReader();
+
+    reader.onload = e => {
+        previewImg.src = e.target.result;
+    };
+
+    reader.readAsDataURL(this.files[0]);
+});
+
+// =====================================
+// RECURRING TOGGLE
+// =====================================
+recurringToggle.addEventListener("change", function () {
+
+    recurringOptions.style.display =
+        this.checked ? "block" : "none";
+
+    previewRecurring.innerText =
+        this.checked ? "Yes" : "No";
+});
+
+// =====================================
+// CREATE FORM DATA
+// =====================================
+function buildFormData(status="pending") {
+
+    const formData = new FormData();
+
+    formData.append("title", titleInput.value);
+    formData.append("description", descInput.value);
+    formData.append("url", urlInput.value);
+    formData.append("ad_category", categoryInput.value);
+    formData.append("duration_days", durationInput.value);
+
+    formData.append(
+        "is_recurring",
+        recurringToggle.checked
+    );
+
+    formData.append(
+        "recurring_days",
+        recurringDays.value
+    );
+
+    formData.append("status", status);
+
+    if (imageInput.files[0]) {
+        formData.append("image", imageInput.files[0]);
+    }
+
+    return formData;
+}
+
+// =====================================
+// PAY & PUBLISH
+// =====================================
+document.getElementById("publishBtn")
+.addEventListener("click", async () => {
+
+    const btn = document.getElementById("publishBtn");
+
+    btn.disabled = true;
+    btn.innerHTML = "Processing...";
+
+    try {
+
+        const response = await fetch("", {
+            method: "POST",
+            body: buildFormData("pending"),
+            headers: {
+                "X-Requested-With": "XMLHttpRequest"
+            }
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+
+            window.location.href =
+                `/ads/pay/${data.ad_id}/`;
+
+        } else {
+
+            alert(data.error || "Failed to create ad");
+
+        }
+
+    } catch (err) {
+
+        alert("Something went wrong.");
+
+    }
+
+    btn.disabled = false;
+    btn.innerHTML = "💳 Pay & Publish Advertisement";
+});
+
+// =====================================
+// SAVE DRAFT
+// =====================================
+document.getElementById("draftBtn")
+.addEventListener("click", async () => {
+
+    const btn = document.getElementById("draftBtn");
+
+    btn.disabled = true;
+    btn.innerHTML = "Saving...";
+
+    try {
+
+        const response = await fetch(
+            "{% url 'save_draft_ad' %}",
+            {
+                method: "POST",
+                body: buildFormData("draft"),
+                headers: {
+                    "X-Requested-With": "XMLHttpRequest"
+                }
+            }
+        );
+
+        const data = await response.json();
+
+        if (data.success) {
+
+            window.location.href =
+                "{% url 'ads_dashboard' %}";
+
+        } else {
+
+            alert(data.error || "Failed to save draft");
+
+        }
+
+    } catch (err) {
+
+        alert("Something went wrong.");
+
+    }
+
+    btn.disabled = false;
+    btn.innerHTML = "💾 Save as Draft";
+});
+
+</script>
+
+{% endblock %}

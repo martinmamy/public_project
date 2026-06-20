@@ -1,394 +1,349 @@
+
 /* =====================================
-🌍 GLOBAL DESIGN SYSTEM
+🌍 GLOBAL FEED DESIGN SYSTEM (CLEAN 2026)
 ===================================== */
 
 /* =====================================
-🧱 LAYOUT
+📦 CARD SYSTEM (UNIFIED)
 ===================================== */
+.problem-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
 
-/* =====================================
-📦 CARD SYSTEM
-===================================== */
-.problem-card{
-  background:var(--card);
-  border-radius:var(--radius);
-  
-  margin-bottom:18px;
-  border:1px solid transparent;
-  transition:var(--transition);
+  margin-bottom: 16px;
+
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  overflow: hidden;
 }
 
-.problem-card:hover{
-  transform:translateY(-3px);
-  box-shadow:var(--shadow-md);
-  border-color:var(--border);
+.problem-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
 }
 
 /* =====================================
 👤 HEADER
 ===================================== */
-.problem-card-header{
-  padding:14px 16px;
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
+.problem-card-header {
+  padding: 14px 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
 }
 
-.header-left{
-  display:flex;
-  align-items:center;
-  gap:10px;
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
 }
 
-.header-right{
-  display:flex;
-  align-items:center;
-  gap:8px;
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
-/* Avatar */
-.avatar{
-  width:42px;
-  height:42px;
-  border-radius:50%;
-  object-fit:cover;
-  border:2px solid #fff;
-  box-shadow:0 0 0 1px var(--border);
-  transition:var(--transition);
+/* =====================================
+👤 AVATAR (CLEAN SYSTEM)
+===================================== */
+.avatar {
+  width: 40px;
+  height: 40px;
+
+  border-radius: 50%;
+  object-fit: cover;
+
+  background: var(--primary-soft);
+  color: var(--primary);
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-weight: 600;
+  font-size: 13px;
+
+  transition: transform 0.2s ease;
 }
 
-.avatar:hover{
-  transform:scale(1.05);
+.avatar:hover {
+  transform: scale(1.03);
 }
 
-/* Meta */
-.problem-time{
-  font-size:12px;
-  color:var(--muted);
+/* =====================================
+🧾 META
+===================================== */
+.problem-time {
+  font-size: 12px;
+  color: var(--muted);
 }
 
-/* Category */
-.category-badge{
-  font-size:11px;
-  background:var(--primary-soft);
-  color:var(--primary);
-  padding:4px 10px;
-  border-radius:999px;
-  font-weight:600;
+.category-badge {
+  font-size: 11px;
+  background: var(--primary-soft);
+  color: var(--primary);
+
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-weight: 600;
 }
 
 /* =====================================
 📝 BODY
 ===================================== */
-.problem-card-body{
-  padding:0 16px 14px;
+.problem-card-body {
+  padding: 0 16px 14px;
 }
 
-.problem-title{
-  font-size:18px;
-  font-weight:700;
-  margin-bottom:6px;
-  text-align:center;
+.problem-title {
+  font-size: 17px;
+  font-weight: 700;
+  margin-bottom: 6px;
+  text-align: center;
+  color: var(--text);
 }
 
-.problem-content{
-  font-size:14px;
-  line-height:1.6;
-  color:var(--text);
+.problem-content {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--muted);
 }
 
 /* =====================================
-🖼 MEDIA
+🖼 MEDIA (CLEAN UX)
 ===================================== */
-.media-container{
-  margin-top:10px;
-  text-align:center;
+.media-container {
+  margin-top: 10px;
+  text-align: center;
 }
 
 .media-container img,
-.media-container video{
-  width:80%;
-  height:250px;
-  object-fit:cover;
-  border-radius:12px;
-  transition:var(--transition);
-}
+.media-container video {
+  width: 100%;
+  max-height: 300px;
 
-.media-container img:hover{
-  transform:scale(1.02);
-  box-shadow:var(--shadow-md);
+  object-fit: cover;
+  border-radius: 12px;
 }
 
 /* =====================================
-⚡ INTERACTION BAR
+⚡ ACTION BAR
 ===================================== */
-.problem-actions{
-  display:flex;
-  flex-wrap:wrap;
-  align-items:center;
-  gap:12px;
-  margin-top:10px;
-  padding-top:10px;
-  border-top:1px solid var(--border);
+.problem-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+
+  margin-top: 10px;
+  padding-top: 10px;
+
+  border-top: 1px solid var(--border);
 }
 
-/* Buttons */
-.vote-btn{
-  border:none;
-  background:#f0f2f5;
-  border-radius:50%;
-  width:34px;
-  height:34px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  font-size:16px;
-  transition:var(--transition);
+/* Vote button (clean + modern) */
+.vote-btn {
+  border: none;
+  background: transparent;
+
+  width: 34px;
+  height: 34px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 50%;
+  color: var(--muted);
+
+  transition: all 0.2s ease;
 }
 
-.vote-btn:hover{
-  background:var(--primary-soft);
-  transform:scale(1.1);
-}
-
-.vote-count{
-  font-weight:600;
-}
-
-/* Small icons */
-.problem-actions .small{
-  color:var(--muted);
+.vote-btn:hover {
+  background: var(--hover);
+  color: var(--primary);
 }
 
 /* =====================================
-💬 COMMENTS
+💬 COMMENTS (SIMPLIFIED)
 ===================================== */
-.comment-section{
-  margin-top:12px;
+.comment-card {
+  background: var(--bg-soft);
+  border-radius: 10px;
+
+  padding: 8px 10px;
+  margin-bottom: 6px;
+
+  transition: background 0.2s ease;
 }
 
-.comments-list-container{
-  max-height:280px;
-  overflow-y:auto;
-  padding-right:4px;
+.comment-card:hover {
+  background: var(--hover);
 }
 
-/* Comment */
-.comment-card{
-  background:#f0f2f5;
-  border-radius:12px;
-  padding:8px 10px;
-  margin-bottom:6px;
-  transition:var(--transition);
+.comment-content {
+  font-size: 13px;
+  color: var(--text);
 }
 
-.comment-card:hover{
-  background:#e9ebee;
+.comment-time {
+  font-size: 11px;
+  color: var(--muted);
 }
 
-.comment-content{
-  font-size:13px;
+/* input */
+.comment-form textarea {
+  border-radius: 14px;
+  font-size: 13px;
+  padding: 10px 12px;
+
+  border: 1px solid var(--border);
+  background: var(--card);
+
+  outline: none;
 }
 
-.comment-time{
-  font-size:11px;
-  color:var(--muted);
-}
-
-/* Input */
-.comment-form textarea{
-  border-radius:20px;
-  font-size:13px;
-  padding:10px 14px;
-  border:1px solid var(--border);
-}
-
-.comment-form textarea:focus{
-  border-color:var(--primary);
-  box-shadow:0 0 0 2px rgba(24,119,242,0.15);
-  outline:none;
+.comment-form textarea:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px var(--primary-soft);
 }
 
 /* =====================================
-🎞 TRENDING STORIES
+🎞 STORIES (CLEAN CAROUSEL)
 ===================================== */
-.trending-stories-wrapper{
-  position:relative;
-  margin-bottom:1.5rem;
+.trending-stories {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding-bottom: 6px;
+  scrollbar-width: none;
 }
 
-.trending-stories{
-  display:flex;
-  gap:12px;
-  overflow-x:auto;
-  scroll-behavior:smooth;
-  padding-bottom:6px;
-  scrollbar-width:none;
+.trending-stories::-webkit-scrollbar {
+  display: none;
 }
 
-.trending-stories::-webkit-scrollbar{
-  display:none;
+.story-card {
+  flex: 0 0 auto;
+  width: 150px;
+
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+
+  padding: 8px;
+
+  transition: transform 0.2s ease;
 }
 
-/* Story Card */
-.story-card{
-  flex-shrink:0;
-  width:180px;
-  background:var(--card);
-  border-radius:12px;
-  padding:8px;
-  cursor:pointer;
-  transition:var(--transition);
+.story-card:hover {
+  transform: translateY(-2px);
 }
 
-.story-card:hover{
-  transform:scale(1.05);
+.story-media {
+  height: 90px;
+  border-radius: 8px;
+  overflow: hidden;
 }
 
-/* Story Media */
-.story-media{
-  height:100px;
-  border-radius:8px;
-  overflow:hidden;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-}
+.story-title {
+  font-size: 13px;
+  font-weight: 600;
 
-/* Story Title */
-.story-title{
-  font-size:13px;
-  font-weight:600;
-  white-space:nowrap;
-  overflow:hidden;
-  text-overflow:ellipsis;
-}
-
-/* Buttons */
-.trending-stories-wrapper .btn{
-  width:32px;
-  height:32px;
-  border-radius:50%;
-  box-shadow:var(--shadow-sm);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* =====================================
-📌 BOOKMARK PANEL
+📌 SIDEBAR PANEL
 ===================================== */
-#bookmarkcard{
-  position:sticky;
-  top:90px;
-  background:var(--card);
-  border-radius:14px;
-  padding:16px;
-  box-shadow:var(--shadow-sm);
-}
+#bookmarkcard {
+  position: sticky;
+  top: 90px;
 
-.bookmark-item{
-  padding:6px 0;
-  transition:var(--transition);
-}
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
 
-.bookmark-item:hover{
-  padding-left:6px;
-  color:var(--primary);
+  padding: 14px;
 }
 
 /* =====================================
-📱 MOBILE BUTTON
+📱 MOBILE FLOAT BUTTON
 ===================================== */
-.sidebar-toggle-btn{
-  position:fixed;
-  top:100px;
-  right:15px;
-  z-index:2000;
+.sidebar-toggle-btn {
+  position: fixed;
+  top: 100px;
+  right: 15px;
 
-  width:48px;
-  height:48px;
-  border-radius:50%;
-  background:var(--primary);
-  color:white;
+  width: 46px;
+  height: 46px;
 
-  border:none;
-  box-shadow:0 6px 18px rgba(0,0,0,0.25);
+  border-radius: 50%;
+  border: none;
+
+  background: var(--primary);
+  color: white;
+
+  box-shadow: var(--shadow-md);
 }
 
 /* =====================================
-🎞 MODAL
+🧼 SCROLLBAR (UNIFIED)
 ===================================== */
-#media-modal{
-  backdrop-filter:blur(6px);
+::-webkit-scrollbar {
+  width: 6px;
 }
 
-#media-modal-content img,
-#media-modal-content video{
-  border-radius:16px;
-  max-width:100%;
-  max-height:90vh;
-}
-
-/* =====================================
-🧼 SCROLLBAR
-===================================== */
-::-webkit-scrollbar{
-  width:6px;
-}
-::-webkit-scrollbar-thumb{
-  background:#bcc0c4;
-  border-radius:10px;
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 10px;
 }
 
 /* =====================================
 📲 RESPONSIVE
 ===================================== */
-@media(max-width:768px){
-
-  .problem-title{
-    font-size:16px;
+@media (max-width: 768px) {
+  .problem-title {
+    font-size: 15px;
   }
 
-  .story-card{
-    width:150px;
+  .story-card {
+    width: 130px;
   }
 
   .media-container img,
-  .media-container video{
-    width:100%;
-    height:220px;
+  .media-container video {
+    max-height: 220px;
   }
 }
 
-@media(max-width:480px){
-
-  .problem-title{
-    font-size:15px;
+@media (max-width: 480px) {
+  .avatar {
+    width: 32px;
+    height: 32px;
   }
 
-  .story-card{
-    width:120px;
-  }
-
-  .story-media{
-    height:80px;
-  }
-
-  .avatar{
-    width:34px;
-    height:34px;
+  .story-card {
+    width: 110px;
   }
 }
 
 /* =====================================
-✨ MICRO INTERACTIONS
+✨ MICRO INTERACTIONS (CLEAN)
 ===================================== */
-button:active{
-  transform:scale(0.95);
+button:active {
+  transform: scale(0.97);
 }
 
-a{
-  transition:var(--transition);
+a {
+  transition: color 0.2s ease, opacity 0.2s ease;
 }
 
-a:hover{
-  opacity:.85;
+a:hover {
+  opacity: 0.85;
 }

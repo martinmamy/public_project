@@ -1,16 +1,18 @@
 from django import forms
 from django.contrib.auth import get_user_model
 from django.contrib.auth.forms import UserCreationForm
+from django.db.models.functions import FirstValue
         
 from MindBridge.models import (
     UserProfile, User, Problem, Answer,
-    Comment, Vote, Follow, Tip, Bounty, CreatorSubscription,
+    Comment, Vote, Follow, Tip, Bounty, CreatorsSubscription,
     Notification, Report, Advertisement, Bookmark
 )
 from MindBridge.predefined import PREDEFINED_CATEGORIES
 
 from MindBridge.models import UserProfile
 from MindBridge.util.moderation import contains_bad_words
+from MindBridge.validators import validate_safe_meeting_url
 
 User = get_user_model()
 
@@ -90,13 +92,15 @@ class UpdateProfileForm(forms.ModelForm):
     )
 
     # Fields from UserProfile
+    first_name = forms.CharField(required=False, widget=forms.TextInput(attrs={"class": "form-control", "placeholder": "First Name"}))
+    last_name = forms.CharField(required=False, widget=forms.TextInput(attrs={"class": "form-control", "placeholder": "Last Name"}))
     website = forms.URLField(required=False, widget=forms.URLInput(attrs={"class": "form-control", "placeholder": "Website"}))
     profession = forms.CharField(required=False, widget=forms.TextInput(attrs={"class": "form-control", "placeholder": "Profession"}))
     country = forms.CharField(required=False, widget=forms.TextInput(attrs={"class": "form-control", "placeholder": "Country"}))
 
     class Meta:
         model = UserProfile
-        fields = ["website", "profession", "country", "bio", "avatar"]
+        fields = ["website", "profession", "country", "bio", "avatar", "first_name", "last_name"]
 
     def save(self, commit=True):
         profile = super().save(commit=False)
@@ -104,6 +108,8 @@ class UpdateProfileForm(forms.ModelForm):
 
         # Save User fields
         user.bio = self.cleaned_data.get("bio", user.bio)
+        user.first_name = self.cleaned_data.get("first_name", user.first_name)
+        user.last_name = self.cleaned_data.get("last_name", user.last_name)
         avatar = self.cleaned_data.get("avatar")
         if avatar:
             user.avatar = avatar
@@ -134,89 +140,167 @@ from django.core.validators import MinValueValidator
 
 from django import forms
 
+
+import re
+from django.core.exceptions import ValidationError
+
+import re
+import bleach
+from django import forms
+from django.core.exceptions import ValidationError
+
+URL_REGEX = re.compile(
+    r"(https?://\S+|www\.\S+|\b[a-z0-9-]+\.(com|net|org|io|me|us|xyz)\b)",
+    re.IGNORECASE
+)
+
+def contains_url(text):
+    return bool(URL_REGEX.search(text or ""))
+
+
+import bleach
+from django import forms
+from django.core.exceptions import ValidationError
+
 class ProblemForm(forms.ModelForm):
 
-    # Hidden input for JS dynamic tags
     tags_input = forms.CharField(
         required=False,
         widget=forms.HiddenInput(),
         help_text="Enter tags separated by commas."
     )
 
-    # Post type field
     post_type = forms.ChoiceField(
         choices=Problem.POST_TYPE_CHOICES,
         initial="issue",
         widget=forms.Select(attrs={"class": "form-select"}),
-        label="Post Type",
-        help_text="Select whether this post is an issue or information"
+        label="Post Type"
     )
 
     class Meta:
         model = Problem
-        fields = ["title", "description", "category", "bounty_amount", "file", "post_type"]
+        fields = [
+            "title",
+            "description",
+            "category",
+            "bounty_amount",
+            "file",
+            "post_type"
+        ]
 
         widgets = {
-            "title": forms.TextInput(
-                attrs={"class": "form-control", "placeholder": "Problem title"}
-            ),
-            "description": forms.Textarea(
-                attrs={"class": "form-control", "rows": 6, "placeholder": "Describe your problem"}
-            ),
-            "category": forms.Select(
-                choices=PREDEFINED_CATEGORIES,
-                attrs={"class": "form-select"}
-            ),
-            "bounty_amount": forms.NumberInput(
-                attrs={"class": "form-control", "min": 0, "step": 1}
-            ),
-            "file": forms.ClearableFileInput(
-                attrs={"class": "form-control", "accept": "image/*,video/*,audio/*"}
-            ),
+            "title": forms.TextInput(attrs={
+                "class": "form-control",
+                "placeholder": "Problem title"
+            }),
+            "description": forms.Textarea(attrs={
+                "class": "form-control",
+                "rows": 6,
+                "placeholder": "Describe your problem"
+            }),
+            "category": forms.Select(attrs={
+                "class": "form-select"
+            }),
+            "bounty_amount": forms.NumberInput(attrs={
+                "class": "form-control",
+                "min": 0,
+                "step": 1
+            }),
+            "file": forms.ClearableFileInput(attrs={
+                "class": "form-control",
+                "accept": "image/*,video/*,audio/*"
+            }),
         }
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    # =========================================================
+    # 🔥 TITLE VALIDATION (STRICT)
+    # =========================================================
+    def clean_title(self):
+        title = (self.cleaned_data.get("title") or "").strip()
 
-        self.fields["bounty_amount"].required = False
+        if contains_url(title):
+            raise ValidationError("Links are not allowed in the title.")
 
-        # preload tags when editing
-        if self.instance and self.instance.tags:
-            self.initial["tags_input"] = self.instance.tags
+        if contains_bad_words(title):
+            raise ValidationError("Inappropriate content in title.")
 
-        # preload post type when editing
-        if self.instance and self.instance.post_type:
-            self.initial["post_type"] = self.instance.post_type
+        if len(title) < 5:
+            raise ValidationError("Title is too short.")
+
+        return title
 
     # =========================================================
-    # 🔥 BAD WORD VALIDATION (MAIN FIX)
+    # 🔥 DESCRIPTION (SAFE HTML SANITIZATION)
+    # =========================================================
+    def clean_description(self):
+        description = self.cleaned_data.get("description") or ""
+
+        if contains_bad_words(description):
+            raise ValidationError("Your post contains inappropriate language.")
+
+        allowed_tags = [
+            "b", "i", "u", "strong", "em",
+            "p", "br",
+            "ul", "ol", "li",
+            "code", "pre",
+            "a"
+        ]
+
+        allowed_attrs = {
+            "a": ["href", "target", "rel"]
+        }
+
+        cleaned = bleach.clean(
+            description,
+            tags=allowed_tags,
+            attributes=allowed_attrs,
+            protocols=["http", "https", "mailto"],
+            strip=True
+        )
+
+        return cleaned
+
+    # =========================================================
+    # 🔥 CROSS FIELD VALIDATION
     # =========================================================
     def clean(self):
         cleaned_data = super().clean()
 
-        title = cleaned_data.get("title", "")
-        description = cleaned_data.get("description", "")
+        bounty = cleaned_data.get("bounty_amount") or 0
+        post_type = cleaned_data.get("post_type")
 
-        if contains_bad_words(title) or contains_bad_words(description):
-            raise forms.ValidationError(
-                "Your post contains inappropriate language."
-            )
+        # Example rule: no bounty on discussion posts
+        if post_type == "discussion" and bounty > 0:
+            raise ValidationError("Discussions cannot have bounties.")
 
         return cleaned_data
 
+    # =========================================================
+    # 🔥 SAFE SAVE LOGIC
+    # =========================================================
     def save(self, commit=True, user=None):
         instance = super().save(commit=False)
 
         if user:
             instance.author = user
 
-        # tags handling
+        # -------------------------
+        # TAG CLEANING (IMPROVED)
+        # -------------------------
         tags_str = self.cleaned_data.get("tags_input", "")
-        instance.tags = ",".join(
-            [t.strip() for t in tags_str.split(",") if t.strip()]
-        )
 
-        # post type handling
+        clean_tags = [
+            t.strip().lower()
+            for t in tags_str.split(",")
+            if t.strip()
+        ]
+
+        # remove duplicates
+        instance.tags = ",".join(sorted(set(clean_tags)))
+
+        # -------------------------
+        # POST TYPE
+        # -------------------------
         instance.post_type = self.cleaned_data.get("post_type", "issue")
 
         if commit:
@@ -375,17 +459,135 @@ class BountyForm(forms.ModelForm):
 # =========================================================
 # 12. Creator Subscription Form
 # =========================================================
-class CreatorSubscriptionForm(forms.ModelForm):
+from django import forms
+
+from MindBridge.models import CreatorsSubscription
+
+
+# =========================================================
+# SUBSCRIPTION FORM (CREATE / UPDATE)
+# =========================================================
+
+class CreatorsSubscriptionForm(forms.ModelForm):
+
     class Meta:
-        model = CreatorSubscription
-        fields = ["creator", "subscriber", "monthly_fee", "active"]
+
+        model = CreatorsSubscription
+
+        fields = (
+            "user",
+            "plan",
+            "amount",
+            "status",
+            "active",
+            "premium_access",
+            "paypal_subscription_id",
+            "paypal_plan_id",
+            "started_at",
+            "next_billing_time",
+            "cancelled_at",
+            "expired_at",
+        )
+
         widgets = {
-            "creator": forms.Select(attrs={"class": "form-select"}),
-            "subscriber": forms.Select(attrs={"class": "form-select"}),
-            "monthly_fee": forms.NumberInput(attrs={"class": "form-control", "min": 0}),
-            "active": forms.CheckboxInput(attrs={"class": "form-check-input"}),
+
+            "user": forms.Select(attrs={
+                "class": "form-control"
+            }),
+
+            "plan": forms.Select(attrs={
+                "class": "form-control"
+            }),
+
+            "amount": forms.NumberInput(attrs={
+                "class": "form-control",
+                "step": "0.01"
+            }),
+
+            "status": forms.Select(attrs={
+                "class": "form-control"
+            }),
+
+            "active": forms.CheckboxInput(attrs={
+                "class": "form-check-input"
+            }),
+
+            "premium_access": forms.CheckboxInput(attrs={
+                "class": "form-check-input"
+            }),
+
+            "paypal_subscription_id": forms.TextInput(attrs={
+                "class": "form-control"
+            }),
+
+            "paypal_plan_id": forms.TextInput(attrs={
+                "class": "form-control"
+            }),
+
+            "started_at": forms.DateTimeInput(attrs={
+                "class": "form-control",
+                "type": "datetime-local"
+            }),
+
+            "next_billing_time": forms.DateTimeInput(attrs={
+                "class": "form-control",
+                "type": "datetime-local"
+            }),
+
+            "cancelled_at": forms.DateTimeInput(attrs={
+                "class": "form-control",
+                "type": "datetime-local"
+            }),
+
+            "expired_at": forms.DateTimeInput(attrs={
+                "class": "form-control",
+                "type": "datetime-local"
+            }),
         }
 
+    # =========================================================
+    # VALIDATION RULES
+    # =========================================================
+
+    def clean(self):
+
+        cleaned_data = super().clean()
+
+        plan = cleaned_data.get("plan")
+        amount = cleaned_data.get("amount")
+        active = cleaned_data.get("active")
+
+        # -------------------------------------------------
+        # BASIC VALIDATION
+        # -------------------------------------------------
+
+        if plan == CreatorsSubscription.Plan.MONTHLY:
+
+            if amount and amount <= 0:
+
+                raise forms.ValidationError(
+                    "Monthly plan must have a valid amount."
+                )
+
+        if plan == CreatorsSubscription.Plan.YEARLY:
+
+            if amount and amount <= 0:
+
+                raise forms.ValidationError(
+                    "Yearly plan must have a valid amount."
+                )
+
+        # -------------------------------------------------
+        # BUSINESS RULE
+        # -------------------------------------------------
+
+        if active and cleaned_data.get("status") != CreatorsSubscription.Status.ACTIVE:
+
+            raise forms.ValidationError(
+                "Active subscription must have ACTIVE status."
+            )
+
+        return cleaned_data
 # =========================================================
 # 13. Notification Form
 # =========================================================
@@ -428,3 +630,161 @@ class BookmarkForm(forms.ModelForm):
             "user": forms.Select(attrs={"class": "form-select"}),
             "problem": forms.Select(attrs={"class": "form-select"}),
         }
+        
+
+from .models import EventHub
+
+
+class EventHubForm(forms.ModelForm):
+
+    class Meta:
+        model = EventHub
+        fields = [
+            "category",
+            "title",
+            "description",
+            "start_time",
+            "end_time",
+            "meeting_url",
+        ]
+
+        widgets = {
+            "category": forms.Select(attrs={
+                "class": "form-control"
+            }),
+            "title": forms.TextInput(attrs={
+                "class": "form-control",
+                "placeholder": "Event title"
+            }),
+            "description": forms.Textarea(attrs={
+                "class": "form-control",
+                "rows": 4,
+                "placeholder": "Describe your event..."
+            }),
+            "start_time": forms.DateTimeInput(attrs={
+                "type": "datetime-local",
+                "class": "form-control"
+            }),
+            "end_time": forms.DateTimeInput(attrs={
+                "type": "datetime-local",
+                "class": "form-control"
+            }),
+            "meeting_url": forms.URLInput(attrs={
+                "class": "form-control",
+                "placeholder": "https://meet link (optional)"
+            }),
+        }
+
+    # ✅ THIS MUST BE OUTSIDE Meta
+    def clean_meeting_url(self):
+        url = self.cleaned_data.get("meeting_url")
+
+        if not url:
+            return ""
+
+        validate_safe_meeting_url(url)
+        return url
+    
+
+from django import forms
+from django.core.validators import validate_email
+from django.core.exceptions import ValidationError
+
+
+class AdminSendEmailForm(forms.Form):
+
+    # =========================
+    # RECIPIENT (FIXED)
+    # =========================
+    # Now supports MULTIPLE emails via JS (comma-separated)
+    recipient = forms.CharField(
+        required=False,
+        widget=forms.HiddenInput()
+    )
+
+    subject = forms.CharField(
+        label="Email Subject",
+        max_length=255,
+        widget=forms.TextInput(attrs={
+            "class": "form-control",
+            "placeholder": "Enter email subject"
+        })
+    )
+
+    body = forms.CharField(
+        required=False,  # handled by Quill
+        widget=forms.HiddenInput()
+    )
+
+    send_to_all = forms.BooleanField(
+        required=False,
+        label="Send to all users",
+        widget=forms.CheckboxInput(attrs={
+            "class": "form-check-input"
+        })
+    )
+
+    # =========================
+    # BODY VALIDATION
+    # =========================
+    def clean_body(self):
+        body = self.cleaned_data.get("body", "").strip()
+
+        # Quill empty states
+        if body in ["", "<p><br></p>"]:
+            raise ValidationError("Email body cannot be empty.")
+
+        return body
+
+    # =========================
+    # MAIN VALIDATION (FIXED)
+    # =========================
+    def clean(self):
+        cleaned_data = super().clean()
+
+        recipient_raw = cleaned_data.get("recipient")
+        send_to_all = cleaned_data.get("send_to_all")
+
+        # If send_to_all is checked → ignore recipients completely
+        if send_to_all:
+            cleaned_data["recipient"] = ""
+            return cleaned_data
+
+        # Must have at least something
+        if not recipient_raw:
+            raise ValidationError(
+                "Provide at least one recipient or select 'Send to all users'."
+            )
+
+        # =========================
+        # PARSE MULTIPLE EMAILS
+        # =========================
+        emails = [
+            email.strip().lower()
+            for email in recipient_raw.split(",")
+            if email.strip()
+        ]
+
+        if not emails:
+            raise ValidationError("No valid recipients found.")
+
+        # =========================
+        # VALIDATE EACH EMAIL
+        # =========================
+        invalid_emails = []
+
+        for email in emails:
+            try:
+                validate_email(email)
+            except ValidationError:
+                invalid_emails.append(email)
+
+        if invalid_emails:
+            raise ValidationError(
+                f"Invalid email(s): {', '.join(invalid_emails[:5])}"
+            )
+
+        # Save cleaned version back as CSV
+        cleaned_data["recipient"] = ",".join(emails)
+
+        return cleaned_data

@@ -1,3 +1,4 @@
+import datetime
 import uuid
 from django.db import models
 from django.contrib.auth.models import AbstractUser
@@ -6,6 +7,11 @@ from django.db.models import Q, F
 from MindBridge.predefined import PREDEFINED_CATEGORIES
 from django.utils import timezone
 from datetime import timedelta
+from urllib.parse import urlparse
+from MindBridge.validators import validate_safe_meeting_url  # if you placed it separately
+from django.db import models
+from django.core.validators import URLValidator
+from django.core.exceptions import ValidationError
 
 
 from django.core.exceptions import ValidationError
@@ -39,6 +45,49 @@ def validate_file_size(value):
             f"File too large. Max size for this file type is {max_size}MB."
         )
         
+        
+def validate_ad_file_size(value):
+
+    ext = os.path.splitext(value.name)[1].lower()
+
+    # =====================================================
+    # ADS-SPECIFIC LIMITS (STRICTER FOR PERFORMANCE)
+    # =====================================================
+
+    IMAGE_MAX_MB = 3      # ads must load fast
+    VIDEO_MAX_MB = 25     # compressed ads recommended
+    AUDIO_MAX_MB = 5
+    DEFAULT_MAX_MB = 10   # unknown formats heavily restricted
+
+    # =====================================================
+    # FILE TYPE GROUPS
+    # =====================================================
+
+    image_exts = {'.jpg', '.jpeg', '.png', '.webp'}
+    #video_exts = {'.mp4', '.webm'}
+
+    # =====================================================
+    # DETERMINE LIMIT
+    # =====================================================
+
+    if ext in image_exts:
+        max_size = IMAGE_MAX_MB
+
+    else:
+        max_size = DEFAULT_MAX_MB
+
+    # =====================================================
+    # VALIDATION CHECK
+    # =====================================================
+
+    max_bytes = max_size * 1024 * 1024
+
+    if value.size > max_bytes:
+        raise ValidationError(
+            f"Ad file too large ({ext or 'unknown type'}). "
+            f"Max allowed size: {max_size}MB for ads."
+        )
+        
 
 class User(AbstractUser):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -68,31 +117,86 @@ class User(AbstractUser):
 
 class UserProfile(models.Model):
 
+    STATUS_CHOICES = [
+        ("online", "Available now"),
+        ("later", "Available later"),
+        ("offline", "Offline"),
+    ]
+
+    REASON_CHOICES = [
+        ("fix_bug", "Fix bug"),
+        ("consultation", "Consultation"),
+        ("session", "Live session"),
+        ("other", "Other"),
+    ]
+    
+    MODE_CHOICES = [
+        ("onsite", "Onsite"),
+        ("remote", "Remote"),
+        ("not determined", "Not determined"),
+    ]
+    
+
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="profile")
-
+    first_name = models.CharField(max_length=30, blank=True)
+    last_name = models.CharField(max_length=30, blank=True)
     website = models.URLField(blank=True)
-
     country = models.CharField(max_length=100, db_index=True)
-
     profession = models.CharField(max_length=150, db_index=True)
 
     followers_count = models.PositiveIntegerField(default=0)
     following_count = models.PositiveIntegerField(default=0)
 
+    # 👇 NEW FIELDS
+    availability_status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default="offline",
+        db_index=True
+    )
+    availability_mode = models.CharField(
+        max_length=20,
+        choices=MODE_CHOICES,
+        default="remote",
+        db_index=True
+    )
+
+    availability_reason = models.CharField(
+        max_length=30,
+        choices=REASON_CHOICES,
+        blank=True,
+        null=True
+    )
+    
+    is_verification_recurring = models.BooleanField(default=False)
+
+    verification_subscription_id = models.CharField(max_length=255, blank=True)
+    verification_started_at = models.DateTimeField(null=True, blank=True)
+    verified_until = models.DateTimeField(null=True, blank=True, db_index=True)
+
+    updated_at = models.DateTimeField(auto_now=True)
+
     class Meta:
         indexes = [
             models.Index(fields=["country"]),
             models.Index(fields=["profession"]),
+            models.Index(fields=["availability_status"]),
+            models.Index(fields=["availability_mode"]),
         ]
+
 
 
 class EmailOTP(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     code = models.CharField(max_length=128)  # hashed
     created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField(default=timezone.now() + timedelta(minutes=5))
+
+    def is_expired(self):
+        return timezone.now() > self.expires_at
 
     def is_valid(self):
-        return timezone.now() - self.created_at < timedelta(minutes=5)
+        return not self.is_expired()
     
 # =========================================================
 # 5. PROBLEM (MAIN POST)
@@ -100,8 +204,8 @@ class EmailOTP(models.Model):
 
 class Problem(models.Model):
     POST_TYPE_CHOICES = [
-        ("issue", "Issue"),
-        ("information", "Information"),
+        ("issue", "Report an Issue"),
+        ("information", "Share an Idea"),
     ]
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     
@@ -410,33 +514,317 @@ class Bounty(models.Model):
 # 13. CREATOR SUBSCRIPTIONS
 # =========================================================
 
-class CreatorSubscription(models.Model):
 
-    creator = models.ForeignKey(
-        User,
-        related_name="creator_subscribers",
-        on_delete=models.CASCADE
+class CreatorsSubscription(models.Model):
+
+    # =====================================================
+    # SUBSCRIPTION STATUS
+    # =====================================================
+
+    class Status(models.TextChoices):
+
+        PENDING = "PENDING", "Pending"
+        ACTIVE = "ACTIVE", "Active"
+        SUSPENDED = "SUSPENDED", "Suspended"
+        CANCELLED = "CANCELLED", "Cancelled"
+        EXPIRED = "EXPIRED", "Expired"
+
+    # =====================================================
+    # SUBSCRIPTION PLAN TYPES
+    # =====================================================
+
+    class Plan(models.TextChoices):
+
+        MONTHLY = "MONTHLY", "Monthly"
+        YEARLY = "YEARLY", "Yearly"
+
+    # =====================================================
+    # PRIMARY IDENTIFIER
+    # =====================================================
+
+    uuid = models.UUIDField(
+        default=uuid.uuid4,
+        editable=False,
+        unique=True,
     )
 
-    subscriber = models.ForeignKey(
+    # =====================================================
+    # SUBSCRIBED USER
+    # =====================================================
+
+    user = models.ForeignKey(
         User,
-        related_name="subscriptions",
-        on_delete=models.CASCADE
+        related_name="premium_subscriptions",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True
     )
 
-    monthly_fee = models.DecimalField(max_digits=10, decimal_places=2)
+    # =====================================================
+    # PAYPAL SUBSCRIPTION DATA
+    # =====================================================
 
-    active = models.BooleanField(default=True)
+    paypal_subscription_id = models.CharField(
+        max_length=255,
+        unique=True,
+        db_index=True,
+        null=True,
+        blank=True
+    )
 
-    started_at = models.DateTimeField(auto_now_add=True)
+    paypal_plan_id = models.CharField(
+        max_length=255,
+        default=""
+    )
+
+    # =====================================================
+    # SUBSCRIPTION PLAN
+    # =====================================================
+
+    plan = models.CharField(
+        max_length=20,
+        choices=Plan.choices,
+        default=Plan.MONTHLY
+    )
+
+    amount = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=0
+    )
+
+    currency = models.CharField(
+        max_length=10,
+        default="USD"
+    )
+
+    # =====================================================
+    # SUBSCRIPTION STATE
+    # =====================================================
+
+    status = models.CharField(
+        max_length=20,
+        choices=Status.choices,
+        default=Status.PENDING
+    )
+
+    active = models.BooleanField(
+        default=False
+    )
+
+    # =====================================================
+    # FEATURE ACCESS
+    # =====================================================
+
+    premium_access = models.BooleanField(
+        default=False
+    )
+
+    # =====================================================
+    # BILLING DATES
+    # =====================================================
+
+    started_at = models.DateTimeField(
+        blank=True,
+        null=True
+    )
+
+    next_billing_time = models.DateTimeField(
+        blank=True,
+        null=True
+    )
+
+    cancelled_at = models.DateTimeField(
+        blank=True,
+        null=True
+    )
+
+    expired_at = models.DateTimeField(
+        blank=True,
+        null=True
+    )
+
+    # =====================================================
+    # TIMESTAMPS
+    # =====================================================
+
+    created_at = models.DateTimeField(
+        auto_now_add=True
+    )
+
+    updated_at = models.DateTimeField(
+        auto_now=True
+    )
+
+    # =====================================================
+    # MODEL CONFIGURATION
+    # =====================================================
 
     class Meta:
+
+        ordering = ["-created_at"]
+
+        verbose_name = "Premium Subscription"
+
+        verbose_name_plural = "Premium Subscriptions"
+
         constraints = [
+
+            # ONLY ONE ACTIVE SUBSCRIPTION PER USER
+
             models.UniqueConstraint(
-                fields=["creator", "subscriber"],
-                name="unique_creator_subscription"
+                fields=["user"],
+                condition=models.Q(active=True),
+                name="unique_active_subscription_per_user"
             )
         ]
+
+        indexes = [
+
+            models.Index(fields=["user"]),
+            models.Index(fields=["status"]),
+            models.Index(fields=["paypal_subscription_id"]),
+        ]
+
+    # =====================================================
+    # STRING REPRESENTATION
+    # =====================================================
+
+    def __str__(self):
+
+        return (
+            f"{self.user.email} | "
+            f"{self.plan} | "
+            f"{self.status}"
+        )
+
+    # =====================================================
+    # ACTIVATE SUBSCRIPTION
+    # =====================================================
+
+    def activate(self):
+
+        self.status = self.Status.ACTIVE
+
+        self.active = True
+
+        self.premium_access = True
+
+        if not self.started_at:
+
+            self.started_at = timezone.now()
+
+        self.save(update_fields=[
+            "status",
+            "active",
+            "premium_access",
+            "started_at",
+            "updated_at",
+        ])
+
+        # ENABLE USER PREMIUM FEATURES
+
+        self.user.is_premium = True
+
+        self.user.save(update_fields=[
+            "is_premium"
+        ])
+
+    # =====================================================
+    # CANCEL SUBSCRIPTION
+    # =====================================================
+
+    def cancel(self):
+
+        self.status = self.Status.CANCELLED
+
+        self.active = False
+
+        self.premium_access = False
+
+        self.cancelled_at = timezone.now()
+
+        self.save(update_fields=[
+            "status",
+            "active",
+            "premium_access",
+            "cancelled_at",
+            "updated_at",
+        ])
+
+        # REMOVE USER PREMIUM FEATURES
+
+        self.user.is_premium = False
+
+        self.user.save(update_fields=[
+            "is_premium"
+        ])
+
+    # =====================================================
+    # SUSPEND SUBSCRIPTION
+    # =====================================================
+
+    def suspend(self):
+
+        self.status = self.Status.SUSPENDED
+
+        self.active = False
+
+        self.premium_access = False
+
+        self.save(update_fields=[
+            "status",
+            "active",
+            "premium_access",
+            "updated_at",
+        ])
+
+        self.user.is_premium = False
+
+        self.user.save(update_fields=[
+            "is_premium"
+        ])
+
+    # =====================================================
+    # EXPIRE SUBSCRIPTION
+    # =====================================================
+
+    def expire(self):
+
+        self.status = self.Status.EXPIRED
+
+        self.active = False
+
+        self.premium_access = False
+
+        self.expired_at = timezone.now()
+
+        self.save(update_fields=[
+            "status",
+            "active",
+            "premium_access",
+            "expired_at",
+            "updated_at",
+        ])
+
+        self.user.is_premium = False
+
+        self.user.save(update_fields=[
+            "is_premium"
+        ])
+
+    # =====================================================
+    # CHECK ACCESS
+    # =====================================================
+
+    @property
+    def has_access(self):
+
+        return (
+            self.active and
+            self.premium_access and
+            self.status == self.Status.ACTIVE
+        )
 
 
 # =========================================================
@@ -463,6 +851,33 @@ class Notification(models.Model):
 
     created_at = models.DateTimeField(auto_now_add=True, db_index=True)
 
+
+
+class PushSubscription(models.Model):
+
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="push_subscriptions"
+    )
+
+    endpoint = models.TextField()
+
+    p256dh = models.TextField()
+
+    auth = models.TextField()
+
+    browser = models.CharField(
+        max_length=255,
+        blank=True
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True
+    )
+
+    def __str__(self):
+        return f"{self.user.username} - {self.browser}"
 
 # =========================================================
 # 15. REPORT SYSTEM
@@ -498,45 +913,145 @@ class Report(models.Model):
 
 # models.py
 class Advertisement(models.Model):
+
     STATUS_CHOICES = [
+        ("draft", "Draft"),
         ("pending", "Pending"),
         ("active", "Active"),
         ("rejected", "Rejected"),
         ("expired", "Expired"),
     ]
 
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    RECURRING_CHOICES = [
+        (3, "Every 3 Days"),
+        (7, "Every 7 Days"),
+        (14, "Every 14 Days"),
+        (30, "Every 30 Days"),
+    ]
+
+    id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False
+    )
 
     advertiser = models.ForeignKey(
-        User, 
-        null=True, blank=True,
+        User,
+        null=True,
+        blank=True,
         on_delete=models.SET_NULL,
         related_name="ads"
     )
 
     advertiser_name = models.CharField(max_length=200)
-    image = models.ImageField(upload_to="ads/", validators=[validate_file_size])
+
+    title = models.CharField(
+        max_length=255,
+        db_index=True,
+        default="Ad Title"
+    )
+
+    description = models.TextField(
+        db_index=True,
+        default="Ad Description"
+    )
+
+    ad_category = models.CharField(
+        max_length=100,
+        choices=PREDEFINED_CATEGORIES,
+        db_index=True,
+        default="Technology"
+    )
+
+    ads_file = models.FileField(
+        upload_to="promos/",
+        validators=[validate_ad_file_size]
+    )
+
     target_url = models.URLField()
 
-    category = models.ForeignKey(
+    related_problem = models.ForeignKey(
         "MindBridge.Problem",
-        null=True, blank=True,
+        null=True,
+        blank=True,
         on_delete=models.SET_NULL,
         related_name="ads"
     )
 
-    price = models.DecimalField(max_digits=6, decimal_places=2)
+    # =========================================
+    # BILLING
+    # =========================================
+    price = models.DecimalField(
+        max_digits=8,
+        decimal_places=2
+    )
+
     duration_days = models.PositiveIntegerField(default=7)
 
+    # =========================================
+    # CAMPAIGN DATES
+    # =========================================
     start_at = models.DateTimeField(null=True, blank=True)
+
     expires_at = models.DateTimeField(null=True, blank=True)
 
+    # =========================================
+    # ANALYTICS
+    # =========================================
     impressions = models.PositiveIntegerField(default=0)
+
     clicks = models.PositiveIntegerField(default=0)
 
-    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default="pending")
+    # =========================================
+    # STATUS
+    # =========================================
+    status = models.CharField(
+        max_length=10,
+        choices=STATUS_CHOICES,
+        default="draft"
+    )
+
+    # =========================================
+    # RECURRING ADS
+    # =========================================
+    is_recurring = models.BooleanField(default=False)
+
+    recurring_every = models.PositiveIntegerField(
+        choices=RECURRING_CHOICES,
+        null=True,
+        blank=True
+    )
+
+    next_relaunch_at = models.DateTimeField(
+        null=True,
+        blank=True
+    )
+
+    stop_recurring = models.BooleanField(default=False)
+
+    # =========================================
+    # SOFT DELETE
+    # =========================================
+    is_deleted = models.BooleanField(default=False)
+
+    deleted_at = models.DateTimeField(
+        null=True,
+        blank=True
+    )
+    is_expiring_soon = models.BooleanField(default=False)
+    is_urgent_expiry = models.BooleanField(default=False)
+
+    # =========================================
+    # TRACKING
+    # =========================================
+    relaunch_count = models.PositiveIntegerField(default=0)
 
     created_at = models.DateTimeField(auto_now_add=True)
+
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.title
 
 
 
@@ -647,6 +1162,7 @@ class Payment(models.Model):
             ("bounty", "Bounty"),
             ("subscription", "Subscription"),
             ("ad", "Advertisement"),
+            ("booking", "Booking"),
         ],
         db_index=True
     )
@@ -657,14 +1173,64 @@ class Payment(models.Model):
         max_length=20,
         choices=[
             ("pending", "Pending"),
+            ("held", "Held"),
             ("completed", "Completed"),
             ("failed", "Failed"),
             ("refunded", "Refunded"),
+            
         ],
         db_index=True
     )
 
     created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+        
+
+class EventHub(models.Model):
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+
+    host = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="external_events"
+    )
+    category = models.CharField(max_length=100, choices=PREDEFINED_CATEGORIES, default="Technology")
+
+    title = models.CharField(max_length=255)
+    description = models.TextField(blank=True)
+
+    start_time = models.DateTimeField()
+    end_time = models.DateTimeField(null=True, blank=True)
+    
+    meeting_url = models.URLField(blank=True, validators=[validate_safe_meeting_url])
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    @property
+    def is_upcoming(self):
+        return self.start_time > timezone.now()
+
+    @property
+    def is_ongoing(self):
+        now = timezone.now()
+        return self.start_time <= now and (self.end_time is None or self.end_time >= now)
+
+    @property
+    def is_ended(self):
+        return self.end_time is not None and self.end_time < timezone.now()
+
+    def __str__(self):
+        return self.title
+
+
+# models.py
+class EventReminder(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    event = models.ForeignKey(EventHub, on_delete=models.CASCADE)
+    remind_at = models.DateTimeField()
+    sent = models.BooleanField(default=False)
+
+    created_at = models.DateTimeField(auto_now_add=True)
     
 
 class Event(models.Model):
@@ -744,12 +1310,12 @@ class EventInvitation(models.Model):
     class Meta:
         unique_together = ["event", "invited_user"]
         
+        
 class EventRecording(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     event = models.ForeignKey("Event", on_delete=models.CASCADE, related_name="recordings")
     file = models.FileField(upload_to="live_recordings/", validators=[validate_file_size])
     created_at = models.DateTimeField(auto_now_add=True)
-    
     
     
 
@@ -798,3 +1364,207 @@ class KnowledgeBaseEntry(models.Model):
 
     def __str__(self):
         return self.title
+    
+    
+class LiveSession(models.Model):
+    PROVIDER_CHOICES = [
+        ("meet", "Google Meet"),
+        ("zoom", "Zoom"),
+        ("teams", "Microsoft Teams"),
+    ]
+
+    STATUS_CHOICES = [
+        ("created", "Created"),
+        ("ended", "Ended"),
+    ]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+
+    expert = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="live_sessions_as_expert"
+    )
+
+    client = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="live_sessions_as_client"
+    )
+
+    provider = models.CharField(
+        max_length=10,
+        choices=PROVIDER_CHOICES,
+        default="meet"
+    )
+
+    meeting_link = models.URLField(blank=True, null=True)
+
+    duration = models.PositiveIntegerField(default=30)  # 10 / 30 / 60
+
+    status = models.CharField(
+        max_length=10,
+        choices=STATUS_CHOICES,
+        default="created"
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    ended_at = models.DateTimeField(blank=True, null=True)
+
+    def __str__(self):
+        return f"{self.provider} session: {self.client} → {self.expert}"
+    
+    
+# =====================================
+# 📅 AVAILABILITY SLOT
+# =====================================
+class AvailabilitySlot(models.Model):
+    
+    UNIT_CHOICES = [
+        ("hour", "Per Hour"),
+        ("session", "Per Session"),
+    ]
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+
+    expert = models.ForeignKey(User, on_delete=models.CASCADE)
+
+    start_time = models.DateTimeField()
+    end_time = models.DateTimeField()
+    
+    price = models.DecimalField(max_digits=8, decimal_places=2, default=0.00)
+    currency = models.CharField(max_length=10, default="USD")
+    unit = models.CharField(max_length=20, choices=UNIT_CHOICES, default="hour")
+
+    description = models.CharField(max_length=255, blank=True)
+
+    is_booked = models.BooleanField(default=False)
+    is_archived = models.BooleanField(default=False)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.expert} | {self.start_time} - {self.end_time}"
+
+    # ✅ INSTANCE METHOD (correct way)
+    def is_owner(self, user):
+        return self.expert.id == user.id
+
+
+# =====================================
+# 📹 BOOKING (AUTO JITSI MEETING)
+# =====================================
+        
+class Booking(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+
+    slot = models.ForeignKey(
+        "AvailabilitySlot",
+        on_delete=models.CASCADE,
+        related_name="bookings"
+    )
+
+    booked_by = models.ForeignKey("User", on_delete=models.CASCADE)
+
+    meeting_link = models.URLField(blank=True, editable=False)
+    details = models.TextField(blank=True)
+
+    is_cancelled = models.BooleanField(default=False)
+    cancelled_at = models.DateTimeField(null=True, blank=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["slot"],
+                condition=Q(is_cancelled=False),
+                name="unique_active_booking_per_slot"
+            )
+        ]
+
+    def generate_meeting_link(self):
+        return f"https://meet.jit.si/FancyLearn-{self.id}"
+
+    def save(self, *args, **kwargs):
+        # generate link only for active bookings
+        if not self.is_cancelled and not self.meeting_link:
+            super().save(*args, **kwargs)
+            self.meeting_link = self.generate_meeting_link()
+            super().save(update_fields=["meeting_link"])
+            return
+
+        super().save(*args, **kwargs)
+
+    def cancel(self):
+        if self.is_cancelled:
+            return
+
+        self.is_cancelled = True
+        self.cancelled_at = timezone.now()
+        self.meeting_link = ""
+        self.save(update_fields=["is_cancelled", "cancelled_at", "meeting_link"])
+        
+        
+class Review(models.Model):
+
+    booking = models.OneToOneField(Booking, on_delete=models.CASCADE)
+
+    reviewer = models.ForeignKey(User, on_delete=models.CASCADE, related_name="given_reviews")
+    reviewed_user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="received_reviews")
+
+    rating = models.IntegerField()
+    comment = models.TextField(blank=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+
+class SendEmail(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+
+    admin_user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='sent_emails'
+    )
+
+    recipient = models.EmailField()
+
+    subject = models.CharField(max_length=255)
+    body = models.TextField()  # HTML content (Quill)
+
+    sent_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.subject} → {self.recipient}"
+    
+    
+class UserReport(models.Model):
+
+    reporter = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="reports_sent"
+    )
+
+    reported_user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="reports_received"
+    )
+
+    reason = models.TextField()
+
+    evidence_image = models.ImageField(
+        upload_to="reports/evidence/",
+        blank=True,
+        null=True
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"{self.reporter} reported {self.reported_user}"

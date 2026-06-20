@@ -8,7 +8,7 @@
   <div class="row justify-content-center">
     <div class="col-md-6">
 
-      <div class="card shadow-sm border-0 text-center p-4">
+      <div class="card border-0 text-center p-4">
 
         <div class="mb-4">
           <i class="fa fa-times-circle text-danger fa-4x"></i>
@@ -23,12 +23,12 @@
 
         <div class="mt-4">
 
-          <a href="{% url 'link_paypal_account' %}" class="btn btn-danger">
+          <a href="{% url 'link_paypal_account' %}" data-spa-link class="btn btn-danger">
             <i class="fa fa-redo me-1"></i>
             Try Again
           </a>
 
-          <a href="/" class="btn btn-outline-secondary">
+          <a href="/" data-spa-link class="btn btn-outline-secondary">
             <i class="fa fa-home me-1"></i>
             Return to Home
           </a>

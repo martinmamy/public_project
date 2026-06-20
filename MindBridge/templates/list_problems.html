@@ -10,7 +10,7 @@
 
     <!-- Trending Story-style Carousel -->
     <div class="trending-stories-wrapper position-relative mb-4">
-      <h5 class="fw-bold mb-2">Trending</h5>
+      <p class="fw-bold mb-2 text-info">Trending Issues</p>
 
       <!-- Carousel container -->
       <div title="Click on post card to go to detail" class="trending-stories d-flex gap-3 overflow-auto" id="trendingStories">
@@ -18,7 +18,7 @@
           {% if story.post_type != "information" %}
             <div class="story-card flex-shrink-0 position-relative"
                 style="width:180px; border-radius:12px; background:var(--card); padding:8px; cursor:pointer;"
-                onclick="window.location.href='{% url 'problem_detail_partial' story.id %}'">
+                onclick="window.location.href='{% url 'problem_detail_partial' story.id %}'" data-spa-link>
 
               <!-- Author Avatar -->
               <div class="position-absolute" style="top:9px; left:9px; z-index:5;">
@@ -45,7 +45,13 @@
                     {% endif %}
                   {% endwith %}
                 {% else %}
-                  <div class="bg-secondary w-100 h-100"></div>
+                  <!-- 🔥 FALLBACK: DESCRIPTION -->
+                  <div class="w-100 h-100 d-flex align-items-center justify-content-center p-2 text-center"
+                      style="font-size:12px; color:var(--text-muted); overflow:hidden;">
+                    <span style="display:-webkit-box; -webkit-line-clamp:4; -webkit-box-orient:vertical; overflow:hidden;">
+                      {{ story.description|truncate_html_chars:20|convert_mentions|linebreaks|linkify|safe }}
+                    </span>
+                  </div>
                 {% endif %}
               </div>
               <!-- Title -->
@@ -60,7 +66,7 @@
           {% else %}
             <div class="story-card flex-shrink-0 position-relative"
               style="width:180px; border-radius:12px; background:var(--card); padding:8px; cursor:pointer;"
-              onclick="window.location.href='{% url 'talenthub' %}#problem-{{ story.id }}'">
+              onclick="window.location.href='{% url 'talenthub' %}#problem-{{ story.id }}'" data-spa-link>
 
               <!-- Author Avatar -->
               <div class="position-absolute" style="top:9px; left:9px; z-index:5;">
@@ -117,6 +123,7 @@
       <button id="sidebarToggle" class="sidebar-toggle-btn d-lg-none" title="Open Issues BookMark">
         BM
       </button>
+      
       <!-- Header + Search & Sort -->
       <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
         <div class="d-flex flex-column gap-2 mb-3">
@@ -152,15 +159,15 @@
 
         </div>
 
-        <small>Got a question, insight, or idea? Share it with the community!</small>
-        <a href="{% url 'create_problem' %}">
+        <small class="text-info">Got a question, insight, or idea? Share it with the community!</small>
+        <a href="{% url 'create_problem' %}" data-spa-link >
             <i class="fas fa-plus"></i> Post Now
         </a>
       </div>
       <!-- PROBLEMS LIST -->
       <div id="problems-container">
         {% for problem in problems|dictsortreversed:"created_at" %}
-        <div title="Click on post title to go to detail" class="card shadow-sm mb-4 border-0 problem-card position-relative"
+        <div title="Click on post title to go to detail" class="card mb-4 problem-card position-relative"
              data-problem-id="{{ problem.id }}"
              data-title="{{ problem.title|lower }}"
              data-votes="{{ problem.annot_votes_score }}"
@@ -170,7 +177,7 @@
              data-solved="{{ problem.is_solved|yesno:'true,false' }}">
           <div class="card-body">
             <!-- RIGHT: category + status badges -->
-              <div class="d-flex justify-content-end">
+            <div class="d-flex justify-content-end">
                 {% if problem.category.name %}
                   <span title="Post category" class="category-badge">{{ problem.category.name }}</span>
                 {% else %}
@@ -179,13 +186,13 @@
                 {% if problem.is_solved %}
                   <span title="Post status" class="badge-status badge bg-success ms-2 text-light"><i class="fas fa-check-circle"></i> Solved</span>
                 {% endif %}
-              </div>
+            </div>
 
             <!-- PROBLEM HEADER -->
             <div class="card-header">
               <!-- LEFT: avatar + username -->
               <div class="header-left">
-                <a href="{% url 'profile' problem.author.id %}" class="d-flex align-items-center text-decoration-none">
+                <a href="{% url 'profile' problem.author.id %}" data-spa-link class="d-flex align-items-center text-decoration-none">
                   {% if problem.author.avatar %}
                     <img src="{{ problem.author.avatar.url }}" class="avatar me-2">
                   {% else %}
@@ -195,54 +202,76 @@
                     {% endwith %}
                   {% endif %}
                   <div class="d-flex flex-column">
-                    <strong>{{ problem.author.username }}</strong>
+                    <div class="d-flex align-items-center gap-1">
+                      {% if problem.author.is_verified_expert %}
+                        <i class="fas fa-shield-alt verified-expert" title="Verified Expert"></i>
+                      {% endif %}
+                      {% if problem.author.profile.first_name or problem.author.profile.last_name %}
+                        <strong>{{ problem.author.profile.first_name }} {{ problem.author.profile.last_name }}</strong>
+                      {% else %}
+                        <strong>{{ problem.author.username }}</strong>
+                      {% endif %}
+                    </div>
                     <small data-time="{{ problem.created_at|date:'c' }}"></small>
+                    
                   </div>
                 </a>
+                
                 {% if request.user != problem.author and not problem.is_following %}
-                      <button class="follow-btn bg-primary text-white border-0 rounded-circle d-flex align-items-center justify-content-center"
+                  <button class="follow-btn bg-primary text-white border-0 rounded-circle d-flex align-items-center justify-content-center"
                               data-user-id="{{ problem.author.id }}"
                               title="Follow" 
                               style="width:18px;height:18px; position:relative; left:-30px; top:10px; display:flex">
                           <i class="fa-solid fa-circle-plus"></i>
-                      </button>
+                  </button>
                 {% endif %}
+                <!-- 👇 PRESENCE SYSTEM HERE -->
+                      {% include "components/user_presence.html" with user=problem.author %}
               </div>
             </div>
 
             <!-- TITLE & DESCRIPTION -->
             <h5 class="problem-title mb-2 text-center">
-              <a href="{% url 'problem_detail_partial' problem.id %}" class="problem-link fw-bold">
+              <a href="{% url 'problem_detail' problem.id %}"
+                class="problem-link fw-bold"
+                data-modal-link>
                 {{ problem.title }}
+              </a>
+              <!-- OPEN DETAIL ICON -->
+              <a href="{% url 'problem_detail' problem.id %}"
+                data-spa-link
+                class="open-detail-icon"
+                title="Open details">
+                  <i class="fa-solid fa-arrow-up-right-from-square"></i>
               </a>
             </h5>
             
             <div class="problem-content mb-3">
               {% if problem.description|length > 200 %}
-                {{ problem.description|truncate_html_chars:200|convert_mentions|linebreaks|safe }}
-                <a href="{% url 'problem_detail_partial' problem.id %}" class="read-more-link">Read more</a>
+                {{ problem.description|truncate_html_chars:200|convert_mentions|linebreaks|linkify|safe }}
+                <a href="{% url 'problem_detail_partial' problem.id %}" data-spa-link class="read-more-link">Read more</a>
               {% else %}
-                {{ problem.description|convert_mentions|linebreaks|safe }}
+                {{ problem.description|convert_mentions|linebreaks|linkify|safe }}
               {% endif %}
             </div>
 
             <!-- MEDIA -->
             {% if problem.file %}
-            {% with problem.file.url|lower as file_url %}
-            <div class="media-container text-center mb-3">
-              {% if ".jpg" in file_url or ".jpeg" in file_url or ".png" in file_url or ".gif" in file_url %}
-              <img src="{{ problem.file.url }}" style="width:80%; height:400px; cursor:pointer; border-radius:8px;" class="clickable-media" data-bs-toggle="modal" data-bs-target="#mediaModal" data-src="{{ problem.file.url }}">
-              {% elif ".mp4" in file_url or ".mov" in file_url or ".avi" in file_url or ".mkv" in file_url or ".webm" in file_url %}
-              <video style="width:100%; max-width:300px; cursor:pointer; border-radius:8px;" controls class="clickable-media" data-bs-toggle="modal" data-bs-target="#mediaModal" data-src="{{ problem.file.url }}">
-                <source src="{{ problem.file.url }}">
-              </video>
-              {% elif ".mp3" in file_url or ".wav" in file_url or ".aac" in file_url %}
-              <audio style="width:100%;" controls class="clickable-media" data-bs-toggle="modal" data-bs-target="#mediaModal" data-src="{{ problem.file.url }}">
-                <source src="{{ problem.file.url }}">
-              </audio>
-              {% endif %}
-            </div>
-            {% endwith %}
+              {% with problem.file.url|lower as file_url %}
+                <div class="media-container text-center mb-3">
+                  {% if ".jpg" in file_url or ".jpeg" in file_url or ".png" in file_url or ".gif" in file_url %}
+                    <img src="{{ problem.file.url }}" style="width:80%; height:400px; cursor:pointer; border-radius:8px;" class="clickable-media" data-bs-toggle="modal" data-bs-target="#mediaModal" data-src="{{ problem.file.url }}">
+                  {% elif ".mp4" in file_url or ".mov" in file_url or ".avi" in file_url or ".mkv" in file_url or ".webm" in file_url %}
+                    <video style="width:100%; max-width:600px; position:center; cursor:pointer; border-radius:8px;" controls class="clickable-media" data-bs-toggle="modal" data-bs-target="#mediaModal" data-src="{{ problem.file.url }}">
+                      <source src="{{ problem.file.url }}">
+                    </video>
+                  {% elif ".mp3" in file_url or ".wav" in file_url or ".aac" in file_url %}
+                    <audio style="width:100%;" controls class="clickable-media" data-bs-toggle="modal" data-bs-target="#mediaModal" data-src="{{ problem.file.url }}">
+                      <source src="{{ problem.file.url }}">
+                    </audio>
+                  {% endif %}
+                </div>
+              {% endwith %}
             {% endif %}
 
             <!-- VOTES & STATS (HORIZONTAL FIX) -->
@@ -260,40 +289,39 @@
               <span title="Views count on this post" class="small"><i class="fas fa-eye"></i> {{ problem.annot_views_count|abbreviate_number }}</span>
 
               <!-- Bookmark -->
-              <span class="cursor-pointer small save-btn d-flex align-items-center gap-1" data-id="{{ problem.id }}">
+              <span class="cursor-pointer small save-btn d-flex align-items-center gap-1" data-id="{{ problem.id }}" data-spa-link>
                 <i class="fas fa-bookmark {% if problem.is_bookmarked %}active{% endif %}"></i>
                 <span title="Bookmark this post"  class="save-text">{% if problem.is_bookmarked %}Saved{% else %}Save{% endif %}</span>
               </span>
 
               <!-- Share -->
-              <span title="Share this post" class="cursor-pointer small d-flex align-items-center gap-1" data-bs-toggle="modal" data-bs-target="#shareModal-{{ problem.id }}">
+              <span title="Share this post" class="cursor-pointer small d-flex align-items-center gap-1" data-bs-toggle="modal" data-bs-target="#shareModal-{{ problem.id }}" data-spa-link>
                 <i class="fas fa-share"></i> Share
               </span>
 
               <!-- Tips -->
-              {% if problem.author %}
-              <span title="Tips received on this post" class="badge bg-info text-dark d-flex align-items-center gap-1">
-                <i class="fas fa-coins"></i> {{ problem.tips_received|abbreviate_number }}
-              </span>
+              {% if request.user == problem.author %}
+                <span title="Tips received on this post" class="badge bg-info text-dark d-flex align-items-center gap-1">
+                  <i class="fas fa-coins"></i> {{ problem.tips_received|abbreviate_number }}
+                </span>
               {% endif %}
 
               {% if request.user != problem.author %}
-              <div class="problem-tip-box d-flex align-items-center gap-2">
-                <input type="number"
-                      class="form-control form-control-sm problem-tip-amount"
-                      placeholder="$" title="Enter amount to tip">
+                <div class="problem-tip-box d-flex align-items-center gap-2">
+                  <input type="number"
+                        class="form-control form-control-sm problem-tip-amount"
+                        placeholder="$" title="Enter amount to tip">
 
-                <button class="btn btn-warning btn-sm send-problem-tip-btn"
-                        data-id="{{ problem.id }}" title="Tip this post">
-                  <i class="fas fa-coins"></i>
-                  <span class="tip-text">Tip</span>
-                </button>
+                  <button class="btn btn-warning btn-sm send-problem-tip-btn"
+                          data-id="{{ problem.id }}" title="Tip this post">
+                    <span class="tip-text">Tip</span>
+                  </button>
 
-                <span title="Tips sent from you for this post" class="badge bg-info text-dark d-flex align-items-center gap-1">
-                  <i class="fas fa-coins"></i>
-                  {{ problem.tips_received|abbreviate_number }}
-                </span>
-              </div>
+                  <span title="Tips sent from you for this post" class="badge bg-info text-dark d-flex align-items-center gap-1">
+                    <i class="fas fa-coins"></i>
+                    {{ problem.tips_received|abbreviate_number }}
+                  </span>
+                </div>
               {% endif %}
 
               <!-- Promotion badges -->
@@ -307,7 +335,7 @@
             </div>
 
             <!-- TAGS -->
-             {% if problem.tags.all %}
+            {% if problem.tags.all %}
               <div class="problem-tags-compact">
                 
                 <span class="badge bg-secondary tag-indicator"
@@ -318,127 +346,208 @@
                         • {{ tag.name }}<br>
                       {% endfor %}
                       ">
-                  🏷 {{ problem.tags.all|length }}
+                   {{ problem.tags.all|length }}
                 </span>
 
               </div>
-              {% endif %}
-            <!-- ANSWERS COLLAPSE -->
+        
+            {% endif %}
+            <!-- Ads placeholder (isolated, no layout interference) -->
+              <div id="adsPlaceholder-{{ problem.id }}"
+              data-problem-id="{{ problem.id }}">
+                      <!-- post content -->
+                {% include "partials/smart-card-ads.module.html" %}
+              </div>
+            <!-- ANSWERS SECTION -->
             <div class="answers-section mt-3">
-              <div class="d-flex align-items-center">
-  
-                <a class="text-decoration-none"
+
+              <!-- HEADER -->
+              <div class="d-flex align-items-center gap-2 flex-wrap">
+
+                <!-- Toggle Answers -->
+                <a class="text-decoration-none d-flex align-items-center gap-1"
                   data-bs-toggle="collapse"
                   href="#answers-{{ problem.id }}">
-                  <i class="fas fa-comments"></i> Answers ({{ problem.annot_answers_count|abbreviate_number }})
+                  <i class="fas fa-comments"></i>
+                  <span>Answers ({{ problem.annot_answers_count|abbreviate_number }})</span>
                 </a>
 
-                {% if problem.bounty_amount and problem.bounty_amount > 0 %}
-                <span class="badge bg-warning text-dark ms-auto" title="Bounty Amount for Best Answer">
-                  <i class="fas fa-coins"></i> {{ problem.bounty_amount|abbreviate_number }}
-                </span>
-                {% endif %}
-                <div id="adsPlaceholder-{{ problem.id }}" data-problem-id="{{ problem.id }}"></div>
+                <!-- Right Side: bounty + ads -->
+                <div class="d-flex align-items-center gap-2 ms-auto">
+
+                  {% if problem.bounty_amount and problem.bounty_amount > 0 %}
+                    <span class="badge bg-warning text-dark"
+                          title="Bounty Amount for Best Answer">
+                      <i class="fas fa-coins"></i>
+                      {{ problem.bounty_amount|abbreviate_number }}
+                    </span>
+                  {% endif %}
+
+                </div>
+
               </div>
-              <div class="collapse answers-scrollable mt-2" id="answers-{{ problem.id }}">
+
+              <!-- ANSWERS LIST -->
+              <div class="collapse answers-scrollable mt-3"
+                  id="answers-{{ problem.id }}">
+
                 {% for answer in problem.answers.all|dictsortreversed:"votes_score" %}
-                <div class="card answer-card {% if answer.is_accepted %}accepted-answer{% endif %}" data-answer-id="{{ answer.id }}">
-                    <div class="d-flex align-items-center mb-2">
 
-                      <a href="{% url 'profile' answer.author.id %}" class="d-flex align-items-center text-decoration-none">
+                  <div class="card answer-card {% if answer.is_accepted %}accepted-answer{% endif %}"
+                      data-answer-id="{{ answer.id }}">
 
-                          <!-- Avatar -->
-                          {% if answer.author.avatar %}
-                              <img src="{{ answer.author.avatar.url|default:'/static/img/default-avatar.png' }}" 
-                                  class="rounded-circle me-2"
-                                  style="width:35px; height:35px; object-fit:cover;">
-                          {% else %}
-                              {% with first=answer.author.username|slice:":1"|upper %}
-                                  <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40'%3E%3Crect width='40' height='40' fill='%23dee2e6'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='central' text-anchor='middle' font-family='Arial, sans-serif' font-size='20' fill='%23343a40'%3E{{ first }}%3C/text%3E%3C/svg%3E"
-                                  class="avatar me-2">
-                                {% endwith %}
-                          {% endif %}
+                    <!-- HEADER -->
+                    <div class="d-flex align-items-center justify-content-between mb-2 flex-wrap gap-2">
 
-                          <!-- Username + Time -->
-                          <div class="d-flex flex-column small ">
-                              <strong class="">{{ answer.author.username }}</strong>
-                              <span class="answer-time" data-time="{{ answer.created_at|date:'c' }}"></span>
+                      <a href="{% url 'profile' answer.author.id %}" data-spa-link
+                        class="d-flex align-items-center text-decoration-none gap-2">
+
+                        <!-- Avatar -->
+                        {% if answer.author.avatar %}
+                          <img src="{{ answer.author.avatar.url }}"
+                              class="rounded-circle"
+                              style="width:35px;height:35px;object-fit:cover;">
+                        {% else %}
+                          {% with first=answer.author.username|slice:":1"|upper %}
+                          <div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center"
+                              style="width:35px;height:35px;">
+                            {{ first }}
                           </div>
+                          {% endwith %}
+                        {% endif %}
+
+                        <div class="d-flex flex-column small">
+                          <div class="d-flex align-items-center gap-1">
+                            {% if answer.author.is_verified_expert %}
+                              <i class="fas fa-shield-alt verified-expert" title="Verified Expert"></i>
+                            {% endif %}
+                            {% if answer.author.profile.first_name or answer.author.profile.last_name %}
+                              <strong>{{ answer.author.profile.first_name }} {{ answer.author.profile.last_name }}</strong>
+                            {% else %}
+                              <strong>{{ answer.author.username }}</strong>
+                            {% endif %}
+                          </div>
+                          <span class="answer-time"
+                                data-time="{{ answer.created_at|date:'c' }}"></span>
+                        </div>
 
                       </a>
-
-                      <!-- Accepted Badge -->
+                      <!-- 👇 PRESENCE SYSTEM HERE -->
+                      {% include "components/user_presence.html" with user=answer.author %}
                       {% if answer.is_accepted %}
-                          <span title="Accepted answer" class="badge bg-success badge-status ms-2 text-light">
-                              <i class="fas fa-check-circle"></i> Accepted
-                          </span>
+                        <span class="badge bg-success text-light">
+                          <i class="fas fa-check-circle"></i> Accepted
+                        </span>
                       {% endif %}
 
                     </div>
-                    <p class="mb-1">
-                      {% if answer.content|length > 200 %}
-                        {{ answer.content|truncatechars:200|convert_mentions|linebreaks|safe }} 
-                        <a href="{% url 'problem_detail_partial' problem.id %}#answer-{{ answer.id }}" class="read-more-link">Read more</a>
-                      {% else %}
-                        {{ answer.content|convert_mentions|linebreaks|safe }}
-                      {% endif %}
-                    </p>
 
-                  <!-- Answer Media -->
-                  {% if answer.file %}
-                  {% with answer.file.url|lower as file_url %}
-                  <div class="media-container text-center mb-2">
-                    {% if ".jpg" in file_url or ".jpeg" in file_url or ".png" in file_url or ".gif" in file_url %}
-                    <img src="{{ answer.file.url }}" style="width:300px; cursor:pointer; border-radius:8px;" class="clickable-media" data-bs-toggle="modal" data-bs-target="#mediaModal" data-src="{{ answer.file.url }}">
-                    {% elif ".mp4" in file_url or ".mov" in file_url or ".avi" in file_url or ".mkv" in file_url or ".webm" in file_url %}
-                    <video style="width:100%; height:250px;" controls class="clickable-media" data-bs-toggle="modal" data-bs-target="#mediaModal" data-src="{{ answer.file.url }}">
-                      <source src="{{ answer.file.url }}">
-                    </video>
-                    {% elif ".mp3" in file_url or ".wav" in file_url or ".aac" in file_url %}
-                    <audio style="width:100%;" controls class="clickable-media" data-bs-toggle="modal" data-bs-target="#mediaModal" data-src="{{ answer.file.url }}">
-                      <source src="{{ answer.file.url }}">
-                    </audio>
-                    {% endif %}
-                  </div>
-                  {% endwith %}
-                  {% endif %}
-
-                  <div class="d-flex align-items-center gap-2 position-relative">
-                    <button class="btn  vote-btn upvote me-1" data-id="{{ answer.id }}" data-type="answer" title="Upvote">👍</button>
-                    <span title="Votes count for this answer" id="answer-score-{{ answer.id }}">{{ answer.votes_score|abbreviate_number }}</span>
-                    <button class="btn  vote-btn downvote ms-1" data-id="{{ answer.id }}" data-type="answer" title="Downvote">👎</button>
-                    {% if answer.author %}
-                      <span class="badge bg-info text-dark ms-2" title="Tips Accumulated for this Answer"><i class="fas fa-coins"></i> {{ answer.tips_received }}</span>
-                    {% endif %}
-                  </div>
-                  {% if request.user != answer.author %}
-                    <div class="answer-tip-box d-flex align-items-center gap-2">
-                      <input type="number"
-                            class="form-control form-control-sm tip-amount"
-                            placeholder="$" title="Enter amount to tip this answer">
-
-                      <button class="btn btn-warning btn-sm send-tip-btn" data-id="{{ answer.id }}" title="Tip this answer">
-                        <i class="fas fa-coins"></i>
-                        <span class="tip-text">Tip</span>
-                      </button>
-
-                      <span title="Tips sent from you for this answer" class="badge bg-info text-dark d-flex align-items-center gap-1">
-                        <i class="fas fa-coins"></i>
-                        {{ answer.tips_received|abbreviate_number }}
-                      </span>
+                    <!-- CONTENT -->
+                    <div class="mb-2">
+                      <p class="mb-1">
+                        {% if answer.content|length > 200 %}
+                          {{ answer.content|convert_mentions|linebreaks|linkify|safe }}
+                          <a href="{% url 'problem_detail_partial' problem.id %}#answer-{{ answer.id }}" data-spa-link
+                            class="read-more-link">Read more</a>
+                        {% else %}
+                          {{ answer.content|convert_mentions|linebreaks|linkify|safe }}
+                        {% endif %}
+                      </p>
                     </div>
-                  {% endif %}
-                </div>
+
+                    <!-- MEDIA -->
+                    {% if answer.file %}
+                      {% with answer.file.url|lower as file_url %}
+                        <div class="text-center mb-2">
+
+                          {% if ".jpg" in file_url or ".jpeg" in file_url or ".png" in file_url or ".gif" in file_url %}
+                            <img src="{{ answer.file.url }}"
+                                class="clickable-media"
+                                style="max-width:300px;border-radius:8px;"
+                                data-bs-toggle="modal"
+                                data-bs-target="#mediaModal"
+                                data-src="{{ answer.file.url }}">
+
+                          {% elif ".mp4" in file_url or ".mov" in file_url or ".webm" in file_url %}
+                            <video controls
+                                  style="width:100%;max-height:250px;border-radius:8px;"
+                                  class="clickable-media"
+                                  data-bs-toggle="modal"
+                                  data-bs-target="#mediaModal"
+                                  data-src="{{ answer.file.url }}">
+                              <source src="{{ answer.file.url }}">
+                            </video>
+
+                          {% elif ".mp3" in file_url or ".wav" in file_url %}
+                            <audio controls style="width:100%;">
+                              <source src="{{ answer.file.url }}">
+                            </audio>
+                          {% endif %}
+
+                        </div>
+                      {% endwith %}
+                    {% endif %}
+
+                    <!-- ACTIONS -->
+                    <div class="d-flex align-items-center flex-wrap gap-2">
+
+                      <!-- VOTES -->
+                      <div class="d-flex align-items-center gap-1">
+                        <button class="btn vote-btn upvote"
+                                data-id="{{ answer.id }}"
+                                data-type="answer">👍</button>
+
+                        <span id="answer-score-{{ answer.id }}">
+                          {{ answer.votes_score|abbreviate_number }}
+                        </span>
+
+                        <button class="btn vote-btn downvote"
+                                data-id="{{ answer.id }}"
+                                data-type="answer">👎</button>
+                      </div>
+
+                      <!-- Tips -->
+                      {% if request.user == answer.author %}
+                        <span class="badge bg-info text-dark">
+                          <i class="fas fa-coins"></i>
+                          {{ answer.tips_received|abbreviate_number }}
+                        </span>
+                      {% endif %}
+
+                    
+                      <!-- TIP BOX -->
+                      {% if request.user != answer.author %}
+                      <div class="answer-tip-box d-flex align-items-center gap-2 mt-2">
+
+                        <input type="number"
+                              class="form-control form-control-sm tip-amount"
+                              placeholder="$">
+
+                        <button class="btn btn-warning btn-sm send-tip-btn"
+                                data-id="{{ answer.id }}">
+                          Tip
+                        </button>
+
+                        <span class="badge bg-info text-dark">
+                          {{ answer.tips_received|abbreviate_number }}
+                        </span>
+
+                      </div>
+                      {% endif %}
+
+                    </div>
+                  </div><hr>
+                {% empty %}
+                  <div class="p-3 text-center text-muted">No answers yet.</div>
                 {% endfor %}
-                {% if problem.answers.all|length == 0 %}
-                <div class=" small">No answers yet.</div>
-                {% endif %}
+
               </div>
+
             </div>
 
           </div>
-        </div>
 
+        </div>
         <!-- SHARE MODAL -->
         <div class="modal fade" id="shareModal-{{ problem.id }}" tabindex="-1" aria-hidden="true">
           <div class="modal-dialog modal-dialog-centered">
@@ -478,296 +587,598 @@
           </div>
         </div>
         <div id="problem-modal"
-            class="position-fixed start-0 bottom-0 w-100 shadow-lg modal-surface">
+            class="position-fixed start-0 bottom-0 w-100 shadow-lg modal-surface"
+            style="height:0;opacity:0;visibility:hidden;pointer-events:none;">
 
+            <!-- HANDLE -->
             <div class="modal-handle"></div>
 
-            <div class="p-3 h-100 overflow-auto">
+            <!-- FIXED HEADER -->
+            <div class="modal-header-fixed d-flex justify-content-between align-items-center">
 
-              <div class="d-flex justify-content-between align-items-center mb-3">
-                <h5 class="m-0 modal-title-text">{{ problem.title }} </h5>
-                <a href="{% url 'problem_detail' problem.id %}" class="text-decoration-none text-reset">View Details</a>
-                <button id="close-problem" class="btn btn-sm btn-outline-secondary">✕</button>
-              </div>
+                <h5 class="m-0 modal-title-text text-info">
+                    {{ problem.title }}
+                </h5>
 
-              <div id="problem-content" class="modal-body-text">
-                <p>Loading...</p>
-              </div>
+                <button id="close-problem"
+                        class="btn btn-sm btn-outline-info">
+                    ✕
+                </button>
 
             </div>
+
+            <!-- SCROLLABLE CONTENT -->
+            <div id="problem-content-wrapper">
+
+                <div id="problem-content" class="modal-body-text">
+                    <p>Loading...</p>
+                </div>
+
+            </div>
+
         </div>
+
         {% empty %}
         <div class="card p-4 text-center ">No problems yet. Be the first to ask!</div>
         {% endfor %}
       </div>
-
-      <!-- PAGINATION -->
-      {% if problems.has_other_pages %}
-      <nav>
-        <ul class="pagination justify-content-center">
-          {% if problems.has_previous %}
-          <li class="page-item"><a class="page-link" href="?page={{ problems.previous_page_number }}">Previous</a></li>
-          {% endif %}
-          {% for num in problems.paginator.page_range %}
-          <li class="page-item {% if problems.number == num %}active{% endif %}"><a class="page-link" href="?page={{ num }}">{{ num }}</a></li>
-          {% endfor %}
-          {% if problems.has_next %}
-          <li class="page-item"><a class="page-link" href="?page={{ problems.next_page_number }}">Next</a></li>
-          {% endif %}
-        </ul>
-      </nav>
-      {% endif %}
-
     </div>
+  
+    <!-- backdrop -->
+    <div id="problem-backdrop" class="modal-backdrop-layer"></div>
+      <!-- RIGHT PANEL: BOOKMARKS -->
+      <div class="col-lg-4 position-relative">
 
-  <!-- backdrop -->
-  <div id="problem-backdrop" class="modal-backdrop-layer"></div>
-    <!-- RIGHT PANEL: BOOKMARKS -->
-    <div class="col-lg-4 position-relative">
-      <div class="sticky-panel" id="bookmarkPanel">
-        <h5 class="fw-bold mb-3">Bookmarks</h5>
+        <div class="sticky-panel" id="bookmarkPanel">
 
-        {% if bookmarked_problems %}
-          <ul class="list-group list-group-flush bookmark-list">
-            {% for bp in bookmarked_problems %}
-              <li class="list-group-item bookmark-item px-0 d-flex justify-content-between align-items-start" data-id="{{ bp.id }}">
+            <h5 class="fw-bold mb-3">
+                Bookmarks
+            </h5>
 
-                {% if bp.post_type == "information" %}
-                  <!-- Go to TalentHub + scroll to problem -->
-                  <a href="{% url 'talenthub' %}#problem-{{ bp.id }}" class="bookmark-title text-decoration-none d-block">
-                    {{ bp.title|truncatechars:50 }}
-                    {% if bp.title|length > 50 %}
-                      <span class="read-more">...Read more</span>
-                    {% endif %}
-                  </a>
-                {% else %}
-                  <!-- Go to normal problem detail -->
-                  <a href="{% url 'problem_detail_partial' bp.id %}" class="bookmark-title text-decoration-none d-block">
-                    {{ bp.title|truncatechars:50 }}
-                    {% if bp.title|length > 50 %}
-                      <span class="read-more">...Read more</span>
-                    {% endif %}
-                  </a>
-                {% endif %}
+            {% if bookmarked_problems %}
 
-                <!-- Optional solved badge -->
-                {% if bp.annot_accepted_count > 0 %}
-                  <span class="badge bg-success ms-2 text-light">
-                    <i class="fas fa-check-circle"></i> Solved
-                  </span>
-                {% endif %}
+                <ul class="list-group list-group-flush bookmark-list">
 
-              </li>
-            {% endfor %}
-          </ul>
-        {% else %}
-          <div class="small">
-            <i class="fas fa-bookmark me-1"></i> No bookmarks yet.
-          </div>
-        {% endif %}
+                    {% for bp in bookmarked_problems %}
+
+                        <li class="list-group-item bookmark-item px-0 d-flex justify-content-between align-items-start"
+                            data-id="{{ bp.id }}">
+
+                            {% if bp.post_type == "information" %}
+
+                                <a href="{% url 'talenthub' %}#problem-{{ bp.id }}"
+                                  data-spa-link
+                                  class="bookmark-title text-decoration-none d-block">
+
+                                    {{ bp.title|truncatechars:50 }}
+
+                                    {% if bp.title|length > 50 %}
+                                        <span class="read-more">
+                                            ...Read more
+                                        </span>
+                                    {% endif %}
+
+                                </a>
+
+                            {% else %}
+
+                                <a href="{% url 'problem_detail_partial' bp.id %}"
+                                  data-spa-link
+                                  class="bookmark-title text-decoration-none d-block">
+
+                                    {{ bp.title|truncatechars:50 }}
+
+                                    {% if bp.title|length > 50 %}
+                                        <span class="read-more">
+                                            ...Read more
+                                        </span>
+                                    {% endif %}
+
+                                </a>
+
+                            {% endif %}
+
+                            {% if bp.annot_accepted_count > 0 %}
+                                <span class="badge bg-success ms-2 text-light">
+                                    <i class="fas fa-check-circle"></i>
+                                    Solved
+                                </span>
+                            {% endif %}
+
+                        </li>
+
+                        <!-- ================================================= -->
+                        <!-- GOOGLE AD AFTER EVERY 4 BOOKMARKS -->
+                        <!-- ================================================= -->
+
+                        {% if forloop.counter|divisibleby:2 %}
+
+                          <li class="list-group-item border-0 px-0 py-3 google-ad-item d-none">
+
+                              <div class="bookmark-google-ad">
+
+                                  <ins class="adsbygoogle"
+                                      style="display:block"
+                                      data-ad-client="ca-pub-XXXXXXXXXXXX"
+                                      data-ad-slot="XXXXXXXXXX"
+                                      data-ad-format="auto"
+                                      data-full-width-responsive="true">
+                                  </ins>
+
+                              </div>
+
+                          </li>
+
+                      {% endif %}
+
+                    {% endfor %}
+
+                </ul>
+
+            {% else %}
+
+                <div class="small">
+                    <i class="fas fa-bookmark me-1"></i>
+                    No bookmarks yet.
+                </div>
+
+            {% endif %}
+
+        </div>
 
       </div>
     </div>
-  </div>
 
-  <!-- Image Preview Modal -->
-  <div id="img-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); justify-content:center; align-items:center; z-index:2000;">
-    <span id="img-modal-close" style="position:absolute; top:20px; right:30px; font-size:30px; color:white; cursor:pointer;">&times;</span>
-    <img id="img-modal-content" src="" style="max-width:90%; max-height:90%; border-radius:10px; box-shadow:0 4px 12px rgba(0,0,0,0.5);"/>
-  </div>
+    <!-- Image Preview Modal -->
+    <div id="img-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); justify-content:center; align-items:center; z-index:2000;">
+      <span id="img-modal-close" style="position:absolute; top:20px; right:30px; font-size:30px; color:white; cursor:pointer;">&times;</span>
+      <img id="img-modal-content" src="" style="max-width:90%; max-height:90%; border-radius:10px; box-shadow:0 4px 12px rgba(0,0,0,0.5);"/>
+    </div>
 
-  <!-- MEDIA MODAL -->
-  <div class="modal fade" id="mediaModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-lg">
-      <div class="modal-content">
-        <div class="modal-body" id="modal-media-container"></div>
+    <!-- MEDIA MODAL -->
+    <div class="modal fade" id="mediaModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+          <div class="modal-body" id="modal-media-container"></div>
+        </div>
       </div>
     </div>
-  </div>
+  
+
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+    const adItems = document.querySelectorAll(".google-ad-item");
+
+    adItems.forEach(item => {
+
+        const ad = item.querySelector(".adsbygoogle");
+
+        try {
+            (adsbygoogle = window.adsbygoogle || []).push({});
+
+            // Wait briefly for AdSense fill
+            setTimeout(() => {
+
+                // Google injects iframe when filled
+                const hasIframe = ad.querySelector("iframe");
+
+                if (hasIframe) {
+                    item.classList.remove("d-none");
+                }
+
+            }, 1500);
+
+        } catch (e) {
+            console.log("AdSense init error", e);
+        }
+
+    });
+
+});
+</script>
 <style>
-/* BACKDROP */
-.modal-backdrop-layer {
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.55);
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.25s ease;
-    z-index: 1040; /* BELOW Bootstrap modals */
-}
-
-.modal-backdrop-layer.active {
-    opacity: 1;
-    pointer-events: auto;
-}
-
-
-/* MODAL BASE */
-.modal-surface {
-    height: 0;
+.bookmark-google-ad {
     overflow: hidden;
-    transition: height 0.35s ease;
-    z-index: 10000;
-    border-top-left-radius: 18px;
-    border-top-right-radius: 18px;
+    border-radius: 12px;
+    background: #fff;
+    min-height: 100px;
+    padding: 10px;
+    border: 1px solid #e5e7eb;
+}
+ /* =====================================================
+MODAL LAYOUT
+===================================================== */
 
-    /* LIGHT MODE DEFAULT */
-    background: var(--bg-gradient);
-    color: var(--text);
+.modal-surface{
+    display:flex;
+    flex-direction:column;
 }
 
-/* HANDLE */
-.modal-handle {
-    width: 42px;
-    height: 5px;
-    background: #c7c7c7;
-    color: var(--text);
-    border-radius: 10px;
-    margin: 10px auto;
+/* =====================================================
+FIXED HEADER
+===================================================== */
+
+.modal-header-fixed{
+    position:sticky;
+    top:0;
+    z-index:5;
+
+    padding:14px 16px;
+
+    background:inherit;
+
+    border-bottom:1px solid rgba(255,255,255,.08);
+
+    flex-shrink:0;
 }
 
-/* TEXT */
-.modal-title-text {
-    color: inherit;
-    font-weight: 600;
+/* =====================================================
+SCROLLABLE CONTENT
+===================================================== */
+
+#problem-content-wrapper{
+    flex:1;
+    overflow-y:auto;
+
+    padding:16px;
+
+    -webkit-overflow-scrolling:touch;
 }
 
-.modal-body-text {
-    color: inherit;
+/* Optional smoother scrolling */
+#problem-content-wrapper::-webkit-scrollbar{
+    width:6px;
 }
 
-/* 📱 MOBILE FIX */
-@media (max-width: 768px) {
-    .modal-surface {
-        max-height: 80vh; /* almost full screen */
-        border-radius: 16px 16px 0 0;
+#problem-content-wrapper::-webkit-scrollbar-thumb{
+    background:rgba(255,255,255,.18);
+    border-radius:20px;
+} 
+/* =========================================================
+BACKDROP
+========================================================= */
+.modal-backdrop-layer{
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,.55);
+
+    opacity:0;
+    visibility:hidden;
+    pointer-events:none;
+
+    transition:opacity .25s ease;
+
+    z-index:1040;
+}
+
+.modal-backdrop-layer.show{
+    opacity:1;
+    visibility:visible;
+    pointer-events:auto;
+}
+
+/* =========================================================
+MODAL
+========================================================= */
+.modal-surface{
+    position:fixed;
+    left:0;
+    bottom:0;
+    width:100%;
+
+    height:88vh;
+
+    transform:translateY(100%);
+    opacity:0;
+    visibility:hidden;
+    pointer-events:none;
+
+    overflow:hidden;
+
+    transition:
+        transform .35s ease,
+        opacity .25s ease;
+
+    z-index:10000;
+
+    border-radius:18px 18px 0 0;
+
+    background:var(--bg-gradient);
+    color:var(--text);
+
+    will-change:transform;
+}
+
+/* OPEN STATE */
+.modal-surface.show{
+    transform:translateY(0);
+    opacity:1;
+    visibility:visible;
+    pointer-events:auto;
+}
+
+/* =========================================================
+HANDLE
+========================================================= */
+.modal-handle{
+    width:42px;
+    height:5px;
+    border-radius:10px;
+    margin:10px auto;
+    background:#c7c7c7;
+}
+
+/* =========================================================
+TEXT
+========================================================= */
+.modal-title-text{
+    color:inherit;
+    font-weight:600;
+}
+
+.modal-body-text{
+    color:inherit;
+}
+
+/* =========================================================
+MOBILE
+========================================================= */
+@media (max-width:768px){
+
+    .modal-surface{
+        height:88vh;
+        border-radius:16px 16px 0 0;
     }
 }
 
-/* 🌙 DARK MODE */
-@media (prefers-color-scheme: dark) {
-    .modal-surface {
-        background: #111827;
-        border-top: 1px solid rgba(255,255,255,0.08);
+/* =========================================================
+DARK MODE
+========================================================= */
+@media (prefers-color-scheme:dark){
+
+    .modal-surface{
+        background:#111827;
+        border-top:1px solid rgba(255,255,255,.08);
     }
 
-    .modal-backdrop-layer {
-        background: rgba(0,0,0,0.7);
+    .modal-backdrop-layer{
+        background:rgba(0,0,0,.72);
     }
 
-    .modal-handle {
-        background: #4b5563;
+    .modal-handle{
+        background:#4b5563;
     }
 }
 </style>
 <script>
 document.addEventListener("DOMContentLoaded", function () {
 
-  const modal = document.getElementById("problem-modal");
-  const backdrop = document.getElementById("problem-backdrop");
-  const content = document.getElementById("problem-content");
-  const closeBtn = document.getElementById("close-problem");
+    const modal = document.getElementById("problem-modal");
+    const backdrop = document.getElementById("problem-backdrop");
+    const content = document.getElementById("problem-content");
+    const closeBtn = document.getElementById("close-problem");
 
-  let isOpen = false;
+    let isOpen = false;
 
-  // -------------------------
-  // TIME FORMAT
-  // -------------------------
-  const fbTimeSince = (dateString) => {
-    const now = new Date();
-    const past = new Date(dateString);
+    /* =====================================================
+    FORCE INITIAL CLOSED STATE
+    Prevent refresh flash
+    ===================================================== */
+    modal.style.transform = "translateY(100%)";
+    modal.style.opacity = "0";
+    modal.style.visibility = "hidden";
+    modal.style.pointerEvents = "none";
 
-    const seconds = Math.floor((now - past) / 1000);
+    /* =====================================================
+    FACEBOOK STYLE TIME FORMAT
+    ===================================================== */
+    const fbTimeSince = (dateString) => {
 
-    if (seconds < 60) return `${seconds}s ago`;
-    if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
-    if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
-    if (seconds < 604800) return `${Math.floor(seconds / 86400)}d ago`;
+        const now = new Date();
+        const past = new Date(dateString);
 
-    return past.toLocaleDateString(undefined, {
-      month: "short",
-      day: "numeric"
-    });
-  };
+        const seconds = Math.floor((now - past) / 1000);
+        const minutes = Math.floor(seconds / 60);
+        const hours = Math.floor(minutes / 60);
+        const days = Math.floor(hours / 24);
+        const weeks = Math.floor(days / 7);
+        const months = Math.floor(days / 30);
+        const years = Math.floor(days / 365);
 
-  function updateTimes(root = document) {
-    root.querySelectorAll("[data-time]").forEach(el => {
-      el.innerText = fbTimeSince(el.dataset.time);
-    });
-  }
+        if (seconds < 10) return "now";
+        if (seconds < 60) return `${seconds}s`;
+        if (minutes < 60) return `${minutes}m`;
+        if (hours < 24) return `${hours}h`;
+        if (days < 7) return `${days}d`;
+        if (days < 30) return `${weeks}w`;
+        if (days < 365) return `${months}mo`;
 
-  // -------------------------
-  // OPEN MODAL
-  // -------------------------
-  function openModal(url) {
+        return `${years}y`;
+    };
 
-    isOpen = true;
+    function updateTimes(root = document) {
 
-    // prevent background scroll
-    document.body.style.overflow = "hidden";
-    document.body.classList.add("modal-open");
-
-    // show backdrop FIRST
-    backdrop.style.opacity = "1";
-    backdrop.style.pointerEvents = "auto";
-
-    // show modal
-    modal.style.height = "88vh";
-
-    content.innerHTML = "<p>Loading...</p>";
-
-    fetch(url, {
-      headers: { "X-Requested-With": "XMLHttpRequest" }
-    })
-    .then(r => r.text())
-    .then(html => {
-      content.innerHTML = html;
-      updateTimes(content);
-    })
-    .catch(() => {
-      content.innerHTML = "<p>Failed to load content.</p>";
-    });
-  }
-
-  // -------------------------
-  // CLOSE MODAL
-  // -------------------------
-  function closeModal() {
-
-    isOpen = false;
-
-    document.body.style.overflow = "auto";
-    document.body.classList.remove("modal-open");
-
-    modal.style.height = "0";
-
-    backdrop.style.opacity = "0";
-    backdrop.style.pointerEvents = "none";
-  }
-
-  // -------------------------
-  // CLICK HANDLERS
-  // -------------------------
-  document.querySelectorAll("a.problem-link").forEach(link => {
-    link.addEventListener("click", function (e) {
-      e.preventDefault();
-      openModal(this.href);
-    });
-  });
-
-  closeBtn?.addEventListener("click", closeModal);
-  backdrop?.addEventListener("click", closeModal);
-
-  document.addEventListener("keydown", function (e) {
-    if (e.key === "Escape" && isOpen) {
-      closeModal();
+        root.querySelectorAll("[data-time]").forEach(el => {
+            el.innerText = fbTimeSince(el.dataset.time);
+        });
     }
-  });
 
-  updateTimes(document);
+    /* =====================================================
+    OPEN MODAL
+    ===================================================== */
+    function openModal(url) {
+
+        isOpen = true;
+
+        /* LOCK BODY */
+        document.body.style.overflow = "hidden";
+        document.body.classList.add("modal-open");
+
+        /* SHOW BACKDROP */
+        if (backdrop) {
+            backdrop.style.opacity = "1";
+            backdrop.style.visibility = "visible";
+            backdrop.style.pointerEvents = "auto";
+        }
+
+        /* SHOW MODAL */
+        modal.style.transition =
+            "transform .35s ease, opacity .25s ease";
+
+        modal.style.height = "88vh";
+        modal.style.transform = "translateY(0)";
+        modal.style.opacity = "1";
+        modal.style.visibility = "visible";
+        modal.style.pointerEvents = "auto";
+
+        /* LOADING */
+        content.innerHTML = `
+            <div class="text-center py-5">
+                <div class="spinner-border text-info"></div>
+                <p class="mt-3">Loading...</p>
+            </div>
+        `;
+
+        fetch(url, {
+            headers: {
+                "X-Requested-With": "XMLHttpRequest"
+            }
+        })
+        .then(r => r.text())
+        .then(html => {
+
+            content.innerHTML = html;
+
+            updateTimes(content);
+
+            initSafeLinks();
+        })
+        .catch(() => {
+
+            content.innerHTML = `
+                <div class="text-center py-5 text-danger">
+                    Failed to load content.
+                </div>
+            `;
+        });
+    }
+
+    /* =====================================================
+    CLOSE MODAL
+    ===================================================== */
+    function closeModal() {
+
+        isOpen = false;
+
+        document.body.style.overflow = "auto";
+        document.body.classList.remove("modal-open");
+
+        /* HIDE MODAL */
+        modal.style.transform = "translateY(100%)";
+        modal.style.opacity = "0";
+        modal.style.pointerEvents = "none";
+
+        setTimeout(() => {
+
+            modal.style.visibility = "hidden";
+            modal.style.height = "0";
+
+        }, 350);
+
+        /* HIDE BACKDROP */
+        if (backdrop) {
+            backdrop.style.opacity = "0";
+            backdrop.style.visibility = "hidden";
+            backdrop.style.pointerEvents = "none";
+        }
+    }
+
+    /* =====================================================
+    OPEN HANDLERS
+    ===================================================== */
+    document.querySelectorAll("a.problem-link").forEach(link => {
+
+        link.addEventListener("click", function (e) {
+
+            e.preventDefault();
+
+            openModal(this.href);
+        });
+    });
+
+    /* =====================================================
+    CLOSE HANDLERS
+    ===================================================== */
+    closeBtn?.addEventListener("click", closeModal);
+
+    backdrop?.addEventListener("click", closeModal);
+
+    document.addEventListener("keydown", function (e) {
+
+        if (e.key === "Escape" && isOpen) {
+            closeModal();
+        }
+    });
+
+    updateTimes(document);
 
 });
+
+/* =====================================================
+SAFE EXTERNAL LINKS
+===================================================== */
+
+function showLinkWarning(url) {
+
+    document.getElementById("warn-url").innerText = url;
+
+    document.getElementById("confirmLink").href = url;
+
+    const modal = new bootstrap.Modal(
+        document.getElementById("linkWarningModal")
+    );
+
+    modal.show();
+}
+
+function initSafeLinks() {
+
+    document.querySelectorAll(".safe-link").forEach(link => {
+
+        if (link.dataset.bound) return;
+
+        link.dataset.bound = "true";
+
+        link.addEventListener("click", function (e) {
+
+            e.preventDefault();
+
+            showLinkWarning(this.href);
+        });
+    });
+}
+
+document.addEventListener("DOMContentLoaded", initSafeLinks);
+
+/* =====================================================
+EVENT DELEGATION
+Works for dynamically loaded content
+===================================================== */
+document.addEventListener("click", function (e) {
+
+    const link = e.target.closest(".safe-link");
+
+    if (!link) return;
+
+    e.preventDefault();
+
+    showLinkWarning(link.href);
+});
 </script>
+
+
 <script>
 document.addEventListener("DOMContentLoaded", function () {
   const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
@@ -1215,100 +1626,400 @@ document.querySelectorAll(".vote-btn").forEach(btn => {
 
 
 
-  // -------------------------
-  // TIME FORMAT (FB STYLE)
-  // -------------------------
-  const fbTimeSince = dateString => {
-    const now = new Date();
-    const past = new Date(dateString);
-    const seconds = Math.floor((now - past)/1000);
-    if (seconds < 60) return `${seconds}s ago`;
-    if (seconds < 3600) return `${Math.floor(seconds/60)}m ago`;
-    if (seconds < 86400) return `${Math.floor(seconds/3600)}h ago`;
-    if (seconds < 604800) return `${Math.floor(seconds/86400)}d ago`;
-    return past.toLocaleDateString(undefined, { month: "short", day: "numeric" });
-  };
-  document.querySelectorAll("[data-time]").forEach(el => el.innerText = fbTimeSince(el.dataset.time));
+const fbTimeSince = (dateString) => {
+
+  const now = new Date();
+  const past = new Date(dateString);
+
+  const seconds = Math.floor((now - past) / 1000);
+  const minutes = Math.floor(seconds / 60);
+  const hours = Math.floor(minutes / 60);
+  const days = Math.floor(hours / 24);
+  const weeks = Math.floor(days / 7);
+  const months = Math.floor(days / 30);
+  const years = Math.floor(days / 365);
+
+  if (seconds < 10) return "now";
+  if (seconds < 60) return `${seconds}s`;
+  if (minutes < 60) return `${minutes}m`;
+  if (hours < 24) return `${hours}h`;
+  if (days < 7) return `${days}d`;
+  if (days < 30) return `${weeks}w`;
+  if (days < 365) return `${months}mo`;
+  if (years < 10) return `${years}y`;
+
+  // fallback for very old dates
+  return past.toLocaleDateString(undefined, {
+    year: "numeric",
+    month: "short",
+    day: "numeric"
+  });
+};
+
+// APPLY
+document.querySelectorAll("[data-time]").forEach(el => {
+  el.innerText = fbTimeSince(el.dataset.time);
+});
+
+// -------------------------
+
+// CYCLIC INFINITE FEED (NO CLONING)
+
+// -------------------------
+
+
+
+let isLoading = false;
+
+let initialized = false;
+
+
+
+const problemsContainer = document.getElementById("problems-container");
+
+
+
+// We keep a fixed dataset in memory
+
+let allCards = [];
+
+
+
+// How many items move per scroll
+
+const BATCH_SIZE = 5;
+
 
 
 // -------------------------
-  // INFINITE SCROLL / AUTOLOAD
-  // -------------------------
-  let currentPage = 1;        // Tracks current page
-  let isLoading = false;      // Prevent duplicate fetches
-  const problemsContainer = document.getElementById("problems-container");
 
-  const loadNextPage = async () => {
-    if (isLoading) return;
-    isLoading = true;
-    currentPage++;
+// INIT (FETCH ONCE ONLY)
 
-    try {
-      const res = await fetch(`/problems?page=${currentPage}`);
-      if (!res.ok) return;
+// -------------------------
 
-      const html = await res.text(); 
-      const tempDiv = document.createElement("div");
-      tempDiv.innerHTML = html;
-      const newCards = Array.from(tempDiv.querySelectorAll(".problem-card"));
+const initFeed = async () => {
 
-      // Append new cards
-      newCards.forEach(card => {
-        problemsContainer.appendChild(card);
-      });
+  if (initialized) return;
 
-      // Format timestamps for new cards
-      newCards.forEach(card => {
-        card.querySelectorAll("[data-time]").forEach(el => {
-          el.innerText = fbTimeSince(el.dataset.time);
-        });
-      });
+  initialized = true;
 
-      // Re-initialize vote buttons, save buttons, media, etc.
-      newCards.forEach(card => {
-        card.querySelectorAll(".vote-btn").forEach(btn => {
-          btn.addEventListener("click", () => handleVote(btn));
-        });
-        card.querySelectorAll(".save-btn").forEach(btn => {
-          btn.addEventListener("click", async () => {
-            const problemId = btn.dataset.id;
-            const textSpan = btn.querySelector(".save-text");
-            const icon = btn.querySelector("i");
-            try {
-              const res = await fetch(`/problems/${problemId}/save/`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json", "X-CSRFToken": csrfToken }
-              });
-              const data = await res.json();
-              if (data.status === "saved") {
-                textSpan.textContent = "Saved";
-                icon.classList.add("active");
-              } else {
-                textSpan.textContent = "Save";
-                icon.classList.remove("active");
-              }
-            } catch(err) { console.error(err); }
-          });
-        });
-        card.querySelectorAll(".clickable-media, .answer-media").forEach(disableMediaDownload);
-      });
 
-      // Re-sort answers for all cards
-      sortAllProblemAnswers();
 
-    } catch(err) {
-      console.error("Failed to load next page:", err);
-    } finally {
-      isLoading = false;
-    }
-  };
+  try {
 
-  // Detect when user scrolls near bottom (200px from bottom)
-  window.addEventListener("scroll", () => {
-    if ((window.innerHeight + window.scrollY) >= (document.body.offsetHeight - 200)) {
-      loadNextPage();
-    }
+    const res = await fetch(`/problems`);
+
+    if (!res.ok) return;
+
+
+
+    const html = await res.text();
+
+
+
+    const tempDiv = document.createElement("div");
+
+    tempDiv.innerHTML = html;
+
+
+
+    allCards = Array.from(tempDiv.querySelectorAll(".problem-card"));
+
+
+
+    // initialize all logic once
+
+    initCards(allCards);
+
+
+
+    // mount initial batch
+
+    renderInitial();
+
+
+
+  } catch (err) {
+
+    console.error("Init feed failed:", err);
+
+  }
+
+};
+
+
+
+const renderInitial = () => {
+
+  const first = allCards.slice(0, 10);
+
+
+
+  first.forEach(card => {
+
+    problemsContainer.appendChild(card);
+
   });
+
+};
+
+
+
+const rotateFeed = () => {
+
+  if (isLoading) return;
+
+
+
+  isLoading = true;
+
+
+
+  const currentCards = Array.from(
+
+    problemsContainer.querySelectorAll(".problem-card")
+
+  );
+
+
+
+  const toMove = currentCards.slice(0, BATCH_SIZE);
+
+
+
+  // Move DOM nodes from top → bottom (NO CLONING)
+
+  toMove.forEach(card => {
+
+    problemsContainer.appendChild(card);
+
+  });
+
+
+
+  isLoading = false;
+
+};
+
+
+
+
+
+window.addEventListener("scroll", () => {
+
+  const nearBottom =
+
+    window.innerHeight + window.scrollY >=
+
+    document.body.offsetHeight - 200;
+
+
+
+  if (nearBottom) {
+
+    rotateFeed();
+
+  }
+
+});
+
+
+
+
+
+function initCards(cards) {
+
+  cards.forEach(card => {
+
+
+
+    // timestamps
+
+    card.querySelectorAll("[data-time]").forEach(el => {
+
+      el.innerText = fbTimeSince(el.dataset.time);
+
+    });
+
+
+
+    // votes
+
+    card.querySelectorAll(".vote-btn").forEach(btn => {
+
+      if (btn.dataset.bound === "1") return;
+
+      btn.dataset.bound = "1";
+
+
+
+      btn.addEventListener("click", () => handleVote(btn));
+
+    });
+
+
+
+    // save button
+
+    card.querySelectorAll(".save-btn").forEach(btn => {
+
+      if (btn.dataset.bound === "1") return;
+
+      btn.dataset.bound = "1";
+
+
+
+      btn.addEventListener("click", async () => {
+
+        const problemId = btn.dataset.id;
+
+
+
+        try {
+
+          const res = await fetch(`/problems/${problemId}/save/`, {
+
+            method: "POST",
+
+            headers: {
+
+              "Content-Type": "application/json",
+
+              "X-CSRFToken": csrfToken
+
+            }
+
+          });
+
+
+
+          const data = await res.json();
+
+
+
+          const textSpan = btn.querySelector(".save-text");
+
+          const icon = btn.querySelector("i");
+
+
+
+          if (data.status === "saved") {
+
+            textSpan.textContent = "Saved";
+
+            icon.classList.add("active");
+
+          } else {
+
+            textSpan.textContent = "Save";
+
+            icon.classList.remove("active");
+
+          }
+
+
+
+        } catch (err) {
+
+          console.error(err);
+
+        }
+
+      });
+
+    });
+
+
+
+    // media protection
+
+    card.querySelectorAll(".clickable-media, .answer-media")
+
+      .forEach(disableMediaDownload);
+
+
+
+    // ads
+
+    initAds(card);
+
+  });
+
+}
+
+
+
+
+
+function initAds(root = document) {
+
+
+
+  root.querySelectorAll("[id^='adsPlaceholder-']").forEach(el => {
+
+
+
+    if (el.dataset.loaded === "1") return;
+
+    el.dataset.loaded = "1";
+
+
+
+    const problemId = el.dataset.problemId;
+
+    if (!problemId) return;
+
+
+
+    requestAnimationFrame(() => {
+
+
+
+      fetch(`/ads/${problemId}/`)
+
+        .then(res => res.json())
+
+        .then(data => {
+
+
+
+          if (!data.success || !data.html?.trim()) {
+
+            el.remove();
+
+            return;
+
+          }
+
+
+
+          el.innerHTML = data.html;
+
+
+
+          initAdsCarousel(el);
+
+        })
+
+        .catch(() => el.remove());
+
+
+
+    });
+
+  });
+
+}
+
+
+
+
+
+
+
+initFeed();
+
+
 
 const bookmarkPanel = document.getElementById("bookmarkPanel");
 const toggleBtn = document.getElementById("sidebarToggle");
@@ -1431,19 +2142,136 @@ function getCSRFToken() {
 </script>
 
 <script>
-document.querySelectorAll("[id^='adsPlaceholder-']").forEach(el => {
-    const problemId = el.dataset.problemId;
-    if (!problemId) return;
+// =====================================================
+// IMAGE DETECTION
+// =====================================================
+function isImage(url) {
+    if (!url) return false;
 
-    fetch(`/ads/${problemId}/`)
-        .then(res => res.text())
-        .then(html => {
-            el.innerHTML = html;
-            if (window.adsbygoogle) (adsbygoogle = window.adsbygoogle || []).push({});
-        });
+    const cleanUrl = url.split("?")[0].toLowerCase();
+
+    const imageExts = [
+        ".jpg", ".jpeg", ".png", ".webp",
+        ".gif", ".bmp", ".svg", ".avif"
+    ];
+
+    if (imageExts.some(ext => cleanUrl.endsWith(ext))) return true;
+
+    if (
+        cleanUrl.includes("image") ||
+        cleanUrl.includes("cdn") ||
+        cleanUrl.includes("media")
+    ) return true;
+
+    return false;
+}
+
+
+// =====================================================
+// CAROUSEL (SAFE + NO MEMORY LEAK VERSION)
+// =====================================================
+function initAdsCarousel(root) {
+
+    const container = root.querySelector(".problem-ads");
+    if (!container) return;
+
+    let slides = Array.from(container.querySelectorAll(".ad-horizontal"));
+
+    // filter only images
+    slides = slides.filter(slide => {
+        const img = slide.querySelector("img");
+        const src = img?.getAttribute("src") || "";
+        return isImage(src);
+    });
+
+    if (slides.length <= 1) return;
+
+    let index = 0;
+    let interval = null;
+
+    function shuffle(arr) {
+        for (let i = arr.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [arr[i], arr[j]] = [arr[j], arr[i]];
+        }
+        return arr;
+    }
+
+    function render() {
+        container.innerHTML = "";
+        slides.forEach(s => container.appendChild(s));
+    }
+
+    function slide() {
+        index++;
+
+        if (index >= slides.length) {
+            index = 0;
+            slides = shuffle(slides);
+            render();
+        }
+
+        const width = slides[0].offsetWidth;
+        container.style.transform = `translateX(-${index * width}px)`;
+    }
+
+    slides = shuffle(slides);
+    render();
+
+    interval = setInterval(slide, 4000);
+
+    // prevent memory leaks on re-init
+    root.addEventListener("mouseenter", () => clearInterval(interval));
+    root.addEventListener("mouseleave", () => {
+        interval = setInterval(slide, 4000);
+    });
+}
+
+
+// =====================================================
+// MAIN ADS LOADER (FIXED FOR INFINITE SCROLL)
+// =====================================================
+function loadAdsIn(root = document) {
+
+    root.querySelectorAll("[id^='adsPlaceholder-']").forEach(el => {
+
+        // prevent duplicate loading
+        if (el.dataset.loaded === "1") return;
+        el.dataset.loaded = "1";
+
+        const problemId = el.dataset.problemId;
+        if (!problemId) return;
+
+        fetch(`/ads/${problemId}/`)
+            .then(res => res.json())
+            .then(data => {
+
+                if (!data.success || !data.html?.trim()) {
+                    el.remove();
+                    return;
+                }
+
+                el.innerHTML = data.html;
+
+                // wait for DOM paint BEFORE carousel init
+                requestAnimationFrame(() => {
+                    initAdsCarousel(el);
+                });
+            })
+            .catch(() => {
+                el.remove();
+            });
+    });
+}
+
+
+// =====================================================
+// INITIAL LOAD
+// =====================================================
+document.addEventListener("DOMContentLoaded", () => {
+    loadAdsIn(document);
 });
 </script>
-
 
 <style>
 
@@ -1481,7 +2309,6 @@ BOOKMARK PANEL (DESKTOP)
   border-radius: 10px;
   background: var(--card);
 
-  box-shadow: 0 3px 10px rgba(0,0,0,0.08);
 
   font-size: clamp(0.9rem,1vw,1rem);
 }
@@ -1548,7 +2375,6 @@ MOBILE BOOKMARK PANEL
     background: var(--card);
     border-left: 1px solid #ddd;
 
-    box-shadow: -4px 0 15px rgba(0,0,0,0.15);
 
     z-index: 2000;
 
@@ -1688,148 +2514,231 @@ Extra compact fields - fully responsive
   }
 }
 
+.problem-title .open-detail-icon{
+    opacity:0;
+}
+
+.problem-title:hover .open-detail-icon{
+    opacity:1;
+}
+
 </style>
 
 <script>
 document.addEventListener("DOMContentLoaded", () => {
+
   const container = document.getElementById("trendingStories");
   const leftBtn = document.getElementById("scrollLeft");
   const rightBtn = document.getElementById("scrollRight");
 
-  const scrollAmount = 220; // card width + gap
-  const autoScrollDelay = 3500;
+  if (!container) return;
 
-  let autoScroll;
+  const scrollAmount = 220;
+  const autoScrollSpeed = 1; // smooth continuous speed
+
   let isDragging = false;
-  let startX;
-  let scrollLeft;
+  let startX = 0;
+  let startScroll = 0;
 
-  // =============================
-  // 🔁 INFINITE LOOP (CLONE EDGES)
-  // =============================
-  const items = Array.from(container.children);
+  /* =====================================================
+     PREPARE ORIGINAL ITEMS
+  ===================================================== */
 
-  items.forEach(item => {
-    const cloneStart = item.cloneNode(true);
-    const cloneEnd = item.cloneNode(true);
+  const originalItems = Array.from(container.children);
 
-    container.appendChild(cloneStart);
-    container.insertBefore(cloneEnd, container.firstChild);
-  });
+  if (!originalItems.length) return;
 
-  // Reset scroll to middle
-  container.scrollLeft = container.scrollWidth / 3;
+  // 🔥 randomize once for mixed feeling
+  const shuffled = [...originalItems].sort(() => Math.random() - 0.5);
 
-  // =============================
-  // ▶️ BUTTON CONTROLS
-  // =============================
-  function scrollNext() {
-    container.scrollBy({ left: scrollAmount, behavior: "smooth" });
+  // clear original
+  container.innerHTML = "";
+
+  // create multiple loops
+  for (let i = 0; i < 6; i++) {
+
+    shuffled.forEach(item => {
+
+      const clone = item.cloneNode(true);
+
+      // prevent duplicate ids
+      clone.querySelectorAll("[id]").forEach(el => {
+        el.removeAttribute("id");
+      });
+
+      container.appendChild(clone);
+    });
   }
 
-  function scrollPrev() {
-    container.scrollBy({ left: -scrollAmount, behavior: "smooth" });
-  }
+  /* =====================================================
+     START IN MIDDLE
+  ===================================================== */
 
-  rightBtn.addEventListener("click", scrollNext);
-  leftBtn.addEventListener("click", scrollPrev);
+  const sectionWidth = container.scrollWidth / 3;
+  container.scrollLeft = sectionWidth;
 
-  // =============================
-  // 🔁 AUTO SCROLL
-  // =============================
-  function startAutoScroll() {
-    autoScroll = setInterval(scrollNext, autoScrollDelay);
-  }
+  /* =====================================================
+     PERFECT INFINITE LOOP
+  ===================================================== */
 
-  function stopAutoScroll() {
-    clearInterval(autoScroll);
-  }
+  function maintainInfiniteLoop() {
 
-  container.addEventListener("mouseenter", stopAutoScroll);
-  container.addEventListener("mouseleave", startAutoScroll);
-
-  // =============================
-  // 🖐️ DRAG / SWIPE SUPPORT
-  // =============================
-  container.addEventListener("mousedown", (e) => {
-    isDragging = true;
-    startX = e.pageX - container.offsetLeft;
-    scrollLeft = container.scrollLeft;
-    container.style.cursor = "grabbing";
-  });
-
-  container.addEventListener("mouseleave", () => {
-    isDragging = false;
-    container.style.cursor = "grab";
-  });
-
-  container.addEventListener("mouseup", () => {
-    isDragging = false;
-    container.style.cursor = "grab";
-  });
-
-  container.addEventListener("mousemove", (e) => {
-    if (!isDragging) return;
-    e.preventDefault();
-    const x = e.pageX - container.offsetLeft;
-    const walk = (x - startX) * 1.5;
-    container.scrollLeft = scrollLeft - walk;
-  });
-
-  // =============================
-  // 📱 TOUCH SUPPORT (MOBILE)
-  // =============================
-  container.addEventListener("touchstart", (e) => {
-    startX = e.touches[0].pageX;
-    scrollLeft = container.scrollLeft;
-  });
-
-  container.addEventListener("touchmove", (e) => {
-    const x = e.touches[0].pageX;
-    const walk = (x - startX) * 1.5;
-    container.scrollLeft = scrollLeft - walk;
-  });
-
-  // =============================
-  // ♻️ LOOP RESET (INFINITE FEEL)
-  // =============================
-  container.addEventListener("scroll", () => {
     const maxScroll = container.scrollWidth;
     const current = container.scrollLeft;
 
-    if (current <= scrollAmount) {
-      container.scrollLeft = maxScroll / 3;
-    } else if (current >= maxScroll - scrollAmount) {
-      container.scrollLeft = maxScroll / 3;
+    // 🔥 jump invisibly
+    if (current <= sectionWidth * 0.5) {
+      container.scrollLeft += sectionWidth;
     }
+
+    else if (current >= maxScroll - sectionWidth * 0.5) {
+      container.scrollLeft -= sectionWidth;
+    }
+  }
+
+  /* =====================================================
+     CONTINUOUS AUTO SCROLL
+  ===================================================== */
+
+  let animationFrame;
+
+  function autoScroll() {
+
+    if (!isDragging) {
+      container.scrollLeft += autoScrollSpeed;
+      maintainInfiniteLoop();
+    }
+
+    animationFrame = requestAnimationFrame(autoScroll);
+  }
+
+  autoScroll();
+
+  /* =====================================================
+     BUTTONS
+  ===================================================== */
+
+  function smoothScroll(direction = 1) {
+
+    container.scrollBy({
+      left: scrollAmount * direction,
+      behavior: "smooth"
+    });
+  }
+
+  rightBtn?.addEventListener("click", () => {
+    smoothScroll(1);
   });
 
-  // =============================
-  // 🎬 VIDEO AUTO-PLAY FIX
-  // =============================
+  leftBtn?.addEventListener("click", () => {
+    smoothScroll(-1);
+  });
+
+  /* =====================================================
+     DRAG DESKTOP
+  ===================================================== */
+
+  container.addEventListener("mousedown", (e) => {
+
+    isDragging = true;
+
+    startX = e.pageX;
+    startScroll = container.scrollLeft;
+
+    container.style.cursor = "grabbing";
+  });
+
+  window.addEventListener("mouseup", () => {
+
+    isDragging = false;
+    container.style.cursor = "grab";
+  });
+
+  window.addEventListener("mousemove", (e) => {
+
+    if (!isDragging) return;
+
+    e.preventDefault();
+
+    const walk = (e.pageX - startX) * 1.5;
+
+    container.scrollLeft = startScroll - walk;
+
+    maintainInfiniteLoop();
+  });
+
+  /* =====================================================
+     TOUCH MOBILE
+  ===================================================== */
+
+  container.addEventListener("touchstart", (e) => {
+
+    isDragging = true;
+
+    startX = e.touches[0].pageX;
+    startScroll = container.scrollLeft;
+  }, { passive: true });
+
+  container.addEventListener("touchmove", (e) => {
+
+    const walk = (e.touches[0].pageX - startX) * 1.5;
+
+    container.scrollLeft = startScroll - walk;
+
+    maintainInfiniteLoop();
+
+  }, { passive: true });
+
+  container.addEventListener("touchend", () => {
+    isDragging = false;
+  });
+
+  /* =====================================================
+     VIDEO AUTOPLAY
+  ===================================================== */
+
   function handleVideos() {
+
     const videos = container.querySelectorAll("video");
 
     videos.forEach(video => {
-      video.pause();
 
       const rect = video.getBoundingClientRect();
-      const inView = rect.left >= 0 && rect.right <= window.innerWidth;
 
-      if (inView) {
+      const visible =
+        rect.left < window.innerWidth &&
+        rect.right > 0;
+
+      if (visible) {
+
         video.play().catch(() => {});
+
+      } else {
+
+        video.pause();
       }
     });
   }
 
   container.addEventListener("scroll", handleVideos);
 
-  // =============================
-  // 🚀 INIT
-  // =============================
+  /* =====================================================
+     PERFORMANCE
+  ===================================================== */
+
+  container.style.scrollBehavior = "auto";
   container.style.cursor = "grab";
-  startAutoScroll();
+
   handleVideos();
+
+  /* =====================================================
+     CLEANUP
+  ===================================================== */
+
+  window.addEventListener("beforeunload", () => {
+    cancelAnimationFrame(animationFrame);
+  });
+
 });
 </script>
 {% endblock %}

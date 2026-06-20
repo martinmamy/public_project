@@ -1,0 +1,708 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Find Experts | Fancylearn{% endblock %}
+
+{% block content %}
+
+<style>
+/* =========================
+   MODERN UI STYLES
+========================= */
+
+.page-wrapper {
+    max-width: 1100px;
+    margin: auto;
+}
+
+.form-select-lg,
+.form-control-lg {
+    font-size: clamp(13px, 1vw, 16px);
+    padding: 10px 12px;
+    height: auto;
+}
+.hero-title {
+    font-size: clamp(18px, 2.2vw, 28px);
+    line-height: 1.2;
+}
+
+.glass-card {
+    background: rgba(255,255,255,0.85);
+    backdrop-filter: blur(10px);
+    border-radius: 16px;
+    border: 1px solid #eee;
+}
+
+.filter-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: #666;
+}
+
+.loading-state {
+    text-align: center;
+    padding: 40px;
+    color: #888;
+}
+
+.disabled-overlay {
+    opacity: 0.5;
+    pointer-events: none;
+}
+</style>
+  <div class="alert alert-warning border-0 rounded-4 mt-3"
+      style="background: linear-gradient(135deg, #fff3cd, #ffe8a1); backdrop-filter: blur(6px);">
+
+    <div class="d-flex align-items-start gap-3">
+      
+      <div class="fs-4">⚠️</div>
+
+      <div>
+        <h6 class="fw-bold mb-1">Transparency Notice</h6>
+
+        <p class="mb-2 small">
+          FancyLearn connects you with independent experts. We <strong>do not</strong> manage or take responsibility for sessions, outcomes, or interactions between users and experts.
+        </p>
+
+        <p class="mb-2 small">
+          We also <strong>do not</strong> process or handle any payments or transactions made outside the platform. Any agreements are strictly between you and the expert.
+        </p>
+
+        <a href="{% url 'transparent_info' %}"
+          data-spa-link
+          class="fw-semibold text-decoration-none">
+          📖 Read full transparency & guidelines
+        </a>
+      </div>
+
+    </div>
+  </div>
+<div id="page-content" class="container mt-5 page-wrapper">
+
+  <!-- FILTERS -->
+  <div class="glass-card p-4 mb-4">
+
+    <h3 class="text-center">🔍 Find Experts Instantly</h3>
+    <p class="text-center">Live availability • Smart matching • Location-based results</p>
+  
+
+    <div class="row g-2 flex-wrap align-items-end">
+
+      <!-- STATUS -->
+      <div class="col-12 col-sm-6 col-md-3">
+        <label class="filter-label">Availability</label>
+        <select id="status" class="form-select form-select-lg">
+          <option value="">Anyone</option>
+          <option value="offline">🔴 Offline</option>
+          <option value="online">🟢 Available now</option>
+          <option value="later">🟡 Available later</option>
+        </select>
+      </div>
+
+      <!-- REASON -->
+      <div class="col-12 col-sm-6 col-md-3">
+        <label class="filter-label">Activity</label>
+        <select id="reason" class="form-select form-select-lg">
+          <option value="">Any</option>
+          <option value="fix_bug">🐞 Fixbug</option>
+          <option value="consultation">💬 Consultation</option>
+          <option value="session">🎯 Session</option>
+        </select>
+      </div>
+
+      <!-- MODE -->
+      <div class="col-12 col-sm-6 col-md-3">
+        <label class="filter-label">Mode</label>
+        <select id="mode" class="form-select form-select-lg">
+          <option value="">Any</option>
+          <option value="remote">🌍 Remote</option>
+          <option value="onsite">📍 Onsite</option>
+        </select>
+      </div>
+
+      <!-- LOCATION -->
+      <div class="col-12 col-sm-6 col-md-3">
+        <label class="filter-label">Location</label>
+        <input id="location"
+               class="form-control form-control-lg"
+               placeholder="Auto-detected"
+               disabled>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- RESULTS -->
+  <div id="results">
+
+    <div class="loading-state">
+      Loading experts...
+    </div>
+
+  </div>
+
+</div>
+
+
+<!-- =========================
+     CONTACT EXCHANGE NOTICE
+========================= -->
+<div class="modal fade" id="contactExchangeModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    
+    <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+
+      <!-- HEADER -->
+      <div class="p-4 text-white"
+           style="background:linear-gradient(135deg,#2563eb,#1e40af);">
+
+        <div class="d-flex align-items-center gap-3">
+
+          <div style="
+              width:52px;
+              height:52px;
+              border-radius:16px;
+              background:rgba(255,255,255,0.15);
+              display:flex;
+              align-items:center;
+              justify-content:center;
+              font-size:24px;
+          ">
+            🤝
+          </div>
+
+          <div>
+            <h5 class="mb-1 fw-bold">
+              Contact Exchange Notice
+            </h5>
+
+            <div class="small text-light opacity-75">
+              Important information before starting a session
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- BODY -->
+      <div class="p-4">
+
+        <div class="alert alert-info border-0 rounded-4 mb-4"
+             style="background:#eff6ff;">
+
+          <div class="d-flex gap-3">
+
+            <div class="fs-4">
+              ℹ️
+            </div>
+
+            <div>
+
+              <p class="mb-2">
+                To help sessions take place smoothly, 
+                <strong>contact details may be exchanged</strong> 
+                between you and the expert after a booking or connection request is accepted.
+              </p>
+
+              <p class="mb-0 text-muted small">
+                This may include communication methods such as email,
+                meeting links, or other session coordination details.
+              </p>
+
+            </div>
+
+          </div>
+
+        </div>
+
+        <!-- SAFETY -->
+        <div class="rounded-4 p-3"
+             style="background:#f8fafc;border:1px solid #e5e7eb;">
+
+          <div class="fw-semibold mb-2">
+            🔒 Safety Reminder
+          </div>
+
+          <ul class="small text-muted mb-0 ps-3">
+            <li>Only share information necessary for the session.</li>
+            <li>Be cautious with personal or financial information.</li>
+            <li>Report suspicious behavior immediately.</li>
+          </ul>
+
+        </div>
+
+      </div>
+
+      <!-- FOOTER -->
+      <div class="px-4 pb-4">
+
+        <button type="button"
+                class="btn btn-primary w-100 rounded-pill py-2"
+                data-bs-dismiss="modal">
+
+          I Understand
+
+        </button>
+
+      </div>
+
+    </div>
+
+  </div>
+</div>
+
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+
+    // show once per browser session
+    if (!sessionStorage.getItem("contactExchangeNoticeShown")) {
+
+        const modal =
+            new bootstrap.Modal(
+                document.getElementById("contactExchangeModal")
+            );
+
+        modal.show();
+
+        sessionStorage.setItem(
+            "contactExchangeNoticeShown",
+            "true"
+        );
+    }
+});
+</script>
+
+
+
+<style>
+
+/* =========================================
+   CONTACT EXCHANGE MODAL
+========================================= */
+
+#contactExchangeModal {
+    z-index: 99999;
+}
+
+#contactExchangeModal .modal-dialog {
+
+    max-width: 540px;
+
+    /* 🔥 pushes below sticky navbar */
+    margin-top: 90px;
+
+    /* centered horizontally */
+    margin-left: auto;
+    margin-right: auto;
+
+    /* smooth spacing */
+    padding: 0 14px;
+}
+
+/* =========================================
+   CONTENT
+========================================= */
+
+#contactExchangeModal .modal-content {
+    border-radius: 24px;
+    overflow: hidden;
+    background: #fff;
+    border: none;
+
+    box-shadow:
+        0 20px 50px rgba(0,0,0,0.15),
+        0 4px 12px rgba(0,0,0,0.08);
+}
+
+/* =========================================
+   HEADER
+========================================= */
+
+#contactExchangeModal .modal-header-area {
+    padding: 1.4rem;
+}
+
+#contactExchangeModal .icon-box {
+
+    width: 54px;
+    height: 54px;
+    min-width: 54px;
+
+    border-radius: 16px;
+
+    background: rgba(255,255,255,0.15);
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    font-size: 24px;
+}
+
+/* =========================================
+   BODY
+========================================= */
+
+#contactExchangeModal .modal-body {
+    padding: 1.4rem;
+}
+
+#contactExchangeModal h5 {
+    font-size: 20px;
+    line-height: 1.3;
+}
+
+#contactExchangeModal p,
+#contactExchangeModal li {
+    font-size: 14px;
+    line-height: 1.7;
+    color: #475569;
+}
+
+#contactExchangeModal ul {
+    padding-left: 1rem;
+}
+
+#contactExchangeModal p,
+#contactExchangeModal li {
+    word-break: break-word;
+}
+
+/* =========================================
+   FOOTER
+========================================= */
+
+#contactExchangeModal .modal-footer {
+    padding: 1.2rem 1.4rem;
+}
+
+#contactExchangeModal .btn {
+    min-height: 48px;
+    font-weight: 600;
+    border-radius: 14px;
+}
+
+/* =========================================
+   LARGE TABLETS
+========================================= */
+
+@media (max-width: 992px) {
+
+    #contactExchangeModal .modal-dialog {
+        max-width: 92%;
+        margin-top: 100px;
+    }
+
+    #contactExchangeModal h5 {
+        font-size: 18px;
+    }
+
+    #contactExchangeModal p,
+    #contactExchangeModal li {
+        font-size: 13px;
+    }
+}
+
+/* =========================================
+   TABLETS
+========================================= */
+
+@media (max-width: 768px) {
+
+    #contactExchangeModal .modal-dialog {
+
+        max-width: 95%;
+
+        /* 🔥 more navbar clearance */
+        margin-top: 110px;
+
+        padding: 0 10px;
+    }
+
+    #contactExchangeModal .modal-header-area,
+    #contactExchangeModal .modal-body,
+    #contactExchangeModal .modal-footer {
+        padding: 1.1rem;
+    }
+
+    #contactExchangeModal .icon-box {
+
+        width: 48px;
+        height: 48px;
+        min-width: 48px;
+
+        border-radius: 14px;
+
+        font-size: 21px;
+    }
+
+    #contactExchangeModal h5 {
+        font-size: 17px;
+    }
+
+    #contactExchangeModal p,
+    #contactExchangeModal li {
+        font-size: 13px;
+        line-height: 1.65;
+    }
+
+    #contactExchangeModal .btn {
+        font-size: 14px;
+    }
+}
+
+/* =========================================
+   MOBILE
+========================================= */
+
+@media (max-width: 576px) {
+
+    #contactExchangeModal .modal-dialog {
+
+        max-width: 96%;
+
+        /* 🔥 avoids hiding behind nav */
+        margin-top: 120px;
+
+        padding: 0 8px;
+    }
+
+    #contactExchangeModal .modal-content {
+        border-radius: 22px;
+    }
+
+    #contactExchangeModal .modal-header-area,
+    #contactExchangeModal .modal-body,
+    #contactExchangeModal .modal-footer {
+        padding: 1rem;
+    }
+
+    #contactExchangeModal .icon-box {
+
+        width: 44px;
+        height: 44px;
+        min-width: 44px;
+
+        border-radius: 13px;
+
+        font-size: 18px;
+    }
+
+    #contactExchangeModal h5 {
+        font-size: 16px;
+    }
+
+    #contactExchangeModal p,
+    #contactExchangeModal li,
+    #contactExchangeModal .small {
+        font-size: 12.5px !important;
+        line-height: 1.65;
+    }
+
+    #contactExchangeModal .btn {
+        width: 100%;
+        font-size: 13px;
+        min-height: 44px;
+    }
+}
+
+/* =========================================
+   EXTRA SMALL DEVICES
+========================================= */
+
+@media (max-width: 360px) {
+
+    #contactExchangeModal .modal-dialog {
+        margin-top: 130px;
+    }
+
+    #contactExchangeModal .icon-box {
+
+        width: 40px;
+        height: 40px;
+        min-width: 40px;
+
+        font-size: 16px;
+    }
+
+    #contactExchangeModal h5 {
+        font-size: 14px;
+    }
+
+    #contactExchangeModal p,
+    #contactExchangeModal li {
+        font-size: 11.5px !important;
+    }
+
+    #contactExchangeModal .btn {
+        font-size: 12px;
+    }
+}
+
+</style>
+
+<script>
+
+let userCountry = null;
+let locationAllowed = false;
+
+/* =========================================================
+   DEBOUNCE (INPUT ONLY)
+========================================================= */
+function debounce(fn, delay = 200) {
+    let t;
+    return (...args) => {
+        clearTimeout(t);
+        t = setTimeout(() => fn(...args), delay);
+    };
+}
+
+/* =========================================================
+   FETCH EXPERTS (STRICT MODE)
+========================================================= */
+function fetchExperts() {
+
+    const results = document.getElementById("results");
+
+    const status = document.getElementById("status")?.value || "";
+    const reason = document.getElementById("reason")?.value || "";
+    const mode = document.getElementById("mode")?.value || "";
+    const location = document.getElementById("location")?.value || "";
+
+    /* 🔥 STRICT RULE:
+       If onsite mode but no verified location → DO NOT CALL API
+    */
+    if (mode === "onsite" && !locationAllowed) {
+        results.innerHTML = `
+            <div class="loading-state text-danger">
+                📍 Location required for onsite experts
+            </div>
+        `;
+        return;
+    }
+
+    results.innerHTML = `
+        <div class="loading-state">Searching experts...</div>
+    `;
+
+    const params = new URLSearchParams();
+
+    params.set("status", status);
+    params.set("reason", reason);
+    params.set("mode", mode);
+
+    // only send location if allowed
+    if (mode === "onsite" && locationAllowed) {
+        params.set("location", location);
+    }
+
+    fetch(`/auth/profile/experts/?${params.toString()}`, {
+        headers: { "X-Requested-With": "XMLHttpRequest" }
+    })
+    .then(res => res.text())
+    .then(html => {
+        results.innerHTML = html;
+    })
+    .catch(() => {
+        results.innerHTML = `
+            <div class="loading-state text-danger">
+                Failed to load experts
+            </div>
+        `;
+    });
+}
+
+/* =========================================================
+   GEOLOCATION (STRICT)
+========================================================= */
+function requestLocation() {
+
+    return new Promise((resolve) => {
+
+        if (!navigator.geolocation) return resolve(false);
+
+        navigator.geolocation.getCurrentPosition(async (pos) => {
+
+            try {
+                const res = await fetch(
+                    `https://nominatim.openstreetmap.org/reverse?format=json&lat=${pos.coords.latitude}&lon=${pos.coords.longitude}`
+                );
+
+                const data = await res.json();
+
+                userCountry = data?.address?.country || "";
+
+                // 🔥 STRICT FLAG ONLY TRUE IF SUCCESS
+                locationAllowed = !!userCountry;
+
+                resolve(locationAllowed);
+
+            } catch (err) {
+                locationAllowed = false;
+                resolve(false);
+            }
+
+        }, () => {
+            locationAllowed = false;
+            resolve(false);
+        });
+    });
+}
+
+/* =========================================================
+   MODE HANDLER
+========================================================= */
+async function handleModeChange(e) {
+
+    const mode = e.target.value;
+    const locationInput = document.getElementById("location");
+
+    if (mode === "onsite") {
+
+        const ok = await requestLocation();
+
+        if (!ok) {
+            e.target.value = "";
+            locationAllowed = false;
+
+            alert("📍 Exact location required for onsite experts");
+            return;
+        }
+
+        locationInput.disabled = false;
+        locationInput.value = userCountry || "";
+
+    } else {
+        locationAllowed = false;
+        locationInput.value = "";
+        locationInput.disabled = true;
+    }
+
+    fetchExperts();
+}
+
+/* =========================================================
+   INIT
+========================================================= */
+document.addEventListener("DOMContentLoaded", () => {
+
+    fetchExperts();
+
+    // 🔥 instant filtering
+    ["status", "reason", "mode"].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.addEventListener("change", fetchExperts);
+    });
+
+    // location input (still triggers but validated)
+    document.getElementById("location")
+        .addEventListener("input", debounce(fetchExperts, 250));
+
+    // mode special logic
+    document.getElementById("mode")
+        .addEventListener("change", handleModeChange);
+});
+
+</script>
+
+{% endblock %}

@@ -1,0 +1,73 @@
+{% load static %}
+{% load mention_tags %}
+{% load custom_tags %}
+
+{% load mention_tags %}
+{% load custom_tags %}
+
+<div class="comment-card card mb-2 p-2" data-id="{{ comment.id }}" style="border-radius:8px; box-shadow:0 1px 4px rgba(0,0,0,0.08);">
+
+    <div class="d-flex align-items-start gap-2">
+
+        <a href="{% url 'profile' comment.user.id %}" data-spa-link>
+            {% if comment.user.avatar %}
+                <img src="{{ comment.user.avatar.url }}" class="rounded-circle" style="width:36px; height:36px; object-fit:cover;">
+            {% else %}
+                <div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center"
+                     style="width:36px; height:36px; font-weight:bold;">
+                    {{ comment.user.username|slice:":1"|upper }}
+                </div>
+            {% endif %}
+        </a>
+
+        <div class="flex-grow-1">
+
+            <div class="d-flex justify-content-between align-items-start">
+
+                <div class="d-flex flex-column">
+                    <a href="{% url 'profile' comment.user.id %}" data-spa-link>
+
+                        <div class="d-flex align-items-center gap-1">
+                            {% if comment.user.is_verified_expert %}
+                                <i class="fas fa-shield-alt verified-expert" title="Verified Expert"></i>
+                            {% endif %}
+                            {% if comment.user.profile.first_name or comment.user.profile.last_name %}
+                                <strong>{{ comment.user.profile.first_name }} {{ comment.user.profile.last_name }}</strong>
+                            {% else %}
+                                <strong>{{ comment.user.username }}</strong>
+                            {% endif %}
+
+                        <!-- 👇 PRESENCE SYSTEM HERE -->
+                        {% include "components/user_presence.html" with user=comment.user %}
+                        </div>
+                    </a>
+
+                    <small class="comment-time" data-time="{{ comment.created_at|date:'c' }}">
+                        Just now
+                    </small>
+                </div>
+
+                {% if user == comment.user %}
+                <div class="d-flex gap-1">
+                    <button class="btn btn-light btn-sm action-btn edit-comment-btn" data-id="{{ comment.id }}">
+                        <i class="fas fa-edit"></i>
+                    </button>
+
+                    <button class="btn btn-light btn-sm action-btn delete-comment-btn text-danger" data-id="{{ comment.id }}">
+                        <i class="fas fa-trash-alt"></i>
+                    </button>
+                </div>
+                {% endif %}
+
+            </div>
+
+            <div class="comment-content mt-3 read-more-box">
+                <div class="read-more-text">
+                    {{ comment.content|convert_mentions|linebreaksbr|linkify|safe }}
+                </div>
+                <button class="read-more-btn">Read more</button>
+            </div>
+
+        </div>
+    </div>
+</div>

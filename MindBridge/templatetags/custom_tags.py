@@ -1,6 +1,6 @@
 
 from django import template
-
+from django.utils.safestring import mark_safe
 from bs4 import BeautifulSoup
 import re
 
@@ -71,3 +71,33 @@ def problem_summary(value):
         return match.group(1)
     # fallback: first 120 chars
     return clean_text[:120] + "…"
+
+
+URL_PATTERN = re.compile(
+    r'(?<!["\'])\b(https?://[^\s<]+|www\.[^\s<]+)\b',
+    re.IGNORECASE
+)
+
+@register.filter
+def linkify(value):
+    if not value:
+        return value
+
+    def replace(match):
+        raw_url = match.group(0)
+
+        # 🔥 BLOCK broken/encoded stuff (SVG, HTML entities, data URLs)
+        if any(x in raw_url for x in ["%3C", "%3E", "svg", "data:", "base64"]):
+            return raw_url
+
+        # normalize URL
+        href = raw_url if raw_url.startswith("http") else f"https://{raw_url}"
+
+        return f'<a href="{href}" class="safe-link" target="_blank">{raw_url}</a>'
+
+    return mark_safe(URL_PATTERN.sub(replace, value))
+
+
+@register.inclusion_tag("components/user_presence.html")
+def user_presence(user):
+    return {"user": user}

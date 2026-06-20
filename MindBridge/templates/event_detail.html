@@ -8,7 +8,7 @@
   <!-- EVENT HEADER -->
   <div class="mb-4">
     <h1 class="mb-1">{{ event.title }}</h1>
-    <p class="text-muted mb-0">Hosted by {{ event.host.username }}</p>
+    <p class="text-muted mb-0">Hosted by {% if event.host.profile.first_name or event.host.profile.last_name %}{{ event.host.profile.first_name }} {{ event.host.profile.last_name }}{% else %}{{ event.host.username }}{% endif %}</p>
     <p>{{ event.description }}</p>
     <p class="mb-0"><strong>Starts at:</strong> {{ event.start_time|date:"M d, Y H:i" }}</p>
     {% if event.end_time %}

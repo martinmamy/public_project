@@ -1,10 +1,12 @@
 # MindBridge/views/notification_views.py
 
+import json
+import logging
 from django.http import JsonResponse
 from django.views import View
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth import get_user_model
-from MindBridge.models import Notification
+from MindBridge.models import Notification, PushSubscription
 from MindBridge.services.notification_service import NotificationService
 from django.utils.decorators import method_decorator
 from django.contrib.auth.decorators import login_required
@@ -16,19 +18,31 @@ from django.views.generic import TemplateView
 
 User = get_user_model()
 
+from django.utils.dateparse import parse_datetime
+from django.utils import timezone
+
 @method_decorator(login_required, name="dispatch")
 class NotificationsListView(LoginRequiredMixin, View):
-    """Return latest 20 notifications for the logged-in user, including actor info."""
+
     def get(self, request, *args, **kwargs):
-        notifications = Notification.objects.filter(user=request.user).order_by("-created_at")[:20]
+
+        now = timezone.now()
+
+        notifications = Notification.objects.filter(
+            user=request.user
+        ).order_by("-created_at")[:20]
 
         data = []
+
         for n in notifications:
+
             actor_info = None
             if n.actor:
                 actor_info = {
                     "id": n.actor.id,
                     "username": n.actor.username,
+                    "first_name": n.actor.first_name,
+                    "last_name": n.actor.last_name,
                     "avatar_url": n.actor.avatar.url if n.actor.avatar and hasattr(n.actor.avatar, 'url') else None,
                     "profile_url": f"/users/{n.actor.id}/"
                 }
@@ -38,33 +52,49 @@ class NotificationsListView(LoginRequiredMixin, View):
                 "message": n.message,
                 "url": n.url or "#",
                 "is_read": n.is_read,
-                "created_at": n.created_at.strftime("%Y-%m-%d %H:%M"),
-                "actor": actor_info
+
+                # ✅ FIXED TIMEZONE (CRITICAL)
+                "created_at": timezone.localtime(n.created_at).strftime("%Y-%m-%d %I:%M %p"),
+
+                "actor": actor_info,
+
+                # optional debug consistency
+                "server_time": timezone.localtime(now).strftime("%Y-%m-%d %I:%M %p"),
             })
 
         return JsonResponse({"notifications": data})
 
 
+@method_decorator(login_required, name="dispatch")
 class NotificationsApiView(LoginRequiredMixin, View):
     PAGE_SIZE = 5
 
     def get(self, request, *args, **kwargs):
-        cursor = request.GET.get("cursor")  # ISO datetime string
-        notifications_qs = Notification.objects.filter(user=request.user).order_by("-created_at")
+
+        now = timezone.now()
+
+        cursor = request.GET.get("cursor")
+
+        qs = Notification.objects.filter(
+            user=request.user
+        ).order_by("-created_at")
 
         if cursor:
-            # Only notifications older than the cursor
-            notifications_qs = notifications_qs.filter(created_at__lt=cursor)
+            qs = qs.filter(created_at__lt=cursor)
 
-        notifications = list(notifications_qs[:self.PAGE_SIZE])
+        notifications = list(qs[:self.PAGE_SIZE])
 
         data = []
+
         for n in notifications:
+
             actor_info = None
             if n.actor:
                 actor_info = {
                     "id": n.actor.id,
                     "username": n.actor.username,
+                    "first_name": n.actor.first_name,
+                    "last_name": n.actor.last_name,
                     "avatar_url": getattr(n.actor.avatar, 'url', None) if n.actor.avatar else None,
                     "profile_url": f"/users/{n.actor.id}/"
                 }
@@ -74,12 +104,19 @@ class NotificationsApiView(LoginRequiredMixin, View):
                 "message": n.message,
                 "url": n.url or "#",
                 "is_read": n.is_read,
-                "created_at": n.created_at.strftime("%Y-%m-%d %H:%M"),
-                "actor": actor_info
+
+                # ✅ FIXED TIMEZONE OUTPUT
+                "created_at": timezone.localtime(n.created_at).strftime("%Y-%m-%d %I:%M %p"),
+
+                "actor": actor_info,
+
+                "server_now": timezone.localtime(now).strftime("%Y-%m-%d %I:%M %p"),
             })
 
-        # ✅ Use the last notification of the current page
-        next_cursor = notifications[-1].created_at.isoformat() if len(notifications) == self.PAGE_SIZE else None
+        next_cursor = (
+            notifications[-1].created_at.isoformat()
+            if len(notifications) == self.PAGE_SIZE else None
+        )
 
         return JsonResponse({
             "notifications": data,
@@ -87,6 +124,7 @@ class NotificationsApiView(LoginRequiredMixin, View):
         })
 
 
+@method_decorator(login_required, name="dispatch")
 class NotificationsPageView(LoginRequiredMixin, TemplateView):
     template_name = "notifications.html"
 
@@ -162,3 +200,85 @@ class SendNotificationView(LoginRequiredMixin, View):
             return JsonResponse({"success": False, "error": "No user specified"}, status=400)
 
         return JsonResponse({"success": True})
+    
+    
+
+from django.http import JsonResponse
+
+logger = logging.getLogger(__name__)
+
+@method_decorator(login_required, name="dispatch")
+class SavePushSubscriptionView(View):
+
+    def post(self, request):
+
+        try:
+
+            logger.info(f"🔔 PUSH SAVE REQUEST FROM: {request.user}")
+
+            data = json.loads(request.body or "{}")
+
+            # =========================================
+            # FRONTEND SENDS DIRECT SUBSCRIPTION OBJECT
+            # =========================================
+            endpoint = data.get("endpoint")
+
+            keys = data.get("keys", {})
+
+            p256dh = keys.get("p256dh")
+            auth = keys.get("auth")
+
+            if not endpoint:
+                return JsonResponse({
+                    "success": False,
+                    "error": "Missing endpoint"
+                }, status=400)
+
+            if not p256dh or not auth:
+                return JsonResponse({
+                    "success": False,
+                    "error": "Missing keys"
+                }, status=400)
+
+            # =========================================
+            # REMOVE DUPLICATES
+            # =========================================
+            PushSubscription.objects.filter(
+                endpoint=endpoint
+            ).delete()
+
+            # =========================================
+            # CREATE SUBSCRIPTION
+            # =========================================
+            subscription = PushSubscription.objects.create(
+
+                user=request.user,
+
+                endpoint=endpoint,
+
+                p256dh=p256dh,
+
+                auth=auth,
+
+                browser=request.META.get(
+                    "HTTP_USER_AGENT",
+                    ""
+                )
+            )
+
+            logger.info(
+                f"✅ PUSH SUBSCRIPTION SAVED: {subscription.id}"
+            )
+
+            return JsonResponse({
+                "success": True
+            })
+
+        except Exception as e:
+
+            logger.exception("❌ PUSH SAVE ERROR")
+
+            return JsonResponse({
+                "success": False,
+                "error": str(e)
+            }, status=500)

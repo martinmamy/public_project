@@ -1,6 +1,6 @@
 {
   "name": "Fancylearn",
-  "short_name": "Fancylearn",
+  "short_name": "FL",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",

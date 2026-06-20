@@ -1,0 +1,250 @@
+<div class="row g-4">
+
+{% for expert in experts %}
+  <div class="col-md-4">
+
+    <div class="expert-card-modern">
+
+      <!-- TOP SECTION -->
+      <div class="expert-header">
+
+        <!-- AVATAR -->
+        <a href="{% url 'profile' expert.user.id %}" class="avatar-wrap" data-spa-link>
+
+          {% if expert.user.avatar %}
+              <img src="{{ expert.user.avatar.url }}" class="avatar-img">
+          {% else %}
+              {% with first=expert.user.username|slice:":1"|upper %}
+                  <div class="avatar-fallback">
+                      {{ first }}
+                  </div>
+              {% endwith %}
+          {% endif %}
+
+          <span class="status-dot status-{{ expert.availability_status }}"></span>
+
+        </a>
+            <!-- VERIFIED EXPERT BADGE -->
+    
+        <!-- USER INFO -->
+        <div class="expert-info">
+            <h6>
+                {% if expert.user.is_verified_expert %}
+                    <span class="verified-badge"
+                        title="Verified Expert">
+                        <i class="fas fa-shield-alt verified-expert" title="Verified Expert"></i>
+                    </span>
+                {% endif %} 
+                {{ expert.user.username }}
+            </h6>
+          <div class="expert-sub">
+            {% include "components/user_presence.html" with user=expert.user %}
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ========================= -->
+      <!-- DETAILS -->
+      <!-- ========================= -->
+      <div class="small text mb-1">
+        {{ expert.get_availability_reason_display|default:"Not specified" }}
+      </div>
+
+      <div class="small mb-3">
+       Work Model: {{ expert.get_availability_mode_display }}
+         <br>
+        Profession: {{ expert.user.profile.profession|default:"Not specified" }}
+      </div>
+
+      <!-- FOOTER ACTION -->
+      <div class="expert-footer">
+
+        <!-- STATUS -->
+        <div class="status-chip status-{{ expert.availability_status }}">
+          <span class="dot"></span>
+          {{ expert.availability_status|title }}
+        </div>
+
+        {% if expert.has_active_slots %}
+            <a href="{% url 'slot_list' expert.user.id %}" data-spa-link
+            class="action-btn"
+            title="View Availability">
+                <i class="fa-regular fa-calendar"></i>
+            </a>
+        {% endif %}
+      </div>
+
+    </div>
+
+  </div>
+
+{% empty %}
+  <div class="text-center py-5">
+    <h5 class="text-info">No experts found</h5>
+  </div>
+{% endfor %}
+
+</div>
+
+<style>
+
+/* =========================
+   GRID CARD
+========================= */
+.expert-card-modern{
+    border:1px solid #eef0f3;
+    border-radius:18px;
+    background: var(--card);
+    color: var(--text);
+    padding:18px;
+    height:100%;
+    transition:all 0.25s ease;
+
+}
+
+.expert-card-modern:hover{
+    transform:translateY(-4px);
+    box-shadow:0 12px 30px rgba(0,0,0,0.08);
+}
+
+/* =========================
+   HEADER
+========================= */
+.expert-header{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    margin-bottom:10px;
+}
+
+/* =========================
+   AVATAR
+========================= */
+.avatar-wrap{
+    position:relative;
+    width:46px;
+    height:46px;
+    display:inline-block;
+}
+
+.avatar-img{
+    width:46px;
+    height:46px;
+    border-radius:50%;
+    object-fit:cover;
+}
+
+.avatar-fallback{
+    width:46px;
+    height:46px;
+    border-radius:50%;
+    background:#e5e7eb;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-weight:600;
+    color:#374151;
+}
+
+/* STATUS DOT */
+.status-dot{
+    position:absolute;
+    bottom:2px;
+    right:2px;
+    width:10px;
+    height:10px;
+    border-radius:50%;
+    border:2px solid white;
+}
+
+.status-online{ background:#22c55e; }
+.status-busy{ background:#f59e0b; }
+.status-offline{ background:#9ca3af; }
+
+/* =========================
+   INFO
+========================= */
+.expert-info h6{
+    margin:0;
+    font-size:15px;
+    font-weight:600;
+}
+
+.expert-sub{
+    font-size:12px;
+    color:#6b7280;
+}
+
+/* =========================
+   META TEXT
+========================= */
+.expert-meta{
+    font-size:13px;
+    color:#6b7280;
+    margin:10px 0 16px;
+}
+
+/* =========================
+   FOOTER
+========================= */
+.expert-footer{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+}
+
+/* STATUS CHIP */
+.status-chip{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    padding:5px 10px;
+    border-radius:999px;
+    font-size:12px;
+    background:#f3f4f6;
+    color:#374151;
+}
+
+.status-chip .dot{
+    width:6px;
+    height:6px;
+    border-radius:50%;
+}
+
+.status-online .dot{ background:#22c55e; }
+.status-busy .dot{ background:#f59e0b; }
+.status-offline .dot{ background:#9ca3af; }
+
+/* =========================
+   ACTION BUTTON
+========================= */
+.action-btn{
+    width:38px;
+    height:38px;
+    border-radius:10px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:#f3f4f6;
+    color:#111827;
+    text-decoration:none;
+    transition:0.2s ease;
+}
+
+.action-btn:hover{
+    background:#111827;
+    color:#ffffff;
+    transform:scale(1.08);
+}
+
+/* =========================
+   RESPONSIVE TWEAK
+========================= */
+@media (max-width:768px){
+    .expert-card-modern{
+        padding:14px;
+    }
+}
+
+</style>

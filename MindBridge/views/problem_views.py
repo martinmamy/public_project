@@ -181,6 +181,11 @@ class CreateProblemView(LoginRequiredMixin, View):
                         paypal_order_id=order_id,
                         expires_at=timezone.now() + timedelta(days=10)
                     )
+                display_name = (
+                    f"{request.user.first_name} {request.user.last_name}".strip()
+                    if request.user.first_name or request.user.last_name
+                    else request.user.username
+                )
 
                 # Admin notifications
                 admins = User.objects.filter(is_staff=True)
@@ -188,7 +193,7 @@ class CreateProblemView(LoginRequiredMixin, View):
                     NotificationService.create_notification(
                         users=admins,
                         actor=request.user,
-                        message=f"New problem posted by {request.user.username}: '{problem.title}'",
+                        message=f"New problem posted by {display_name}: '{problem.title}'",
                         url=reverse("problem_detail", args=[problem.id])
                     )
 
@@ -198,7 +203,7 @@ class CreateProblemView(LoginRequiredMixin, View):
                         NotificationService.create_notification(
                             user=user,
                             actor=request.user,
-                            message=f"{request.user.username} mentioned you in a problem description.",
+                            message=f"{display_name} mentioned you in a problem description.",
                             url=reverse("problem_detail", args=[problem.id])
                         )
 
@@ -249,6 +254,11 @@ class CreateProblemView(LoginRequiredMixin, View):
                     status="held",
                     expires_at=timezone.now() + timedelta(days=10)
                 )
+            display_name = (
+                f"{request.user.first_name} {request.user.last_name}".strip()
+                if request.user.first_name or request.user.last_name
+                else request.user.username
+            )
 
             # Admin notifications
             admins = User.objects.filter(is_staff=True)
@@ -256,7 +266,7 @@ class CreateProblemView(LoginRequiredMixin, View):
                 NotificationService.create_notification(
                     users=admins,
                     actor=request.user,
-                    message=f"New problem posted by {request.user.username}: '{problem.title}'",
+                    message=f"New problem posted by {display_name}: '{problem.title}'",
                     url=reverse("problem_detail", args=[problem.id])
                 )
 
@@ -266,7 +276,7 @@ class CreateProblemView(LoginRequiredMixin, View):
                     NotificationService.create_notification(
                         user=user,
                         actor=request.user,
-                        message=f"{request.user.username} mentioned you in a problem description.",
+                        message=f"{display_name} mentioned you in a problem description.",
                         url=reverse("problem_detail", args=[problem.id])
                     )
 
@@ -357,7 +367,11 @@ class UpdateProblemView(LoginRequiredMixin, View):
                     [t.strip() for t in data["tags"] if t.strip()]
                 )
                 updated = True
-
+            display_name = (
+                f"{request.user.first_name} {request.user.last_name}".strip()
+                if request.user.first_name or request.user.last_name
+                else request.user.username
+            )
             if updated:
                 problem.save()
 
@@ -371,7 +385,7 @@ class UpdateProblemView(LoginRequiredMixin, View):
                             NotificationService.create_notification(
                                 user=user,
                                 actor=request.user,
-                                message=f"{request.user.username} mentioned you in an updated problem description.",
+                                message=f"{display_name} mentioned you in an updated problem description.",
                                 url=reverse("problem_detail", args=[problem.id])
                             )
 
@@ -601,7 +615,6 @@ class ProblemDetailView(View):
 class ListProblemsView(View):
 
     template_name = "list_problems.html"
-    paginate_by = 20
 
     def get(self, request):
 
@@ -615,14 +628,13 @@ class ListProblemsView(View):
         search = request.GET.get("search", "").strip()
 
         # -------------------------------------------------
-        # BASE QUERY (only issues)
+        # BASE QUERY
         # -------------------------------------------------
-        problems_qs = (
-            Problem.objects.filter(post_type="issue")  # <-- only issues
+        problems = (
+            Problem.objects.filter(post_type="issue")
             .select_related("author")
             .prefetch_related("answers")
             .annotate(
-                # COUNTS
                 annot_answers_count=Count("answers", distinct=True),
                 annot_votes_score=F("votes_score"),
                 annot_views_count=F("views_count"),
@@ -630,7 +642,6 @@ class ListProblemsView(View):
                     "answers",
                     filter=Q(answers__is_accepted=True)
                 ),
-                # PROMOTION PRIORITY
                 promotion_priority=Case(
                     When(
                         promotions__promotion_type="pinned",
@@ -650,78 +661,78 @@ class ListProblemsView(View):
                     default=Value(0),
                     output_field=IntegerField(),
                 ),
-                # BOOKMARK
                 is_bookmarked=(
                     Exists(
                         Bookmark.objects.filter(
                             user=user,
                             problem=OuterRef("pk")
                         )
-                    ) if user else Value(False, output_field=BooleanField())
+                    )
+                    if user
+                    else Value(False, output_field=BooleanField())
                 ),
-                # FOLLOW
                 is_following=(
                     Exists(
                         Follow.objects.filter(
                             follower=user,
                             following=OuterRef("author")
                         )
-                    ) if user else Value(False, output_field=BooleanField())
+                    )
+                    if user
+                    else Value(False, output_field=BooleanField())
                 ),
             )
+            .distinct()
         )
 
         # -------------------------------------------------
-        # FILTERING
+        # FILTERS
         # -------------------------------------------------
         if category:
-            problems_qs = problems_qs.filter(category=category)
+            problems = problems.filter(category=category)
+
         if search:
-            problems_qs = problems_qs.filter(title__icontains=search)
+            problems = problems.filter(title__icontains=search)
 
         # -------------------------------------------------
-        # ORDERING
+        # SORTING
         # -------------------------------------------------
         ordering = ["-promotion_priority"]
+
         if sort == "votes":
             ordering.append("-votes_score")
         elif sort == "answers":
             ordering.append("-annot_answers_count")
-        else:  # recent
+        else:
             ordering.append("-created_at")
-        problems_qs = problems_qs.order_by(*ordering)
 
-        # -------------------------------------------------
-        # PAGINATION
-        # -------------------------------------------------
-        paginator = Paginator(problems_qs, self.paginate_by)
-        page_number = request.GET.get("page", 1)
-        page = paginator.get_page(page_number)
-
-        # -------------------------------------------------
-        # BOOKMARK SIDEBAR
-        # -------------------------------------------------
-        bookmarked_problems = problems_qs.filter(is_bookmarked=True)[:10] if user else []
+        problems = problems.order_by(*ordering)
 
         # -------------------------------------------------
         # SOLVED FLAG
         # -------------------------------------------------
-        for problem in page:
+        for problem in problems:
             problem.is_solved = problem.annot_accepted_count > 0
+
+        # -------------------------------------------------
+        # BOOKMARK SIDEBAR
+        # -------------------------------------------------
+        bookmarked_problems = (
+            problems.filter(is_bookmarked=True)[:10]
+            if user
+            else []
+        )
 
         # -------------------------------------------------
         # API RESPONSE
         # -------------------------------------------------
         if is_api_request(request):
             return JsonResponse({
-                "results": [serialize_problem(p) for p in page],
-                "pagination": {
-                    "page": page.number,
-                    "pages": paginator.num_pages,
-                    "has_next": page.has_next(),
-                    "has_previous": page.has_previous(),
-                    "total": paginator.count,
-                },
+                "results": [
+                    serialize_problem(problem)
+                    for problem in problems
+                ],
+                "total": problems.count(),
             })
 
         # -------------------------------------------------
@@ -731,7 +742,7 @@ class ListProblemsView(View):
             request,
             self.template_name,
             {
-                "problems": page,
+                "problems": problems,
                 "bookmarked_problems": bookmarked_problems,
                 "PREDEFINED_CATEGORIES": PREDEFINED_CATEGORIES,
                 "current_category": category,
@@ -743,10 +754,11 @@ class ListProblemsView(View):
         
 @method_decorator(login_required, name="dispatch")
 class TalentHubView(View):
+
     template_name = "talenthub.html"
-    paginate_by = 20
 
     def get(self, request):
+
         user = request.user if request.user.is_authenticated else None
 
         # -------------------------------------------------
@@ -757,14 +769,13 @@ class TalentHubView(View):
         search = request.GET.get("search", "").strip()
 
         # -------------------------------------------------
-        # BASE QUERY (only information posts)
+        # BASE QUERY (information posts only)
         # -------------------------------------------------
-        problems_qs = (
-            Problem.objects.filter(post_type="information")  # <-- only information
+        information = (
+            Problem.objects.filter(post_type="information")
             .select_related("author")
             .prefetch_related("answers")
             .annotate(
-                # Counts
                 annot_answers_count=Count("answers", distinct=True),
                 annot_votes_score=F("votes_score"),
                 annot_views_count=F("views_count"),
@@ -772,7 +783,6 @@ class TalentHubView(View):
                     "answers",
                     filter=Q(answers__is_accepted=True)
                 ),
-                # Promotion priority
                 promotion_priority=Case(
                     When(
                         promotions__promotion_type="pinned",
@@ -792,80 +802,88 @@ class TalentHubView(View):
                     default=Value(0),
                     output_field=IntegerField(),
                 ),
-                # Bookmark
-                is_bookmarked=Exists(
-                    Bookmark.objects.filter(user=user, problem=OuterRef("pk"))
-                ) if user else Value(False, output_field=BooleanField()),
-                # Following
-                is_following=Exists(
-                    Follow.objects.filter(follower=user, following=OuterRef("author"))
-                ) if user else Value(False, output_field=BooleanField()),
+                is_bookmarked=(
+                    Exists(
+                        Bookmark.objects.filter(
+                            user=user,
+                            problem=OuterRef("pk")
+                        )
+                    )
+                    if user
+                    else Value(False, output_field=BooleanField())
+                ),
+                is_following=(
+                    Exists(
+                        Follow.objects.filter(
+                            follower=user,
+                            following=OuterRef("author")
+                        )
+                    )
+                    if user
+                    else Value(False, output_field=BooleanField())
+                ),
             )
+            .distinct()
         )
 
         # -------------------------------------------------
-        # FILTERING
+        # FILTERS
         # -------------------------------------------------
         if category:
-            problems_qs = problems_qs.filter(category=category)
+            information = information.filter(category=category)
+
         if search:
-            problems_qs = problems_qs.filter(title__icontains=search)
+            information = information.filter(title__icontains=search)
 
         # -------------------------------------------------
-        # ORDERING
+        # SORTING
         # -------------------------------------------------
         ordering = ["-promotion_priority"]
+
         if sort == "votes":
             ordering.append("-votes_score")
         elif sort == "answers":
             ordering.append("-annot_answers_count")
-        else:  # recent
+        else:
             ordering.append("-created_at")
-        problems_qs = problems_qs.order_by(*ordering)
 
-        # -------------------------------------------------
-        # PAGINATION
-        # -------------------------------------------------
-        paginator = Paginator(problems_qs, self.paginate_by)
-        page_number = request.GET.get("page", 1)
-        infos_page = paginator.get_page(page_number)
-
-        # -------------------------------------------------
-        # BOOKMARK SIDEBAR
-        # -------------------------------------------------
-        bookmarked_problems = problems_qs.filter(is_bookmarked=True)[:10] if user else []
+        information = information.order_by(*ordering)
 
         # -------------------------------------------------
         # SOLVED FLAG
         # -------------------------------------------------
-        for problem in infos_page:
+        for problem in information:
             problem.is_solved = problem.annot_accepted_count > 0
 
         # -------------------------------------------------
-        # API RESPONSE (optional)
+        # BOOKMARK SIDEBAR
+        # -------------------------------------------------
+        bookmarked_problems = (
+            information.filter(is_bookmarked=True)[:10]
+            if user
+            else []
+        )
+
+        # -------------------------------------------------
+        # API RESPONSE
         # -------------------------------------------------
         if is_api_request(request):
             return JsonResponse({
-                "information": [serialize_problem(p) for p in infos_page],
-                "pagination": {
-                    "information": {
-                        "page": infos_page.number,
-                        "pages": paginator.num_pages,
-                        "has_next": infos_page.has_next(),
-                        "has_previous": infos_page.has_previous(),
-                        "total": paginator.count,
-                    },
-                },
+                "information": [
+                    serialize_problem(problem)
+                    for problem in information
+                ],
+                "total": information.count(),
             })
 
         # -------------------------------------------------
-        # TEMPLATE RENDER
+        # TEMPLATE
         # -------------------------------------------------
         return render(
             request,
             self.template_name,
             {
-                "information": infos_page,
+                "information": information,
                 "bookmarked_problems": bookmarked_problems,
                 "PREDEFINED_CATEGORIES": PREDEFINED_CATEGORIES,
                 "current_category": category,
@@ -873,6 +891,7 @@ class TalentHubView(View):
                 "current_search": search,
             },
         )
+
         
         
 def get_problem_answers(request, problem_id):

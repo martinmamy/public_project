@@ -7,7 +7,7 @@
 
     <div class="card-body">
 
-      <h2 class="card-title mb-4 text-center">Create a New Post</h2>
+      <h2 class="card-title mb-4 text-center text-info">Create a New Post</h2>
 
       {% if form.non_field_errors %}
       <div class="alert alert-danger">
@@ -20,7 +20,7 @@
       <form method="post" enctype="multipart/form-data">
         {% csrf_token %}
 
-        <div class="fb-composer-alt shadow-sm">
+        <div class="fb-composer-alt">
 
           <!-- TOP BAR -->
           <div class="fb-top-bar">
@@ -38,7 +38,7 @@
 
           <!-- TITLE -->
           <div class="fb-field-row mb-2">
-            <input type="text" name="title" class="fb-input-title-alt" placeholder="What's your problem or idea?" required>
+            <input type="text" name="title" class="fb-input-title-alt" title="Enter a short, clear title of your problem." placeholder="What's your problem or idea?" required>
             <span class="required-star">*</span>
             <span class="info-icon"><i class="fas fa-circle-info"></i>
               <span class="info-tooltip">Enter a short, clear title of your problem.</span>
@@ -47,6 +47,48 @@
 
           <!-- DESCRIPTION -->
           <div class="fb-field-row mb-2">
+            <div class="fb-editor-toolbar mb-1">
+
+              <!-- TEXT STYLE -->
+              <div class="group">
+                <button type="button" data-cmd="bold"><b>B</b></button>
+                <button type="button" data-cmd="italic"><i>I</i></button>
+                <button type="button" data-cmd="underline"><u>U</u></button>
+              </div>
+
+              <span class="divider"></span>
+
+              <!-- STRUCTURE -->
+              <div class="group">
+                <button type="button" data-cmd="insertUnorderedList">• List</button>
+                <button type="button" data-cmd="insertOrderedList">1. List</button>
+              </div>
+
+              <span class="divider"></span>
+
+              <!-- HEADINGS -->
+              <div class="group">
+                <button type="button" data-heading="h2">H2</button>
+                <button type="button" data-heading="h3">H3</button>
+                <button type="button" data-heading="h4">H4</button>
+              </div>
+
+              <span class="divider"></span>
+
+              <!-- INSERT -->
+              <div class="group">
+                <button type="button" id="add-link">🔗 Link</button>
+                <button type="button" id="add-code">{"Code"}</button>
+              </div>
+
+              <span class="divider"></span>
+
+              <!-- RESET -->
+              <div class="group">
+                <button type="button" id="clear-format">🧹 Clear</button>
+              </div>
+
+            </div>
             <div id="description-editor"
                 contenteditable="true"
                 class="fb-textarea-alt" 
@@ -142,106 +184,244 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 </script>
 
+<style>
+.fb-editor-toolbar {
+  display: flex;
+  flex-wrap: wrap;          /* 🔥 allows wrapping on small screens */
+  gap: 6px;
+  align-items: center;
+
+  background: #f8f9fa;
+  padding: 6px;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+}
+
+/* buttons */
+.fb-editor-toolbar button {
+  border: none;
+  background: white;
+  padding: 6px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+
+  flex: 0 0 auto;           /* prevents shrinking */
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+.fb-editor-toolbar button:hover {
+  background: #e9ecef;
+}
+
+/* divider */
+.fb-editor-toolbar .divider {
+  width: 1px;
+  height: 18px;
+  background: #ccc;
+  margin: 0 4px;
+}
+</style>
+
 <script>
-document.addEventListener("DOMContentLoaded", function() {
+document.addEventListener("DOMContentLoaded", function () {
+
   const editor = document.getElementById("description-editor");
   const hiddenInput = editor.nextElementSibling;
 
-  // On form submit, copy HTML to hidden input
-  editor.closest("form").addEventListener("submit", () => {
-    hiddenInput.value = editor.innerHTML;
-  });
+  document.execCommand("defaultParagraphSeparator", false, "p");
 
-  let selectedImg = null;
-  let startX, startY, startWidth, startHeight, offsetX, offsetY;
-  let isDragging = false;
-  let isResizing = false;
+  /* =========================================================
+     HELPERS
+  ========================================================= */
 
-  // Select image
-  editor.addEventListener("click", (e) => {
-    if (e.target.tagName === "IMG") {
-      if (selectedImg) selectedImg.classList.remove("selected");
-      selectedImg = e.target;
-      selectedImg.classList.add("selected");
-    } else {
-      if (selectedImg) selectedImg.classList.remove("selected");
-      selectedImg = null;
-    }
-  });
+  function isInsideCodeBlock() {
+    const sel = window.getSelection();
+    if (!sel.rangeCount) return false;
 
-  // Drag & resize
-  editor.addEventListener("mousedown", (e) => {
-    if (!selectedImg) return;
-
-    const rect = selectedImg.getBoundingClientRect();
-    const offsetRight = e.clientX - rect.right;
-    const offsetBottom = e.clientY - rect.bottom;
-
-    // Detect resize (click near bottom-right corner)
-    if (offsetRight > -15 && offsetRight < 5 && offsetBottom > -15 && offsetBottom < 5) {
-      isResizing = true;
-      startX = e.clientX;
-      startY = e.clientY;
-      startWidth = selectedImg.offsetWidth;
-      startHeight = selectedImg.offsetHeight;
-      selectedImg.classList.add("resizing");
-    } else {
-      // Drag mode
-      isDragging = true;
-      offsetX = e.clientX - selectedImg.offsetLeft;
-      offsetY = e.clientY - selectedImg.offsetTop;
-      selectedImg.style.position = "absolute";
-      selectedImg.classList.add("dragging");
-    }
-
-    function onMouseMove(eMove) {
-      if (isResizing) {
-        const dx = eMove.clientX - startX;
-        const dy = eMove.clientY - startY;
-        selectedImg.style.width = startWidth + dx + "px";
-        selectedImg.style.height = startHeight + dy + "px";
-      } else if (isDragging) {
-        const x = eMove.clientX - offsetX;
-        const y = eMove.clientY - offsetY;
-        selectedImg.style.left = x + "px";
-        selectedImg.style.top = y + "px";
+    let node = sel.anchorNode;
+    while (node && node !== editor) {
+      if (node.nodeType === 1 && (node.tagName === "CODE" || node.tagName === "PRE")) {
+        return true;
       }
+      node = node.parentNode;
     }
+    return false;
+  }
 
-    function onMouseUp() {
-      isDragging = false;
-      isResizing = false;
-      if (selectedImg) {
-        selectedImg.classList.remove("dragging", "resizing");
-      }
-      document.removeEventListener("mousemove", onMouseMove);
-      document.removeEventListener("mouseup", onMouseUp);
+  function getCurrentBlock() {
+    const sel = window.getSelection();
+    if (!sel.rangeCount) return null;
+
+    let node = sel.anchorNode;
+    while (node && node !== editor) {
+      if (node.nodeType === 1) return node;
+      node = node.parentNode;
     }
+    return null;
+  }
 
-    document.addEventListener("mousemove", onMouseMove);
-    document.addEventListener("mouseup", onMouseUp);
+  /* =========================================================
+     BLOCK FORMAT SAFETY WRAPPER
+  ========================================================= */
+  function safeExec(cmd, value = null) {
+    if (isInsideCodeBlock()) return; // 🚫 prevent formatting inside code
+    document.execCommand(cmd, false, value);
+    editor.focus();
+  }
+
+  /* =========================================================
+     BASIC FORMATTING
+  ========================================================= */
+  document.querySelectorAll(".fb-editor-toolbar button[data-cmd]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      safeExec(btn.dataset.cmd);
+    });
   });
 
-  // Paste images from clipboard
-  editor.addEventListener("paste", function(e) {
+  /* =========================================================
+     LINK
+  ========================================================= */
+  document.getElementById("add-link").addEventListener("click", () => {
+    if (isInsideCodeBlock()) return;
+
+    const url = prompt("Enter URL:");
+    if (!url) return;
+
+    safeExec("createLink", url);
+  });
+
+  /* =========================================================
+     CODE BLOCK (CLEAN FIX)
+  ========================================================= */
+  document.getElementById("add-code").addEventListener("click", () => {
+
+    const sel = window.getSelection();
+    if (!sel.rangeCount) return;
+
+    const text = sel.toString();
+
+    const pre = document.createElement("pre");
+    const code = document.createElement("code");
+
+    // IMPORTANT: use textContent only (no HTML ever)
+    code.textContent = text || "";
+
+    pre.appendChild(code);
+
+    pre.style.background = "#f6f8fa";
+    pre.style.padding = "10px";
+    pre.style.borderRadius = "8px";
+    pre.style.overflowX = "auto";
+    pre.style.fontFamily = "monospace";
+
+    const range = sel.getRangeAt(0);
+    range.deleteContents();
+    range.insertNode(pre);
+
+    sel.removeAllRanges();
+    editor.focus();
+  });
+
+  /* =========================================================
+     HEADINGS (BLOCK SAFE)
+  ========================================================= */
+  document.querySelectorAll("[data-heading]").forEach(btn => {
+
+    btn.addEventListener("click", () => {
+
+      if (isInsideCodeBlock()) return; // 🚫 prevent corruption
+
+      const level = btn.dataset.heading.toLowerCase();
+
+      const sel = window.getSelection();
+      if (!sel.rangeCount) return;
+
+      const block = getCurrentBlock();
+
+      if (block && block.tagName.toLowerCase() === level) {
+        safeExec("formatBlock", "p");
+      } else {
+        safeExec("formatBlock", level);
+      }
+    });
+  });
+
+  /* =========================================================
+     QUOTE TOGGLE
+  ========================================================= 
+  document.getElementById("add-quote").addEventListener("click", () => {
+
+    if (isInsideCodeBlock()) return;
+
+    const block = getCurrentBlock();
+
+    if (block && block.tagName === "BLOCKQUOTE") {
+      safeExec("formatBlock", "p");
+    } else {
+      safeExec("formatBlock", "blockquote");
+    }
+  });*/
+
+  /* =========================================================
+     CLEAR FORMAT (SAFE CLEANUP)
+  ========================================================= */
+document.getElementById("clear-format").addEventListener("click", () => {
+
+  if (isInsideCodeBlock()) return;
+
+  // 🔥 HARD DELETE EVERYTHING
+  editor.innerHTML = "";
+
+  // Optional: also reset focus
+  editor.focus();
+});
+
+  /* =========================================================
+     IMAGE INSERT (PASTE SUPPORT ONLY)
+  ========================================================= */
+  editor.addEventListener("paste", function (e) {
+
+    if (isInsideCodeBlock()) {
+      // paste as plain text inside code blocks
+      e.preventDefault();
+      const text = (e.clipboardData || window.clipboardData).getData("text");
+      document.execCommand("insertText", false, text);
+      return;
+    }
+
     const items = (e.clipboardData || e.originalEvent.clipboardData).items;
+
     for (const item of items) {
       if (item.type.indexOf("image") !== -1) {
+
         const file = item.getAsFile();
         const reader = new FileReader();
-        reader.onload = function(event) {
+
+        reader.onload = function (event) {
           const img = document.createElement("img");
           img.src = event.target.result;
           img.style.maxWidth = "200px";
           img.style.borderRadius = "10px";
+
           editor.appendChild(img);
         };
+
         reader.readAsDataURL(file);
         e.preventDefault();
       }
     }
   });
+
+  /* =========================================================
+     SAVE CLEAN HTML
+  ========================================================= */
+  editor.closest("form").addEventListener("submit", () => {
+    hiddenInput.value = editor.innerHTML;
+  });
+
 });
+
 document.addEventListener("DOMContentLoaded", function(){
 
 /* --------------------------
@@ -540,218 +720,270 @@ document.addEventListener("DOMContentLoaded", () => {
 </script>
 
 <style>
-/* MAIN COMPOSER */
+/* =========================
+GLOBAL SAFETY RESET
+========================= */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+img, video {
+  max-width: 100%;
+  height: auto;
+}
+
+/* =========================
+MAIN CONTAINER
+========================= */
 .fb-composer-alt {
   background: var(--card);
   color: var(--text);
-  border-radius: 18px;
-  padding: 18px;
+  border-radius: 16px;
+  padding: clamp(10px, 2vw, 18px);
   border: 1px solid rgba(0,0,0,0.1);
+  width: 100%;
   max-width: 100%;
-  box-sizing: border-box;
+  overflow: hidden;
   transition: all 0.2s;
 }
 
-/* TOP BAR */
+/* =========================
+TOP BAR
+========================= */
 .fb-top-bar {
   display: flex;
   align-items: center;
-  margin-bottom: 12px;
-  font-size: 1.05rem;
+  gap: 10px;
+  flex-wrap: wrap;
+  font-size: clamp(0.9rem, 1.2vw, 1.05rem);
 }
+
 .avatar-circle {
-  width: 42px;
-  height: 42px;
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
   border-radius: 50%;
-  background: var(--card);
-  color: var(--text);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: 600;
-  font-size: 16px;
-  margin-right: 10px;
 }
 
-/* TITLE */
-.fb-input-title-alt {
-  width: 100%;
-  border: none;
-  outline: none;
-  font-size: 1.1rem;
-  font-weight: 500;
-  padding: 8px 12px;
-  background: var(--card);
-  color: var(--text);
-  border-radius: 10px;
-  border: 1px solid #eee;
-  transition: all 0.2s;
-}
-.fb-input-title-alt:focus {
-  background: var(--card);
-  color: var(--text);
-}
-
-/* DESCRIPTION */
+/* =========================
+INPUTS (TITLE + TEXTAREA)
+========================= */
+.fb-input-title-alt,
 .fb-textarea-alt {
   width: 100%;
-  border: none;
-  outline: none;
-  resize: vertical;
-  font-size: 0.95rem;
-  padding: 8px 12px;
-  background: var(--card);
-  color: var(--text);
-  border-radius: 10px;
+  max-width: 100%;
   border: 1px solid #eee;
-  margin-bottom: 6px;
-  min-height: 80px;
-  transition: all 0.2s;
-}
-.fb-textarea-alt:focus {
+  border-radius: 10px;
+  padding: clamp(6px, 1.5vw, 10px);
+  font-size: clamp(0.85rem, 1.2vw, 1.05rem);
+  outline: none;
   background: var(--card);
   color: var(--text);
+  transition: 0.2s;
 }
 
-/* FIELD ROWS */
+.fb-textarea-alt {
+  min-height: 90px;
+  resize: vertical;
+}
+
+.fb-input-title-alt:focus,
+.fb-textarea-alt:focus {
+  border-color: #bbb;
+}
+
+/* =========================
+FIELD ROW
+========================= */
 .fb-field-row {
   display: flex;
-  align-items: flex-start;
-  gap: 6px;
   flex-wrap: wrap;
-}
-.fb-field-row textarea {
-  flex: 1 1 100%;
-  align-self: flex-start;
+  gap: 6px;
+  width: 100%;
 }
 
-/* TAGS CONTAINER */
+/* =========================
+TAGS
+========================= */
 .tags-container {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
-  margin-bottom: 8px;
+  width: 100%;
 }
 
-/* ACTION BAR */
+/* =========================
+ACTION BAR (CRITICAL FIX)
+========================= */
 .fb-actions-alt {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  align-items: center;
+  align-items: stretch;
+  width: 100%;
   border-top: 1px solid #eee;
   padding-top: 10px;
 }
 
-/* ACTION WRAPPER */
+/* each action item MUST shrink properly */
 .fb-action-wrapper {
+  flex: 1 1 140px;
+  min-width: 120px;
+  max-width: 100%;
   display: flex;
   align-items: center;
-  gap: 4px;
-  flex: 1 1 auto;
-  min-width: 60px;
+  gap: 6px;
 }
 
-/* ACTION ITEMS */
+/* =========================
+INPUT COMPONENTS
+========================= */
 .fb-select-pill-alt,
 .fb-tag-input-alt,
 .fb-bounty-alt,
 .fb-action-btn-alt {
+  width: 100%;
+  max-width: 100%;
   border-radius: 10px;
-  font-size: 0.9rem;
+  font-size: clamp(0.75rem, 1vw, 0.9rem);
+  padding: 6px 10px;
   border: none;
-  background: var(--bg-gradient);
-  color: var(--text);
-  cursor: pointer;
-  padding: 5px 10px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* =========================
+BUTTONS
+========================= */
+.fb-action-btn-alt {
+  flex: 0 0 auto;
+}
+
+/* =========================
+TOOLTIPS (FIX OVERFLOW)
+========================= */
+/* =========================
+INFO ICON (ANCHOR)
+========================= */
+.info-icon {
+  position: relative;
   display: inline-flex;
   align-items: center;
-  white-space: nowrap;
-  transition: all 0.2s;
-}
-.fb-select-pill-alt { min-width: 90px; max-width: 120px; flex: 1 1 auto; }
-.fb-tag-input-alt { min-width: 60px; max-width: 150px; flex: 2 1 auto; }
-.fb-bounty-alt { min-width: 60px; max-width: 100px; flex: 1 1 auto; }
-.fb-action-btn-alt { flex: 0 0 auto; }
-
-.info-icon {
-  display: inline-flex;
-  margin-left: 4px;
-  font-size: 12px;
-  color: #888;
+  justify-content: center;
   cursor: pointer;
-  font-weight: 700;
-  position: relative; /* for tooltip positioning */
+  font-size: 12px;
 }
 
-/* INFO TOOLTIP BELOW FIELD - FULL WIDTH OF CARD */
+/* =========================
+CENTERED TOOLTIP (FIXED)
+========================= */
 .info-tooltip {
+  position: absolute;
+
+  /* CENTER RELATIVE TO ICON */
+  left: 50%;
+  top: calc(100% + 10px);
+  transform: translateX(-50%) scale(0.98);
+
+  /* SIZE CONTROL */
+  width: min(260px, 90vw);
+
+  background: var(--bg-gradient);
+  color: var(--text);
+  padding: 8px 10px;
+  font-size: 12px;
+  border-radius: 8px;
+
+  text-align: center;
+  line-height: 1.3;
+
+  z-index: 9999;
+
+  /* hidden state */
   opacity: 0;
   pointer-events: none;
 
-  position: absolute;
-  top: 100%;         /* directly below the field/icon */
-  left: 0;           
+  box-shadow: 0 10px 25px rgba(0,0,0,0.15);
 
-  width: auto;       /* let it expand naturally */
-  min-width: 120px;  /* optional minimum */
-  max-width: 100%;   /* never exceed container width */
-  box-sizing: border-box;
-
-  background: var(--bg-gradient);
-  color: var(--text);
-  padding: 6px 10px;
-  font-size: 12px;
-  border-radius: 6px;
-
-  text-align: left;
-  z-index: 100;
-
-  white-space: normal;
-  word-break: break-word;
-  overflow-wrap: break-word;
-
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
 }
 
-/* SHOW TOOLTIP */
+/* SHOW STATE */
 .info-icon.show-tooltip .info-tooltip {
   opacity: 1;
-  pointer-events: auto;
-  transform: translateY(5px); /* small slide down */
+  transform: translateX(-50%) scale(1);
 }
 
-/* Ensure tooltip aligns inside card/field */
-.fb-composer-alt, 
-.fb-field-row {
-  position: relative;
-}
-
-/* Optional: tweak for small screens */
-@media (max-width: 400px) {
+/* =========================
+SMALL SCREEN OPTIMIZATION
+========================= */
+@media (max-width: 480px) {
   .info-tooltip {
+    width: min(220px, 92vw);
     font-size: 11px;
-    padding: 5px 8px;
+    padding: 6px 8px;
   }
 }
-/* REQUIRED STAR */
+/* =========================
+REQUIRED STAR
+========================= */
 .required-star {
   color: #d9534f;
-  margin-left: 2px;
+  margin-left: 3px;
   font-weight: 600;
 }
 
-/* RESPONSIVE */
+/* =========================
+RESPONSIVE BREAKPOINTS
+========================= */
+
+/* TABLET */
 @media (max-width: 768px) {
-  .fb-input-title-alt { font-size: 1rem; }
-  .fb-textarea-alt { font-size: 0.9rem; }
-  .fb-actions-alt { gap: 6px; }
-  .fb-action-wrapper { flex: 1 1 100%; }
+  .fb-actions-alt {
+    gap: 6px;
+  }
+
+  .fb-action-wrapper {
+    flex: 1 1 100%;
+  }
+
+  .fb-top-bar {
+    font-size: 0.95rem;
+  }
 }
 
-@media (max-width: 500px) {
-  .fb-input-title-alt, .fb-textarea-alt { font-size: 0.85rem; }
-  .fb-select-pill-alt, .fb-tag-input-alt, .fb-bounty-alt, .fb-action-btn-alt { font-size: 0.8rem; padding: 4px 8px; }
+/* MOBILE */
+@media (max-width: 480px) {
+  .fb-input-title-alt,
+  .fb-textarea-alt {
+    font-size: 0.85rem;
+  }
+
+  .fb-actions-alt {
+    flex-direction: column;
+  }
+
+  .fb-action-wrapper {
+    width: 100%;
+  }
+
+  .avatar-circle {
+    width: 34px;
+    height: 34px;
+  }
+}
+
+/* VERY SMALL SCREENS */
+@media (max-width: 360px) {
+  .fb-composer-alt {
+    padding: 10px;
+  }
 }
 </style>
 <script>

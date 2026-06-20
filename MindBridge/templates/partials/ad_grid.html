@@ -1,0 +1,815 @@
+{% load static %}
+{% load mention_tags %}
+
+<!-- ===================================================== -->
+<!-- ADS TABLE -->
+<!-- ===================================================== -->
+
+<div class="table-responsive ads-table-wrapper">
+
+    <table class="table align-middle ads-table">
+
+        <!-- ================= TABLE HEAD ================= -->
+        <thead>
+            <tr>
+                <th>Advertisement</th>
+                <th>Category</th>
+                <th>Status</th>
+                <th>Views</th>
+                <th>Clicks</th>
+                <th>CTR</th>
+                <th>Spent</th>
+                <th>Started</th>
+                <th>Expires</th>
+            </tr>
+        </thead>
+
+        <!-- ================= TABLE BODY ================= -->
+        <tbody>
+
+        {% for ad in ads %}
+
+            <tr
+
+                class="
+                    ad-row
+
+                    {% if ad.effective_status == 'expired' %}
+                        ad-expired
+                    {% endif %}
+
+                    {% if ad.effective_status == 'deleted' %}
+                        ad-deleted
+                    {% endif %}
+
+                    {% if ad.is_urgent_expiry %}
+                        ad-urgent-expiry
+                    {% elif ad.is_expiring_soon %}
+                        ad-expiring-soon
+                    {% endif %}
+                "
+
+                data-bs-toggle="offcanvas"
+                data-bs-target="#adDetail{{ ad.id }}"
+            >
+
+                <!-- ================= AD INFO ================= -->
+                <td>
+                    <div class="d-flex align-items-center gap-3">
+
+                        <div class="ad-thumb">
+
+                            {% if ad.ads_file %}
+                                <img src="{{ ad.ads_file.url }}">
+                            {% else %}
+                                <img src="{% static 'logo/favicon-32.png' %}">
+                            {% endif %}
+
+                        </div>
+
+                        <div>
+
+                            <div class="fw-semibold text-dark">
+
+                                {{ ad.title|default:"Untitled Advertisement"|truncatechars:30 }}
+
+                                {% if ad.is_urgent_expiry %}
+                                    <span class="badge bg-danger ms-1">🔥 Urgent</span>
+                                {% elif ad.is_expiring_soon %}
+                                    <span class="badge bg-warning text-dark ms-1">⚠ Expiring Soon</span>
+                                {% endif %}
+
+                            </div>
+
+                            <small class="text-muted">
+
+                                {{ ad.description|default:"No description"|truncatechars:55 }}
+
+                            </small>
+
+                        </div>
+
+                    </div>
+                </td>
+
+                <!-- ================= CATEGORY ================= -->
+                <td>
+                    <span class="category-pill">
+                        {{ ad.ad_category }}
+                    </span>
+                </td>
+
+                <!-- ================= STATUS ================= -->
+                <td>
+
+                    <span class="
+                        status-pill
+
+                        {% if ad.effective_status == 'active' %}
+                            status-active
+                        {% elif ad.effective_status == 'pending' %}
+                            status-pending
+                        {% elif ad.effective_status == 'draft' %}
+                            status-draft
+                        {% elif ad.effective_status == 'expired' %}
+                            status-expired
+                        {% elif ad.effective_status == 'deleted' %}
+                            status-deleted
+                        {% elif ad.effective_status == 'rejected' %}
+                            status-rejected
+                        {% endif %}
+                    ">
+
+                        {{ ad.effective_status|title }}
+
+                    </span>
+
+                </td>
+
+                <!-- ================= METRICS ================= -->
+                <td>{{ ad.impressions|abbreviate_number }}</td>
+                <td>{{ ad.clicks|abbreviate_number }}</td>
+                <td>{{ ad.ctr }}%</td>
+                <td>${{ ad.price|abbreviate_number }}</td>
+
+                <!-- ================= DATES ================= -->
+                <td>{{ ad.start_at|date:"M d, Y" }}</td>
+
+                <td>
+
+                    {{ ad.expires_at|date:"M d, Y" }}
+
+                    {% if ad.is_urgent_expiry %}
+                        <div class="text-danger small fw-bold">
+                            🔥 Ends very soon
+                        </div>
+                    {% elif ad.is_expiring_soon %}
+                        <div class="text-warning small fw-bold">
+                            ⚠ Ending soon
+                        </div>
+                    {% endif %}
+
+                </td>
+
+            </tr>
+
+        {% empty %}
+
+            <!-- ================= EMPTY STATE ================= -->
+            <tr>
+                <td colspan="9" class="py-5 text-center">
+
+                    <img
+                        src="{% static 'logo/favicon-32.png' %}"
+                        width="50"
+                        class="mb-3 opacity-50"
+                    >
+
+                    <h5 class="fw-bold">
+                        No Advertisements Found
+                    </h5>
+
+                    <p class="text-muted mb-0">
+                        Create your first ad campaign 🚀
+                    </p>
+
+                </td>
+            </tr>
+
+        {% endfor %}
+
+        </tbody>
+
+    </table>
+
+</div>
+
+
+<!-- ===================================================== -->
+<!-- OFFCANVAS DETAILS -->
+<!-- ===================================================== -->
+
+{% for ad in ads %}
+
+<div
+    class="offcanvas offcanvas-end ads-offcanvas"
+    tabindex="-1"
+    id="adDetail{{ ad.id }}"
+>
+
+    <!-- HEADER -->
+    <div class="offcanvas-header ads-header">
+
+        <div>
+
+            <h5 class="fw-bold mb-1">
+
+                {{ ad.title }}
+
+            </h5>
+
+            <small class="text-muted">
+
+                Advertisement Details
+
+            </small>
+
+        </div>
+
+        <button
+            type="button"
+            class="btn-close"
+            data-bs-dismiss="offcanvas"
+        ></button>
+
+    </div>
+
+    <!-- BODY -->
+    <div class="offcanvas-body">
+
+        <!-- IMAGE -->
+        <div class="mb-4">
+
+            {% if ad.ads_file %}
+
+                <img
+                    src="{{ ad.ads_file.url }}"
+                    class="ads-preview"
+                >
+
+            {% else %}
+
+                <img
+                    src="{% static 'logo/favicon-32.png' %}"
+                    class="ads-preview"
+                >
+
+            {% endif %}
+
+        </div>
+
+        <!-- STATUS -->
+        <div class="mb-4">
+
+            <span class="
+                status-pill
+
+                {% if ad.effective_status == 'active' %}
+                    status-active
+
+                {% elif ad.effective_status == 'pending' %}
+                    status-pending
+
+                {% elif ad.effective_status == 'draft' %}
+                    status-draft
+
+                {% elif ad.effective_status == 'expired' %}
+                    status-expired
+
+                {% elif ad.effective_status == 'deleted' %}
+                    status-deleted
+
+                {% elif ad.effective_status == 'rejected' %}
+                    status-rejected
+
+                {% endif %}
+            ">
+
+                {{ ad.effective_status|title }}
+
+            </span>
+
+        </div>
+
+        <!-- DESCRIPTION -->
+        <div class="mb-4">
+
+            <div class="fw-semibold mb-2">
+
+                Description
+
+            </div>
+
+            <p class="text-muted">
+
+                {{ ad.description }}
+
+            </p>
+
+        </div>
+
+        <!-- TARGET -->
+        <div class="mb-4">
+
+            <div class="fw-semibold mb-2">
+
+                Target URL
+
+            </div>
+
+            <a
+                href="{{ ad.target_url }}"
+                target="_blank"
+                class="text-break"
+            >
+
+                {{ ad.target_url }}
+
+            </a>
+
+        </div>
+
+        <!-- STATS -->
+        <div class="ads-stats-grid mb-4">
+
+            <div class="ads-stat-card">
+
+                <div class="ads-stat-number">
+
+                    {{ ad.impressions|abbreviate_number }}
+
+                </div>
+
+                <small>Views</small>
+
+            </div>
+
+            <div class="ads-stat-card">
+
+                <div class="ads-stat-number">
+
+                    {{ ad.clicks|abbreviate_number }}
+
+                </div>
+
+                <small>Clicks</small>
+
+            </div>
+
+            <div class="ads-stat-card">
+
+                <div class="ads-stat-number">
+
+                    {{ ad.ctr }}%
+
+                </div>
+
+                <small>CTR</small>
+
+            </div>
+
+        </div>
+
+        <!-- META -->
+        <div class="ads-meta mb-4">
+
+            <div class="ads-meta-row">
+
+                <span>Started</span>
+
+                <span>{{ ad.start_at|date:"M d, Y" }}</span>
+
+            </div>
+
+            <div class="ads-meta-row">
+
+                <span>Expires</span>
+
+                <span>{{ ad.expires_at|date:"M d, Y" }}</span>
+
+            </div>
+
+            <div class="ads-meta-row">
+
+                <span>Relaunches</span>
+
+                <span>{{ ad.relaunch_count }}</span>
+
+            </div>
+
+        </div>
+
+        <!-- ACTIONS -->
+
+        {% if ad.effective_status == "draft" %}
+
+        <a
+            href="{% url 'edit_draft_ad' ad.id %}"
+            class="btn btn-outline-primary w-100 mb-2"
+        >
+
+            ✏ Edit Draft
+
+        </a>
+
+        {% endif %}
+
+        {% if ad.effective_status == "expired" or ad.effective_status == "active" %}
+
+        <form method="POST" action="{% url 'relaunch_ad' ad.id %}">
+
+            {% csrf_token %}
+
+            <button class="btn btn-success w-100 mb-2">
+
+                ↻ Relaunch / Extend
+
+            </button>
+
+        </form>
+
+        {% endif %}
+
+        <!-- RECURRING -->
+
+        <form
+            method="POST"
+            action="{% url 'enable_recurring_ad' ad.id %}"
+            class="mb-2"
+        >
+
+            {% csrf_token %}
+
+            <div class="d-flex gap-2">
+
+                <select
+                    name="recurring_days"
+                    class="form-select"
+                >
+
+                    <option value="3">3 Days</option>
+
+                    <option value="7">7 Days</option>
+
+                    <option value="14">14 Days</option>
+
+                    <option value="30">30 Days</option>
+
+                </select>
+
+                <button class="btn btn-warning">
+
+                    Recurring
+
+                </button>
+
+            </div>
+
+        </form>
+
+        {% if ad.is_recurring %}
+
+        <div class="alert alert-warning">
+
+            Recurring every
+            <strong>{{ ad.recurring_days }} days</strong>
+
+        </div>
+
+        <form method="POST" action="{% url 'stop_recurring_ad' ad.id %}">
+
+            {% csrf_token %}
+
+            <button class="btn btn-dark w-100 mb-2">
+
+                Stop Recurring
+
+            </button>
+
+        </form>
+
+        {% endif %}
+
+        <!-- DELETE -->
+
+        <form method="POST" action="{% url 'delete_ad' ad.id %}">
+
+            {% csrf_token %}
+
+            <button class="btn btn-outline-danger w-100">
+
+                🗑 Delete Advertisement
+
+            </button>
+
+        </form>
+
+    </div>
+
+</div>
+
+{% endfor %}
+
+
+<!-- ===================================================== -->
+<!-- PREMIUM STYLES -->
+<!-- ===================================================== -->
+
+<style>
+
+/* ========================================= */
+/* TABLE */
+/* ========================================= */
+
+.ads-table-wrapper{
+
+    border-radius:24px;
+
+    overflow:hidden;
+
+    background:white;
+
+    border:1px solid rgba(15,23,42,0.06);
+
+    box-shadow:
+        0 10px 30px rgba(15,23,42,0.05);
+}
+
+.ads-table{
+
+    margin-bottom:0;
+}
+
+
+/* ========================================= */
+/* ROWS */
+/* ========================================= */
+
+.ad-row{
+
+    cursor:pointer;
+
+    transition:
+        background .2s ease,
+        transform .2s ease;
+}
+
+.ad-row:hover{
+
+    background:
+        rgba(248,250,252,0.85);
+}
+
+
+/* ========================================= */
+/* THUMB */
+/* ========================================= */
+
+.ad-thumb{
+
+    width:58px;
+    height:58px;
+
+    border-radius:16px;
+
+    overflow:hidden;
+
+    flex-shrink:0;
+
+    background:#f1f5f9;
+}
+
+.ad-thumb img{
+
+    width:100%;
+    height:100%;
+
+    object-fit:cover;
+}
+
+
+/* ========================================= */
+/* CATEGORY */
+/* ========================================= */
+
+.category-pill{
+
+    padding:6px 12px;
+
+    border-radius:999px;
+
+    background:#eff6ff;
+
+    color:#2563eb;
+
+    font-size:.72rem;
+
+    font-weight:600;
+}
+
+
+/* ========================================= */
+/* STATUS */
+/* ========================================= */
+
+.status-pill{
+
+    display:inline-flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    padding:7px 14px;
+
+    border-radius:999px;
+
+    font-size:.75rem;
+
+    font-weight:700;
+}
+
+.status-active{
+
+    background:#dcfce7;
+    color:#166534;
+}
+
+.status-pending{
+
+    background:#fef3c7;
+    color:#92400e;
+}
+
+.status-draft{
+
+    background:#e2e8f0;
+    color:#334155;
+}
+
+.status-expired{
+
+    background:#111827;
+    color:white;
+}
+
+.status-deleted,
+.status-rejected{
+
+    background:#fee2e2;
+    color:#991b1b;
+}
+
+
+/* ========================================= */
+/* OFFCANVAS */
+/* ========================================= */
+
+.ads-offcanvas{
+
+    width:460px !important;
+
+    z-index:2000;
+}
+
+.ads-header{
+
+    position:sticky;
+
+    top:0;
+
+    z-index:10;
+
+    background:white;
+
+    border-bottom:
+        1px solid rgba(15,23,42,0.06);
+}
+
+
+/* ========================================= */
+/* PREVIEW */
+/* ========================================= */
+
+.ads-preview{
+
+    width:100%;
+
+    height:220px;
+
+    object-fit:cover;
+
+    border-radius:22px;
+}
+
+
+/* ========================================= */
+/* STATS */
+/* ========================================= */
+
+.ads-stats-grid{
+
+    display:grid;
+
+    grid-template-columns:repeat(3,1fr);
+
+    gap:12px;
+}
+
+.ads-stat-card{
+
+    padding:18px;
+
+    border-radius:18px;
+
+    background:#f8fafc;
+
+    text-align:center;
+}
+
+.ads-stat-number{
+
+    font-size:1.2rem;
+
+    font-weight:700;
+}
+
+
+/* ========================================= */
+/* META */
+/* ========================================= */
+
+.ads-meta{
+
+    display:flex;
+
+    flex-direction:column;
+
+    gap:10px;
+}
+
+.ads-meta-row{
+
+    display:flex;
+
+    justify-content:space-between;
+
+    color:#64748b;
+}
+
+
+/* ========================================= */
+/* MOBILE */
+/* ========================================= */
+
+@media(max-width:768px){
+
+    .ads-offcanvas{
+
+        width:100% !important;
+    }
+
+    .ads-stats-grid{
+
+        grid-template-columns:1fr;
+    }
+
+    .ad-thumb{
+
+        width:50px;
+        height:50px;
+    }
+}
+
+
+/* ========================================= */
+/* DARK MODE */
+/* ========================================= */
+
+[data-theme="dark"] .ads-table-wrapper{
+
+    background:#111827;
+
+    border:
+        1px solid rgba(255,255,255,0.06);
+}
+
+[data-theme="dark"] .ads-table{
+
+    color:#f8fafc;
+}
+
+[data-theme="dark"] .ads-header{
+
+    background:#111827;
+}
+
+[data-theme="dark"] .ads-stat-card{
+
+    background:#1e293b;
+}
+
+[data-theme="dark"] .ad-row:hover{
+
+    background:
+        rgba(255,255,255,0.03);
+}
+
+[data-theme="dark"] .category-pill{
+
+    background:#1e3a8a;
+
+    color:#bfdbfe;
+}
+
+</style>

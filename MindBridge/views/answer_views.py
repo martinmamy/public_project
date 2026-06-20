@@ -3,6 +3,7 @@ import re
 from datetime import timedelta
 import uuid
 import urllib.parse
+from django.template.loader import render_to_string
 import requests
 from django.conf import settings
 from django.shortcuts import redirect
@@ -103,94 +104,155 @@ def serialize_answer(answer):
 
 @method_decorator(login_required, name="dispatch")
 class CreateAnswerView(View):
-    """Handles posting an answer with optional media and mentions."""
 
     def post(self, request, problem_id):
-        if not request.user.is_authenticated:
-            if is_api_request(request):
-                return JsonResponse({"error": "Authentication required"}, status=401)
-            messages.error(request, "You must be logged in to answer.")
-            return redirect("login")
 
         problem = get_object_or_404(Problem, id=problem_id)
+
         form = AnswerForm(request.POST, request.FILES)
 
         if not form.is_valid():
-            if is_api_request(request):
+
+            if request.headers.get("X-Requested-With") == "XMLHttpRequest":
                 return JsonResponse({
                     "success": False,
                     "errors": form.errors
                 }, status=400)
 
-            messages.error(request, "Invalid input or inappropriate language.")
+            messages.error(request, "Invalid input.")
             return redirect("problem_detail", problem_id=problem.id)
 
-        # ✅ ONLY SAVE AFTER VALIDATION PASSES
         with transaction.atomic():
+
             answer = form.save(commit=False)
             answer.problem = problem
             answer.author = request.user
             answer.save()
 
+            display_name = (
+                f"{request.user.first_name} {request.user.last_name}".strip()
+                if request.user.first_name or request.user.last_name
+                else request.user.username
+            )
+
             # Notify problem owner
             if problem.author != request.user:
                 NotificationService.create_notification(
                     user=problem.author,
-                    message=f"{request.user.username} answered your problem '{problem.title}'.",
+                    message=f"{display_name} answered your problem '{problem.title}'.",
                     url=f"/problems/{problem.id}/"
                 )
 
-            # Notify mentioned users
+            # Mention notifications
             for user in extract_mentions(answer.content):
                 if user != request.user and user != problem.author:
                     NotificationService.create_notification(
                         user=user,
-                        message=f"{request.user.username} mentioned you in an answer.",
+                        message=f"{display_name} mentioned you in an answer.",
                         url=f"/problems/{problem.id}/#answer-{answer.id}"
                     )
 
-        if is_api_request(request):
-            return JsonResponse({"status": "success", "answer": serialize_answer(answer)})
+        # =========================
+        # AJAX RESPONSE
+        # =========================
+        if request.headers.get("X-Requested-With") == "XMLHttpRequest":
 
+            html = render_to_string(
+                "partials/answer_card.html",
+                {
+                    "answer": answer,
+                    "user": request.user
+                },
+                request=request
+            )
+
+            return JsonResponse({
+                "success": True,
+                "html": html,
+                "answer_id": answer.id
+            })
+
+        # =========================
+        # NORMAL RESPONSE
+        # =========================
         messages.success(request, "Answer posted successfully.")
+
         return redirect("problem_detail", problem_id=problem.id)
 
 
-
 def generate_ai_answer(request, problem_id):
-    if request.method == "POST":
-        problem_obj = get_object_or_404(Problem, id=problem_id)
 
-        # Use the correct field here
-        problem_text = problem_obj.description  # <-- fixed
+    if request.method != "POST":
+        return JsonResponse({"error": "POST required"}, status=405)
 
+    problem_obj = get_object_or_404(Problem, id=problem_id)
+
+    try:
         data = json.loads(request.body)
-        user_prompt = data.get("prompt", "")
-        prompt_text = f"Problem: {problem_text}\n"
-        if user_prompt:
-            prompt_text += f"Additional context: {user_prompt}\n"
-        prompt_text += "Provide a detailed, clear, step-by-step answer."
+    except json.JSONDecodeError:
+        return JsonResponse({"error": "invalid json"}, status=400)
 
-        # Call OpenRouter API
-        openrouter_api_key = settings.OPENROUTER_API_KEY
-        url = "https://api.openrouter.ai/v1/completions"
-        payload = {
-            "model": "gpt-4.1-mini",
-            "prompt": prompt_text,
-            "max_tokens": 500,
-        }
-        headers = {"Authorization": f"Bearer {openrouter_api_key}"}
+    user_prompt = data.get("prompt", "").strip()
 
-        try:
-            r = requests.post(url, json=payload, headers=headers)
-            r.raise_for_status()
-            result = r.json()
-            ai_answer = result["choices"][0]["text"].strip()
-        except Exception as e:
-            print(e)
-            ai_answer = ""
+    problem_text = problem_obj.description
+
+    prompt_text = f"""
+Problem:
+{problem_text}
+"""
+
+    if user_prompt:
+        prompt_text += f"\nAdditional context:\n{user_prompt}\n"
+
+    prompt_text += "\nProvide a clear step-by-step solution."
+
+    try:
+        response = requests.post(
+            "https://openrouter.ai/api/v1/chat/completions",
+            headers={
+                "Authorization": f"Bearer {settings.OPENROUTER_API_KEY}",
+                "Content-Type": "application/json",
+
+                # 🔥 REQUIRED
+                "HTTP-Referer": "http://localhost:8000",
+                "X-Title": "FancyLearn",
+            },
+            json={
+                "model": "openai/gpt-4o-mini",  # 🔥 much better than Mistral 7B
+                "messages": [
+                    {
+                        "role": "system",
+                        "content": (
+                            "You are an expert tutor. "
+                            "Explain step-by-step in a clear, structured way."
+                        )
+                    },
+                    {
+                        "role": "user",
+                        "content": prompt_text
+                    }
+                ],
+                "temperature": 0.3,
+                "max_tokens": 800
+            },
+            timeout=20
+        )
+
+        data = response.json()
+
+        ai_answer = (
+            data.get("choices", [{}])[0]
+            .get("message", {})
+            .get("content", "")
+        )
 
         return JsonResponse({"answer": ai_answer})
+
+    except Exception as e:
+        return JsonResponse({
+            "error": "openrouter_failed",
+            "details": str(e)
+        }, status=500)
 
 # =====================================================
 # UPDATE ANSWER
@@ -257,13 +319,9 @@ class DeleteAnswerView(View):
 
 @method_decorator(login_required, name="dispatch")
 class AcceptAnswerView(View):
-    """
-    Allows problem author to accept an answer,
-    award reputation, verify expert status,
-    and handle bounty payouts.
-    """
 
     def post(self, request, answer_id):
+
         answer = get_object_or_404(
             Answer.objects.select_related("problem", "author"),
             id=answer_id
@@ -276,10 +334,30 @@ class AcceptAnswerView(View):
         if problem.author != request.user:
             return JsonResponse({"error": "not_allowed"}, status=403)
 
+        # Already accepted
         if answer.is_accepted:
-            return JsonResponse({"status": "already_accepted"})
+            if is_api_request(request):
+                return JsonResponse({"status": "already_accepted"})
+            messages.info(request, "This answer is already accepted.")
+            return redirect("problem_detail", problem_id=problem.id)
+
+        # Prevent multiple accepted answers (CRITICAL FIX)
+        if Answer.objects.filter(
+            problem=problem,
+            is_accepted=True
+        ).exists():
+
+            if is_api_request(request):
+                return JsonResponse(
+                    {"error": "answer_already_accepted"},
+                    status=400
+                )
+
+            messages.error(request, "This problem already has an accepted answer.")
+            return redirect("problem_detail", problem_id=problem.id)
 
         with transaction.atomic():
+
             # --------------------------
             # ACCEPT ANSWER
             # --------------------------
@@ -290,7 +368,7 @@ class AcceptAnswerView(View):
             problem.save(update_fields=["is_solved"])
 
             # --------------------------
-            # KNOWLEDGE BASE CREATION
+            # KNOWLEDGE BASE
             # --------------------------
             kb_entry, created = KnowledgeBaseEntry.objects.get_or_create(
                 problem=problem,
@@ -301,6 +379,7 @@ class AcceptAnswerView(View):
                     "category": problem.category,
                 }
             )
+
             if not created:
                 kb_entry.answer = answer
                 kb_entry.title = problem.title
@@ -311,7 +390,6 @@ class AcceptAnswerView(View):
             # --------------------------
             # REPUTATION
             # --------------------------
-            # Corrected: must pass action, optional points
             ReputationService.award_points(
                 user=answer.author,
                 action="accepted_answer",
@@ -322,6 +400,7 @@ class AcceptAnswerView(View):
             # EXPERT VERIFICATION
             # --------------------------
             result = ExpertVerificationService.verify_user(answer.author)
+
             if result == "verified":
                 NotificationService.create_notification(
                     user=answer.author,
@@ -330,11 +409,13 @@ class AcceptAnswerView(View):
                 )
 
             # --------------------------
-            # BOUNTY HANDLING
+            # BOUNTY
             # --------------------------
             bounty = getattr(problem, "bounty", None)
+
             if bounty and bounty.status == "held":
                 bounty.awarded_to = answer.author
+
                 if getattr(answer.author, "paypal_account", None):
                     try:
                         send_paypal_payout(
@@ -346,14 +427,16 @@ class AcceptAnswerView(View):
                         print(f"PayPal payout failed: {e}")
                 else:
                     bounty.expires_at = timezone.now() + timedelta(days=10)
+
                     NotificationService.create_notification(
                         user=answer.author,
-                        message="You won a bounty! Link your PayPal within 10 days to receive it."
+                        message="You won a bounty! Add PayPal within 10 days."
                     )
+
                 bounty.save()
 
             # --------------------------
-            # NOTIFICATIONS
+            # NOTIFICATION
             # --------------------------
             if answer.author != request.user:
                 NotificationService.create_notification(
@@ -367,7 +450,10 @@ class AcceptAnswerView(View):
         # RESPONSE
         # --------------------------
         if is_api_request(request):
-            return JsonResponse({"status": "accepted", "answer_id": str(answer.id)})
+            return JsonResponse({
+                "status": "accepted",
+                "answer_id": str(answer.id)
+            })
 
         messages.success(request, "Answer accepted successfully.")
         return redirect("problem_detail", problem_id=problem.id)

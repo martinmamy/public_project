@@ -1,6 +1,7 @@
 from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.http import JsonResponse
+from django.urls.base import reverse
 from MindBridge.models import Answer, User
 from django.views import View
 from django.contrib.auth.decorators import login_required
@@ -67,6 +68,7 @@ class AjaxVerifyExpertView(View):
             return JsonResponse({
                 "success": False,
                 "error": "You do not meet the criteria for verification yet.",
+                "url": reverse("transparent_info"),
                 "details": status
             }, status=403)
 

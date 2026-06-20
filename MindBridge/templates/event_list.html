@@ -7,7 +7,7 @@
 
 <!-- CREATE EVENT -->
 <div class="mb-4 text-end">
-  <a href="{% url 'create_event' %}" class="btn btn-primary">
+  <a href="{% url 'create_event' %}" data-spa-link class="btn btn-primary">
     <i class="fa fa-plus"></i> Create Event
   </a>
 </div>
@@ -40,7 +40,7 @@ LIVE EVENTS
 
 {% for event in events %}
 
-<div class="card shadow-sm mb-4 border-0 rounded-4">
+<div class="card mb-4 border-0 rounded-4">
 
 <div class="card-body">
 
@@ -48,7 +48,7 @@ LIVE EVENTS
 <div class="d-flex justify-content-between align-items-start mb-2">
 
 <h5 class="mb-0 fw-semibold">
-<a href="{% url 'event_detail' event.id %}" class="text-decoration-none text-dark">
+<a href="{% url 'event_detail' event.id %}" data-spa-link class="text-decoration-none text-dark">
 {{ event.title }}
 </a>
 </h5>
@@ -63,7 +63,7 @@ LIVE EVENTS
 
 
 <p class="text-muted small mb-1">
-Hosted by <strong>{{ event.host.username }}</strong>
+Hosted by <strong> {% if event.host.profile.first_name or event.host.profile.last_name %}{{ event.host.profile.first_name }} {{ event.host.profile.last_name }}{% else %}{{ event.host.username }}{% endif %}</strong>
 </p>
 
 <p class="mb-2">{{ event.description }}</p>
@@ -209,7 +209,7 @@ RECORDED EVENTS (VIDEO GRID)
 
 <div class="col-lg-6 col-xl-4">
 
-<div class="card border-0 shadow-sm rounded-4 h-100">
+<div class="card border-0 rounded-4 h-100">
 
 <video
 autoplay
@@ -226,7 +226,7 @@ style="aspect-ratio:16/9;object-fit:cover;background:black;">
 </h6>
 
 <p class="text-muted small mb-0">
-Hosted by {{ event.host.username }}
+Hosted by {% if event.host.profile.first_name or event.host.profile.last_name %}{{ event.host.profile.first_name }} {{ event.host.profile.last_name }}{% else %}{{ event.host.username }}{% endif %}
 </p>
 
 </div>

@@ -1,98 +1,187 @@
 {% load custom_tags %}
 {% load mention_tags %}
 
-<!-- =========================
-TRENDING PROBLEMS (MODERN)
-========================= -->
-{% if trendings_problems and trendings_problems|length > 0 %}
+{% if trendings_problems %}
+
 <div class="card modern-card mb-3">
 
-  <div class="card-header modern-header">
-    <i class="fa-solid fa-fire me-2 text-danger"></i>
-    <span>Trending</span>
-  </div>
+    <div class="card-header modern-header">
+        <i class="fa-solid fa-fire text-danger me-2"></i>
+        <span>Trending</span>
+    </div>
 
-  <div class="modern-list">
-    {% for trending in trendings_problems %}
-      {% if trending.title %}
+    <div class="modern-list progressive-list scrollable-auto" id="trendingList">
 
-        {% if user.is_authenticated %}
+        {% for trending in trendings_problems %}
+            {% if trending.title %}
 
-          {% if trending.post_type == "information" %}
-            <a class="modern-item"
-               href="{% url 'talenthub' %}#problem-{{ trending.id }}">
-              <span class="title">
-                {{ trending.title|convert_mentions|truncatechars:60|safe }}
-              </span>
+            <a class="modern-item progressive-item"
+               href="{% if user.is_authenticated %}
+                        {% if trending.post_type == 'information' %}
+                            {% url 'talenthub' %}#problem-{{ trending.id }}
+                        {% else %}
+                            {% url 'problem_detail' trending.id %}
+                        {% endif %}
+                     {% else %}
+                        {% url 'login' %}
+                     {% endif %}"
+               data-spa-link>
+
+                <span class="title">
+                    {{ trending.title|convert_mentions|truncatechars:60|safe }}
+                </span>
+
             </a>
-          {% else %}
-            <a class="modern-item"
-               href="{% url 'problem_detail' trending.id %}">
-              <span class="title">
-                {{ trending.title|convert_mentions|truncatechars:60|safe }}
-              </span>
-            </a>
-          {% endif %}
 
-        {% else %}
-          <a class="modern-item" href="{% url 'login' %}">
-            <span class="title">
-              {{ trending.title|convert_mentions|truncatechars:60|safe }}
-            </span>
-          </a>
-        {% endif %}
+            {% endif %}
+        {% endfor %}
 
-      {% endif %}
-    {% endfor %}
-  </div>
+    </div>
 
 </div>
+
 {% endif %}
 
-<!-- =========================
-SUGGESTED EXPERTS (MODERN)
-========================= -->
-{% if user.is_authenticated and suggested_experts and suggested_experts|length > 0 %}
+
+
+{% if user.is_authenticated and suggested_experts %}
+
 <div class="card modern-card">
 
-  <div class="card-header modern-header">
-    <i class="fa-solid fa-star me-2 text-warning"></i>
-    <span>Experts</span>
-  </div>
+    <div class="card-header modern-header">
+        <i class="fa-solid fa-star text-warning me-2"></i>
+        <span>Experts</span>
+    </div>
 
-  <div class="modern-list">
-    {% for expert in suggested_experts %}
-      {% if expert.username %}
+    <div class="modern-list progressive-list scrollable-auto" id="expertList">
 
-      <div class="modern-expert-item">
+        {% for expert in suggested_experts %}
 
-        <a href="{% url 'profile' expert.id %}" class="expert-left">
-          {% if expert.avatar and expert.avatar.name %}
-            <img src="{{ expert.avatar.url }}" class="avatar-img modern-avatar">
-          {% else %}
-            {% with first=expert.username|slice:":1"|upper %}
-              <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40'%3E%3Crect width='40' height='40' fill='%23e2e8f0'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='central' text-anchor='middle' font-size='18'%3E{{ first }}%3C/text%3E%3C/svg%3E"
-                   class="avatar-img modern-avatar">
-            {% endwith %}
-          {% endif %}
+        <div class="modern-expert-item progressive-item">
 
-          <div class="expert-info">
-            <span class="name">{{ expert.username }}</span>
-          </div>
-        </a>
+            <a href="{% url 'profile' expert.id %}"
+               class="expert-left"
+               data-spa-link>
 
-        <span class="modern-badge">
-          ⭐ {{ expert.reputation_score|abbreviate_number|default:"0" }}
-        </span>
+                {% if expert.avatar %}
+                    <img src="{{ expert.avatar.url }}" class="avatar-img modern-avatar">
+                {% else %}
+                    {% with first=expert.username|slice:":1"|upper %}
+                    <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40'%3E%3Crect width='40' height='40' fill='%23e2e8f0'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='central' text-anchor='middle' font-size='18'%3E{{ first }}%3C/text%3E%3C/svg%3E"
+                         class="avatar-img modern-avatar">
+                    {% endwith %}
+                {% endif %}
 
-      </div>
+                <div class="expert-info">
 
-      {% endif %}
-    {% endfor %}
-  </div>
+                    {% if expert.is_verified_expert %}
+                        <i class="fas fa-shield-alt verified-expert"></i>
+                    {% endif %}
+
+                    <strong>
+                        {% if expert.profile.first_name %}
+                            {{ expert.profile.first_name }}
+                            {{ expert.profile.last_name }}
+                        {% else %}
+                            {{ expert.username }}
+                        {% endif %}
+                    </strong>
+
+                </div>
+
+            </a>
+
+            {% include "components/user_presence.html" with expert=expert.author %}
+
+            <div class="expert-tier">
+
+                {% if expert.tier == "Beginner" %}
+                    <span class="badge bg-secondary">Beginner</span>
+
+                {% elif expert.tier == "Contributor" %}
+                    <span class="badge bg-info">Contributor</span>
+
+                {% elif expert.tier == "Advanced" %}
+                    <span class="badge bg-primary">Advanced</span>
+
+                {% elif expert.tier == "Expert" %}
+                    <span class="badge bg-success">Expert</span>
+
+                {% elif expert.tier == "Master Expert" %}
+                    <span class="badge bg-warning text-dark">
+                        Master Expert
+                    </span>
+                {% endif %}
+
+            </div>
+
+        </div>
+
+        {% endfor %}
+
+    </div>
 
 </div>
+
 {% endif %}
+
+
+<script>
+(function () {
+
+    const VISIBLE_COUNT = 5;
+
+    function applyScrollableLists() {
+
+        const lists = document.querySelectorAll(".scrollable-auto");
+
+        if (!lists.length) return;
+
+        lists.forEach(list => {
+
+            const items = Array.from(list.querySelectorAll(".progressive-item"));
+            if (items.length <= VISIBLE_COUNT) {
+                list.style.maxHeight = "none";
+                list.style.overflowY = "visible";
+                return;
+            }
+
+            // Calculate exact height of first 5 items
+            let height = 0;
+
+            for (let i = 0; i < VISIBLE_COUNT; i++) {
+                const item = items[i];
+                if (item) {
+                    height += item.offsetHeight;
+                }
+            }
+
+            list.style.maxHeight = height + "px";
+            list.style.overflowY = "auto";
+            list.style.scrollBehavior = "smooth";
+
+        });
+    }
+
+    function safeInit() {
+        try {
+            applyScrollableLists();
+        } catch (err) {
+            console.error("Scrollable init error:", err);
+        }
+    }
+
+    if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", safeInit);
+    } else {
+        safeInit();
+    }
+
+    // SPA support
+    window.addEventListener("spa:render", safeInit);
+
+})();
+</script>
 
 <style>
   /* =========================
@@ -210,5 +299,20 @@ MODERN SIDEBAR CARDS
   color: var(--primary);
 
   font-weight: 600;
+}
+
+.scrollable-auto {
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+/* optional: nicer scrollbar */
+.scrollable-auto::-webkit-scrollbar {
+    width: 4px;
+}
+
+.scrollable-auto::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 10px;
 }
 </style>

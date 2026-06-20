@@ -1,0 +1,250 @@
+{% extends "base.html" %}
+{% load static %}
+{% load mention_tags %}
+
+{% block content %}
+
+<div class="container py-4">
+
+<!-- ================= HEADER ================= -->
+<div class="mb-4">
+    <h3 class="fw-bold text-info">📊 Admin Ads Dashboard</h3>
+    <p class="text-info">Full platform analytics — per status breakdown</p>
+</div>
+
+<!-- ================= TABS ================= -->
+<ul class="nav nav-pills mb-4">
+
+    <li class="nav-item">
+        <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#all">
+            All
+        </button>
+    </li>
+
+    <li class="nav-item">
+        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#active">
+            Active
+        </button>
+    </li>
+
+    <li class="nav-item">
+        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#pending">
+            Pending
+        </button>
+    </li>
+
+    <li class="nav-item">
+        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#draft">
+            Draft
+        </button>
+    </li>
+
+    <li class="nav-item">
+        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#expired">
+            Expired
+        </button>
+    </li>
+
+</ul>
+
+<!-- ===================================================== -->
+<!-- TAB CONTENT -->
+<!-- ===================================================== -->
+<div class="tab-content">
+
+<!-- ================= ALL ================= -->
+<div class="tab-pane fade show active" id="all">
+
+    <!-- KPI -->
+    <div class="row g-3 mb-3">
+
+        <div class="col-md-3">
+            <div class="card p-3 shadow-sm">
+                <small>Total Ads</small>
+                <h4>{{ tab_stats.all.count|abbreviate_number }}</h4>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card p-3 shadow-sm">
+                <small>Revenue</small>
+                <h4>$ {{ tab_stats.all.revenue|abbreviate_number }}</h4>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card p-3 shadow-sm">
+                <small>Clicks</small>
+                <h4>{{ tab_stats.all.clicks|abbreviate_number }}</h4>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card p-3 shadow-sm">
+                <small>Impressions</small>
+                <h4>{{ tab_stats.all.impressions|abbreviate_number }}</h4>
+            </div>
+        </div>
+
+    </div>
+
+    {% include "partials/admin_ad_grid.html" with ads=all_ads %}
+</div>
+
+<!-- ================= ACTIVE ================= -->
+<div class="tab-pane fade" id="active">
+
+    <div class="row g-3 mb-3">
+
+        <div class="col-md-3">
+            <div class="card p-3 shadow-sm">
+                <small>Total Ads</small>
+                <h4>{{ tab_stats.active.count|abbreviate_number }}</h4>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card p-3 shadow-sm">
+                <small>Revenue</small>
+                <h4>$ {{ tab_stats.active.revenue|abbreviate_number }}</h4>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card p-3 shadow-sm">
+                <small>Clicks</small>
+                <h4>{{ tab_stats.active.clicks|abbreviate_number }}</h4>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card p-3 shadow-sm">
+                <small>Impressions</small>
+                <h4>{{ tab_stats.active.impressions|abbreviate_number }}</h4>
+            </div>
+        </div>
+
+    </div>
+
+    {% include "partials/admin_ad_grid.html" with ads=active_ads %}
+</div>
+
+<!-- ================= PENDING ================= -->
+<div class="tab-pane fade" id="pending">
+
+    <div class="row g-3 mb-3">
+
+        <div class="col-md-3">
+            <div class="card p-3 shadow-sm">
+                <small>Total Ads</small>
+                <h4>{{ tab_stats.pending.count|abbreviate_number }}</h4>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card p-3 shadow-sm">
+                <small>Revenue</small>
+                <h4>$ {{ tab_stats.pending.revenue|abbreviate_number }}</h4>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card p-3 shadow-sm">
+                <small>Clicks</small>
+                <h4>{{ tab_stats.pending.clicks|abbreviate_number }}</h4>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card p-3 shadow-sm">
+                <small>Impressions</small>
+                <h4>{{ tab_stats.pending.impressions|abbreviate_number }}</h4>
+            </div>
+        </div>
+
+    </div>
+
+    {% include "partials/admin_ad_grid.html" with ads=pending_ads %}
+</div>
+
+<!-- ================= DRAFT ================= -->
+<div class="tab-pane fade" id="draft">
+
+    <div class="row g-3 mb-3">
+
+        <div class="col-md-3">
+            <div class="card p-3 shadow-sm">
+                <small>Total Ads</small>
+                <h4>{{ tab_stats.draft.count|abbreviate_number }}</h4>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card p-3 shadow-sm">
+                <small>Revenue</small>
+                <h4>$ {{ tab_stats.draft.revenue|abbreviate_number }}</h4>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card p-3 shadow-sm">
+                <small>Clicks</small>
+                <h4>{{ tab_stats.draft.clicks|abbreviate_number }}</h4>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card p-3 shadow-sm">
+                <small>Impressions</small>
+                <h4>{{ tab_stats.draft.impressions|abbreviate_number }}</h4>
+            </div>
+        </div>
+
+    </div>
+
+    {% include "partials/admin_ad_grid.html" with ads=draft_ads %}
+</div>
+
+<!-- ================= EXPIRED ================= -->
+<div class="tab-pane fade" id="expired">
+
+    <div class="row g-3 mb-3">
+
+        <div class="col-md-3">
+            <div class="card p-3 shadow-sm">
+                <small>Total Ads</small>
+                <h4>{{ tab_stats.expired.count|abbreviate_number }}</h4>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card p-3 shadow-sm">
+                <small>Revenue</small>
+                <h4>$ {{ tab_stats.expired.revenue|abbreviate_number }}</h4>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card p-3 shadow-sm">
+                <small>Clicks</small>
+                <h4>{{ tab_stats.expired.clicks|abbreviate_number }}</h4>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card p-3 shadow-sm">
+                <small>Impressions</small>
+                <h4>{{ tab_stats.expired.impressions|abbreviate_number }}</h4>
+            </div>
+        </div>
+
+    </div>
+
+    {% include "partials/admin_ad_grid.html" with ads=expired_ads %}
+</div>
+
+</div>
+
+</div>
+
+{% endblock %}

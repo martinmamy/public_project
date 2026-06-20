@@ -1,0 +1,873 @@
+{% extends "base.html"%}
+{% load static %}
+{% block title %}Transparent Information | Fancylearn{% endblock %}
+
+{% block content %}
+
+
+    <!-- HEADER -->
+    <div class="card-header rounded-top-4">
+      <h2 class="fw-bold mb-0">Platform Policies & Guidelines</h2>
+      <small>Effective Date: {% now "F j, Y" %}</small>
+    </div>
+
+    <!-- TABS -->
+    <div class="card-body p-0">
+
+      <!-- NAV TABS -->
+      <ul class="nav nav-tabs px-3 pt-3" id="policyTabs" role="tablist">
+
+        <li class="nav-item">
+          <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#expert">
+            Expert Verification
+          </button>
+        </li>
+
+        <li class="nav-item">
+          <button class="nav-link" data-bs-toggle="tab" data-bs-target="#monetization">
+            Monetization
+          </button>
+        </li>
+
+        <li class="nav-item">
+          <button class="nav-link" data-bs-toggle="tab" data-bs-target="#ads">
+            Ads Rules
+          </button>
+        </li>
+
+        <li class="nav-item">
+            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#promotion">
+                Promotion System
+            </button>
+        </li>
+
+        <li class="nav-item">
+          <button class="nav-link" data-bs-toggle="tab" data-bs-target="#feeds">
+            Feeds Policy
+          </button>
+        </li>
+
+      </ul>
+
+      <!-- TAB CONTENT -->
+      <div class="tab-content p-4">
+
+        <!-- ========================= -->
+        <!-- EXPERT VERIFICATION -->
+        <!-- ========================= -->
+        <div class="tab-pane fade show active" id="expert">
+
+            <p>
+                FancyLearn recognizes and rewards users who consistently demonstrate expertise,
+                accuracy, and meaningful contributions through its Expert Verification system.
+                This status is granted to individuals who have built trust within the community
+                by providing reliable, high-quality knowledge and actively helping others.
+            </p>
+
+            <!-- ============================ -->
+
+            <h5 class="text-primary mt-4">1. Purpose of Expert Verification</h5>
+            <p>
+                The Expert Verification program is designed to:
+            </p>
+            <ul>
+                <li>Identify and highlight knowledgeable contributors</li>
+                <li>Increase trust and credibility within the community</li>
+                <li>Promote high-quality answers and engagement</li>
+                <li>Provide recognition for consistent performance</li>
+            </ul>
+
+            <!-- ============================ -->
+
+            <h5 class="text-primary mt-4">2. Eligibility Criteria</h5>
+            <p>
+                To qualify for Expert Verification, users must meet <strong>all</strong> of the following requirements:
+            </p>
+
+            <ul>
+                <li>
+                <strong>Reputation Score:</strong>
+                A minimum of <strong>500 points</strong> is required.
+                This reflects overall contribution quality, engagement, and trust within the platform.
+                </li>
+
+                <li>
+                <strong>Accepted Answers:</strong>
+                At least <strong>5 answers</strong> must be marked as accepted.
+                Accepted answers indicate that your solutions have directly helped resolve user problems.
+                </li>
+
+                <li>
+                <strong>Top-Voted Contributions:</strong>
+                A minimum of <strong>10 highly-rated answers</strong> is required.
+                These are determined based on community voting and engagement signals such as upvotes.
+                </li>
+            </ul>
+
+            <p>
+                All criteria must be satisfied simultaneously. Meeting only part of the requirements
+                does not qualify for verification.
+            </p>
+
+            <!-- ============================ -->
+
+            <h5 class="text-primary mt-4">3. Evaluation Process</h5>
+            <p>
+                Eligibility is evaluated automatically based on platform data, including reputation,
+                accepted answers, and voting activity.
+            </p>
+
+            <p>
+                Once all criteria are met, verification may be granted automatically or reviewed
+                before approval to ensure compliance with platform standards.
+            </p>
+
+            <!-- ============================ -->
+
+            <h5 class="text-primary mt-4">4. Verification Fee</h5>
+            <p>
+                In certain cases, a one-time verification fee may be required to finalize the process.
+            </p>
+
+            <div class="alert alert-info rounded-3">
+                <strong>$15 USD</strong> — one-time Expert Verification fee
+            </div>
+
+            <p>
+                Payments are securely processed through third-party providers.
+                FancyLearn does not store or access sensitive financial information.
+            </p>
+
+            <!-- ============================ -->
+
+            <h5 class="text-primary mt-4">5. Benefits of Verification</h5>
+            <ul>
+                <li>Increased profile visibility across the platform</li>
+                <li>Enhanced credibility and trust from other users</li>
+                <li>Priority access to opportunities such as consultations or collaborations</li>
+                <li>Potential eligibility for monetization features</li>
+            </ul>
+
+            <!-- ============================ -->
+
+            <h5 class="text-primary mt-4">6. Maintaining Verified Status</h5>
+            <p>
+                Verified status is not permanent and depends on continued compliance with platform rules.
+            </p>
+
+            <p>
+                FancyLearn reserves the right to revoke verification if a user:
+            </p>
+
+            <ul>
+                <li>Violates community guidelines or platform policies</li>
+                <li>Engages in misleading, harmful, or low-quality contributions</li>
+                <li>Attempts to manipulate reputation, votes, or engagement systems</li>
+                <li>Abuses platform features or monetization systems</li>
+            </ul>
+
+            <!-- ============================ -->
+
+            <h5 class="text-primary mt-4">7. Transparency and Fairness</h5>
+            <p>
+                All verification decisions are based strictly on measurable activity and platform data.
+                We aim to ensure that the process remains fair, objective, and consistent for all users.
+            </p>
+
+            <!-- ============================ -->
+
+            <h5 class="text-primary mt-4">8. Updates to Criteria</h5>
+            <p>
+                FancyLearn may update verification criteria, thresholds, or processes as the platform evolves.
+                Any changes will be reflected in this policy.
+            </p>
+
+        </div>
+
+        <!-- ========================= -->
+        <!-- MONETIZATION -->
+        <!-- ========================= -->
+        <div class="tab-pane fade" id="monetization">
+
+            <p>
+                FancyLearn enables users to generate income by sharing knowledge, solving real-world problems,
+                and offering professional expertise. Our monetization system is designed to reward meaningful,
+                high-quality contributions while maintaining fairness, transparency, and trust across the platform.
+            </p>
+
+            <!-- ============================ -->
+
+            <h5 class="text-primary mt-4">1. Monetization Channels</h5>
+
+            <p>
+                Users can earn through multiple channels, each designed to recognize different forms of value creation.
+                Diversifying your contributions across these channels can significantly increase your earning potential.
+            </p>
+
+            <ul>
+                <li>
+                    <strong>Answers & Problem Solving:</strong>
+                    Earn by providing accurate, insightful, and impactful solutions that help users achieve real outcomes.
+                </li>
+
+                <li>
+                    <strong>Premium Content:</strong>
+                    Offer advanced, structured, or specialized knowledge accessible to users seeking deeper insights.
+                </li>
+
+                <li>
+                    <strong>Bounties:</strong>
+                    Receive rewards for solving high-priority problems where users are actively seeking expert input.
+                </li>
+
+                <li>
+                    <strong>Expert Sessions:</strong>
+                    Monetize your time and expertise through one-on-one or group consultations.
+                </li>
+
+                <li>
+                    <strong>Advertising Revenue:</strong>
+                    Earn through engagement-driven opportunities aligned with platform guidelines.
+                </li>
+            </ul>
+
+            <!-- ============================ -->
+
+            <h5 class="text-primary mt-4">2. Earning Through Answers & Problems</h5>
+
+            <p>
+                Contributions that solve meaningful problems are at the core of FancyLearn. The platform prioritizes
+                clarity, depth, and usefulness over volume, ensuring that valuable knowledge is properly recognized.
+            </p>
+
+            <ul>
+                <li>Deliver precise, well-structured, and actionable solutions</li>
+                <li>Focus on real user needs rather than generic or surface-level responses</li>
+                <li>Use examples, breakdowns, and step-by-step explanations</li>
+                <li>Continuously refine your answers based on feedback and engagement</li>
+            </ul>
+
+            <div class="alert alert-light border rounded-3">
+                💡 <strong>Insight:</strong> Answers that are accepted, highly rated, or frequently referenced
+                significantly boost both your visibility and long-term earning potential.
+            </div>
+
+            <!-- ============================ -->
+
+            <h5 class="text-primary mt-4">3. Bounty System (Problem Rewards)</h5>
+
+            <p>
+                The bounty system encourages high-quality problem solving by allowing users to attach rewards
+                to complex or time-sensitive challenges. This creates a competitive environment where expertise
+                is directly recognized and rewarded.
+            </p>
+
+            <ul>
+                <li>Bounties are set voluntarily by problem creators</li>
+                <li>Rewards are typically granted to the most relevant and impactful solution</li>
+                <li>High-value bounties often attract competitive responses</li>
+            </ul>
+
+            <div class="alert alert-light border rounded-3">
+                💡 <strong>Strategy:</strong> Target unanswered or technically demanding problems with active bounties
+                to maximize both exposure and earnings.
+            </div>
+
+            <!-- ============================ -->
+
+            <h5 class="text-primary mt-4">4. Expert Booking (Find Expert)</h5>
+
+            <p>
+                The <strong>Find Expert</strong> feature allows qualified users to offer paid consultations.
+                This channel is ideal for professionals who can deliver personalized guidance, mentorship,
+                or hands-on problem-solving.
+            </p>
+
+            <ul>
+                <li>Define your availability through structured time slots</li>
+                <li>Offer sessions tailored to specific needs or industries</li>
+                <li>Build credibility through ratings, reviews, and completed sessions</li>
+            </ul>
+
+            <div class="alert alert-light border rounded-3">
+                💡 <strong>Best Practice:</strong> A strong profile, proven expertise, and consistent communication
+                significantly increase your chances of being booked.
+            </div>
+
+            <div class="alert alert-warning border rounded-3 mt-3"
+                style="background: linear-gradient(135deg, #fff3cd, #ffe8a1);">
+
+                ⚠️ <strong>Important Transparency Notice:</strong><br><br>
+
+                FancyLearn acts solely as a platform to connect users with independent experts.
+                We do <strong>not</strong> manage, supervise, or take responsibility for any sessions,
+                interactions, or outcomes resulting from these engagements.
+
+                <br><br>
+
+                We also do <strong>not process, hold, or guarantee payments</strong>. All financial transactions,
+                agreements, refunds, or disputes are handled directly between users and experts.
+
+                <br><br>
+
+                By engaging in expert sessions, you acknowledge and accept full responsibility
+                for your interactions and agreements.
+
+            </div>
+
+            <!-- ============================ -->
+
+            <h5 class="text-primary mt-4">5. Payment Requirements</h5>
+
+            <p>
+                To participate in monetization features such as tips, bounties, or expert sessions,
+                users must connect a valid payment method supported by external providers.
+            </p>
+
+            <ul>
+                <li>A valid <strong>PayPal account</strong> (or supported provider) is required</li>
+                <li>Transactions are processed securely through third-party services</li>
+                <li>FancyLearn does not store or manage sensitive financial information</li>
+            </ul>
+
+            <!-- ============================ -->
+
+            <h5 class="text-primary mt-4">6. Rules & Restrictions</h5>
+
+            <p>
+                To ensure fairness and maintain platform integrity, all monetization activities must comply
+                with established guidelines.
+            </p>
+
+            <ul>
+                <li>No misleading, deceptive, or low-quality monetized content</li>
+                <li>No unauthorized redirection to external payment systems</li>
+                <li>No spam, duplication, or artificial engagement manipulation</li>
+                <li>All activities must align with platform policies and ethical standards</li>
+            </ul>
+
+            <!-- ============================ -->
+
+            <h5 class="text-primary mt-4">7. Best Practices for Success</h5>
+
+            <p>
+                Long-term success on FancyLearn is built on consistency, trust, and value delivery.
+            </p>
+
+            <ul>
+                <li>Prioritize quality and depth over volume</li>
+                <li>Build a strong reputation through consistent contributions</li>
+                <li>Engage actively with the community and respond to feedback</li>
+                <li>Leverage multiple earning channels strategically</li>
+            </ul>
+
+            <!-- ============================ -->
+
+            <h5 class="text-primary mt-4">8. Enforcement</h5>
+
+            <p>
+                FancyLearn reserves the right to review, restrict, or suspend monetization privileges
+                for users who violate policies or attempt to exploit the system.
+            </p>
+
+        </div>
+        <!-- ========================= -->
+        <!-- ADS RULES -->
+        <!-- ========================= -->
+        <div class="tab-pane fade" id="ads">
+
+            <p>
+                FancyLearn provides an advertising system that allows users to promote content,
+                services, or external platforms directly within the ecosystem. Ads are designed
+                to remain relevant, non-intrusive, and aligned with the educational nature of the platform.
+            </p>
+
+            <!-- ============================ -->
+
+            <h5 class="text-primary mt-4">1. Creating Advertisements</h5>
+
+            <p>
+                Users can create advertisements through the Ads Dashboard by submitting the following:
+            </p>
+
+            <ul>
+                <li>A valid <strong>target URL</strong> (destination link)</li>
+                <li>An optional <strong>image or visual banner</strong></li>
+                <li>A selected <strong>duration (in days)</strong></li>
+            </ul>
+
+            <p>
+                Advertisements are initially created in a <strong>pending</strong> state and require
+                payment before becoming active.
+            </p>
+
+            <div class="alert alert-light border rounded-3">
+                💡 <strong>Note:</strong> You must link a valid <strong>PayPal account</strong> before creating ads.
+            </div>
+
+            <!-- ============================ -->
+
+            <h5 class="text-primary mt-4">2. Pricing Model</h5>
+
+            <p>
+                Advertising costs are calculated based on duration:
+            </p>
+
+            <ul>
+                <li>Fixed rate per day (e.g., <strong>$2/day</strong>)</li>
+                <li>Total cost = duration × daily rate</li>
+            </ul>
+
+            <p>
+                Payment is processed securely through PayPal. Once payment is confirmed,
+                the advertisement becomes active immediately.
+            </p>
+
+            <!-- ============================ -->
+
+            <h5 class="text-primary mt-4">3. Ad Placement & Targeting</h5>
+
+            <p>
+                FancyLearn allows ads to be displayed in contextually relevant locations
+                across the platform:
+            </p>
+
+            <ul>
+                <li>
+                <strong>Problem-Based Targeting:</strong>
+                Ads can be associated with specific problems or categories,
+                ensuring they appear to users interested in that topic.
+                </li>
+
+                <li>
+                <strong>Fallback Ads:</strong>
+                If no targeted ads are available, general ads may be displayed.
+                </li>
+
+                <li>
+                <strong>Post Integration:</strong>
+                Ads may appear alongside problems, answers, or feeds
+                in a non-disruptive format.
+                </li>
+            </ul>
+
+            <div class="alert alert-light border rounded-3">
+                💡 <strong>Tip:</strong> Target ads to specific problem categories to increase relevance
+                and improve engagement.
+            </div>
+
+            <!-- ============================ -->
+
+            <h5 class="text-primary mt-4">4. Performance Tracking</h5>
+
+            <p>
+                Advertisers can track the performance of their ads through the dashboard.
+            </p>
+
+            <ul>
+                <li><strong>Impressions:</strong> Number of times the ad is displayed</li>
+                <li><strong>Clicks:</strong> Number of user interactions with the ad</li>
+                <li><strong>Engagement Insights:</strong> Used to evaluate effectiveness</li>
+            </ul>
+
+            <p>
+                Impressions are automatically counted when ads are displayed,
+                and clicks are tracked when users interact with them.
+            </p>
+
+            <!-- ============================ -->
+
+            <h5 class="text-primary mt-4">5. Monetization Opportunities</h5>
+
+            <p>
+                Advertisements can be used strategically to:
+            </p>
+
+            <ul>
+                <li>Promote your own services, expertise, or consultations</li>
+                <li>Drive traffic to external platforms or products</li>
+                <li>Boost visibility of high-value problems or content</li>
+            </ul>
+
+            <div class="alert alert-light border rounded-3">
+                💡 <strong>Tip:</strong> Combining ads with high-quality answers or expert profiles
+                significantly increases conversion rates.
+            </div>
+
+            <!-- ============================ -->
+
+            <h5 class="text-primary mt-4">6. Allowed Content</h5>
+
+            <ul>
+                <li>Educational or professional services</li>
+                <li>Relevant tools, platforms, or learning resources</li>
+                <li>Clear, truthful, and non-deceptive promotions</li>
+            </ul>
+
+            <!-- ============================ -->
+
+            <h5 class="text-primary mt-4">7. Prohibited Content</h5>
+
+            <ul>
+                <li>Misleading or false claims</li>
+                <li>Spam or excessive repetition</li>
+                <li>Harmful, illegal, or offensive material</li>
+                <li>Malicious links or unsafe redirects</li>
+            </ul>
+
+            <!-- ============================ -->
+
+            <h5 class="text-primary mt-4">8. Enforcement & Moderation</h5>
+
+            <p>
+                FancyLearn actively monitors advertisements to maintain quality standards.
+            </p>
+
+            <ul>
+                <li>Ads may be removed if they violate policies</li>
+                <li>Accounts may be restricted for repeated violations</li>
+                <li>No refunds may be issued for policy violations</li>
+            </ul>
+
+            <!-- ============================ -->
+
+            <h5 class="text-primary mt-4">9. Best Practices</h5>
+
+            <ul>
+                <li>Use clear and concise messaging</li>
+                <li>Target relevant categories or problems</li>
+                <li>Avoid overly aggressive or spammy promotion</li>
+                <li>Align ads with user intent and platform context</li>
+            </ul>
+
+        </div>
+
+        <!-- ========================= -->
+        <!-- Promotion POLICY -->
+        <!-- ========================= -->
+        <div class="tab-pane fade" id="promotion">
+
+            <!-- ====================== -->
+            <p>
+                The Promotion System governs how content is distributed and ranked across the platform,
+                including feeds, search results, trending sections, and recommendation surfaces.
+                It combines algorithmic ranking, engagement signals, and optional user-paid visibility boosts.
+            </p>
+
+            <div class="alert alert-secondary">
+                Promotion features are subject to platform rules, eligibility checks, and system constraints.
+                Certain actions may require account verification, sufficient wallet balance, and compliance
+                with content quality standards before activation.
+            </div>
+
+            <!-- ====================== -->
+            <h5 class="text-primary mt-3">Overview of Promotion Status</h5>
+
+            <ul>
+                <li>
+                    <strong>Active Promotion:</strong>
+                    When a post is promoted, it receives temporary enhanced visibility in feeds and
+                    discovery sections. Each promotion has a defined duration and automatically expires
+                    once its lifecycle ends.
+                </li>
+
+                <li>
+                    <strong>Bounty Influence:</strong>
+                    Posts with active bounties may receive additional visibility due to increased user
+                    engagement and participation incentives. Once the bounty ends, ranking returns to normal.
+                </li>
+            </ul>
+
+            <!-- ====================== -->
+            <h5 class="text-primary mt-4">Promotion Tiers & Visibility Levels</h5>
+
+            <ul class="list-unstyled">
+
+                <li class="mb-3">
+                    <span class="badge bg-danger">📌 Pinned</span>
+                    <strong>Highest Visibility Tier</strong>
+                    <p class="mb-1">
+                        Pinned content is permanently prioritized at the top of feeds and bypasses normal ranking logic.
+                        It is reserved for high-impact, system-critical, or manually approved content.
+                    </p>
+                    <small class="text-muted">
+                        May be assigned by administrators or special system rules. Cannot be overridden by other promotions.
+                    </small>
+                </li>
+
+                <li class="mb-3">
+                    <span class="badge bg-info">🚀 Boosted</span>
+                    <strong>High Visibility Boost</strong>
+                    <p class="mb-1">
+                        Boosted content receives increased distribution across feeds and recommendation sections.
+                        It competes with other boosted content based on engagement performance.
+                    </p>
+                    <small class="text-muted">
+                        Time-limited and automatically expires when duration ends.
+                    </small>
+                </li>
+
+                <li class="mb-3">
+                    <span class="badge bg-warning text-dark">⭐ Featured</span>
+                    <strong>Algorithmic Highlight</strong>
+                    <p class="mb-1">
+                        Featured content is selected based on quality signals such as engagement rate,
+                        relevance, and user interaction metrics. It improves discoverability in trending sections.
+                    </p>
+                    <small class="text-muted">
+                        Rotates dynamically based on algorithmic evaluation.
+                    </small>
+                </li>
+
+            </ul>
+
+            <!-- ====================== -->
+            <h5 class="text-primary mt-4">Eligibility Requirements</h5>
+
+            <ul>
+                <li>Only the <strong>original author</strong> can initiate promotions</li>
+                <li>An active and verified payment method may be required</li>
+                <li>Sufficient wallet balance must be available for selected promotion tier</li>
+                <li>Each promotion type can only be active once per content item at a time</li>
+                <li>Promotions cannot exceed defined system limits or stacking rules</li>
+            </ul>
+
+            <!-- ====================== -->
+            <h5 class="text-primary mt-4">Ranking Behavior</h5>
+
+            <ul>
+                <li><strong>Pinned:</strong> Overrides all ranking and appears first in feeds</li>
+                <li><strong>Boosted:</strong> High ranking weight with temporary visibility surge</li>
+                <li><strong>Featured:</strong> Moderate algorithmic boost based on quality signals</li>
+                <li><strong>Bounty Content:</strong> Temporary increase in visibility during bounty period</li>
+            </ul>
+
+            <!-- ====================== -->
+            <h5 class="text-primary mt-4">System Processing Logic</h5>
+
+            <ul>
+                <li>Promotion activation requires validation of eligibility rules</li>
+                <li>Each promotion is assigned a time-based expiration timestamp</li>
+                <li>Feed ranking engine recalculates visibility dynamically</li>
+                <li>Engagement metrics continuously influence ranking strength</li>
+            </ul>
+
+            <!-- ====================== -->
+            <h5 class="text-primary mt-4">Fair Use & Abuse Prevention</h5>
+
+            <ul>
+                <li>Automated detection prevents spam or artificial boosting behavior</li>
+                <li>Fake engagement signals are filtered and penalized</li>
+                <li>Expired promotions are automatically removed from ranking calculations</li>
+                <li>Stacking or manipulation of promotion levels is strictly prevented</li>
+            </ul>
+
+            <!-- ====================== -->
+            <h5 class="text-primary mt-4">Transparency Notice</h5>
+
+            <div class="alert alert-info mt-3">
+                Promotion improves visibility but does not guarantee engagement or interaction.
+                Final content ranking is determined by a combination of algorithmic scoring,
+                user behavior, and content quality evaluation.
+            </div>
+
+        </div>
+
+        <!-- ========================= -->
+        <!-- FEEDS POLICY -->
+        <!-- ========================= -->
+        <div class="tab-pane fade" id="feeds">
+
+            <p>
+                The FancyLearn feed is designed to surface the most relevant, high-quality, and engaging content
+                based on user activity, contributions, and interactions. The system uses multiple ranking strategies
+                to ensure that valuable knowledge is prioritized and easily discoverable.
+            </p>
+
+            <!-- ============================ -->
+
+            <h5 class="text-primary mt-3">1. Types of Feeds</h5>
+
+            <ul>
+                <li>
+                <strong>Global Feed:</strong>
+                Displays problems created by the user, ordered by recency. This helps users track their own activity,
+                contributions, and performance over time.
+                </li>
+
+                <li>
+                <strong>Trending Feed:</strong>
+                Highlights top-performing problems based on a computed score combining:
+                <ul>
+                    <li>Votes (community approval)</li>
+                    <li>Number of answers (engagement)</li>
+                    <li>Views (visibility and reach)</li>
+                </ul>
+                This feed prioritizes content gaining traction across the platform.
+                </li>
+
+                <li>
+                <strong>Followers Feed:</strong>
+                Shows users who follow you, allowing visibility into your audience and network growth.
+                </li>
+
+                <li>
+                <strong>Following Feed:</strong>
+                Displays users you follow, helping you stay updated with their activity and contributions.
+                </li>
+
+                <li>
+                <strong>Personalized Feed:</strong>
+                Displays content from users you follow <strong>only if you have interacted with them</strong>
+                (e.g., answered their questions or voted on their content). This ensures highly relevant and
+                meaningful content tailored to your behavior.
+                </li>
+            </ul>
+
+            <!-- ============================ -->
+
+            <h5 class="text-primary mt-3">2. Ranking & Visibility Factors</h5>
+
+            <p>
+                Feed visibility is not random. Content is ranked dynamically using measurable signals:
+            </p>
+
+            <ul>
+                <li>
+                <strong>Engagement:</strong>
+                Votes, answers, comments, and clicks increase visibility.
+                </li>
+
+                <li>
+                <strong>Views:</strong>
+                Frequently viewed problems gain higher exposure in trending feeds.
+                </li>
+
+                <li>
+                <strong>Answer Activity:</strong>
+                Problems with multiple high-quality answers rank higher.
+                </li>
+
+                <li>
+                <strong>User Reputation:</strong>
+                Contributions from high-reputation users are more likely to surface.
+                </li>
+
+                <li>
+                <strong>Consistency:</strong>
+                Regular contributors are favored over inactive users.
+                </li>
+            </ul>
+
+            <!-- ============================ -->
+
+            <h5 class="text-primary mt-3">3. Content Quality Guidelines</h5>
+
+            <ul>
+                <li>Problems should be clear, specific, and well-structured</li>
+                <li>Answers must provide real value (not generic or copied content)</li>
+                <li>Titles and descriptions should reflect actual content</li>
+                <li>No spam, repetition, or artificially inflated engagement</li>
+                <li>Content must not be misleading, harmful, or irrelevant</li>
+            </ul>
+
+            <!-- ============================ -->
+
+            <h5 class="text-primary mt-3">4. Monetization Impact on Feed</h5>
+
+            <p>
+                Certain monetization features can influence visibility and engagement:
+            </p>
+
+            <ul>
+                <li>
+                <strong>Bounties:</strong>
+                Problems with bounties attract more answers and engagement, increasing feed visibility.
+                </li>
+
+                <li>
+                <strong>Tips:</strong>
+                High-quality answers that receive tips signal value and may gain more exposure.
+                </li>
+
+                <li>
+                <strong>Ad Integration:</strong>
+                Ads may appear alongside feed content but do not override organic ranking quality.
+                </li>
+            </ul>
+
+            <p>
+                Financial activity (tips and bounties) is tracked and may be reflected in analytics dashboards,
+                helping users optimize their contributions for both impact and earnings.
+            </p>
+
+            <!-- ============================ -->
+
+            <h5 class="text-primary mt-3">5. Personalization Logic</h5>
+
+            <p>
+                The feed adapts to your behavior using interaction-based filtering:
+            </p>
+
+            <ul>
+                <li>Content from users you follow is prioritized</li>
+                <li>Only interacted content (votes, answers) appears in personalized feeds</li>
+                <li>Inactive or irrelevant connections are automatically deprioritized</li>
+            </ul>
+
+            <!-- ============================ -->
+
+            <h5 class="text-primary mt-3">6. Analytics & Insights</h5>
+
+            <p>
+                FancyLearn provides analytics to help you understand your feed performance:
+            </p>
+
+            <ul>
+                <li>
+                <strong>Tips Analytics:</strong>
+                Track earnings and spending over time from tips.
+                </li>
+
+                <li>
+                <strong>Bounties Analytics:</strong>
+                Monitor rewards earned and bounties created.
+                </li>
+
+                <li>
+                <strong>Financial Summary:</strong>
+                View net earnings (tips + bounties) to measure contribution value.
+                </li>
+            </ul>
+
+            <!-- ============================ -->
+
+            <h5 class="text-primary mt-3">7. Violations & Enforcement</h5>
+
+            <ul>
+                <li>Low-quality or spam content may be removed</li>
+                <li>Artificial engagement (fake votes, spam answers) may lead to penalties</li>
+                <li>Feed visibility can be reduced for repeated violations</li>
+                <li>Accounts may be restricted or suspended in severe cases</li>
+            </ul>
+
+            <!-- ============================ -->
+
+            <h5 class="text-primary mt-3">8. Best Practices to Grow in the Feed</h5>
+
+            <ul>
+                <li>Post clear, high-value problems that invite meaningful answers</li>
+                <li>Provide detailed, well-structured answers</li>
+                <li>Engage with other users (vote, comment, follow)</li>
+                <li>Use bounties strategically to boost engagement</li>
+                <li>Stay consistent—activity over time improves visibility</li>
+            </ul>
+
+        </div>
+
+      </div>
+
+    </div>
+
+
+{% endblock %}

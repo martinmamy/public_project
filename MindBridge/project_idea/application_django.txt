@@ -1,114 +1,600 @@
-Application Modules
+FancyLearn — Complete Application Prototype
 
-Split the logic into independent apps.
+FancyLearn is a modern educational Q&A, problem-solving, and creator-monetization platform inspired by Stack Overflow, Reddit, Medium, and Patreon, designed specifically for students, teachers, professionals, and experts.
 
-users:
+1. Product Vision
+Core Goal
 
-Handles
+Allow users to:
 
-authentication
-profiles
-followers
-reputation
-subscriptions
-problems
+Ask academic or professional questions
+Answer and teach others
+Build reputation
+Earn money from expertise
+Follow experts
+Access premium educational content
+Join communities around topics
+2. User Roles
+Guest
 
-Handles
+Can:
 
-posting problems
-tags
-categories
-problem media
-view counts
-SEO pages
-answers
+Browse problems
+Search content
+View profiles
+View answers
 
-Handles
+Cannot:
 
-answers
-accepted answers
-answer ranking
-answer statistics
-comments
+Post
+Vote
+Comment
+Monetize
+Student
 
-Handles
+Can:
 
-comments on answers
-comments on problems
-threaded discussions
-voting
+Ask questions
+Answer questions
+Vote
+Follow experts
+Tip creators
+Subscribe to creators
+Expert
 
-Handles
+Can:
 
-upvotes
-downvotes
-score calculations
-monetization
+Everything students can
+Earn tips
+Create premium content
+Receive subscriptions
+Accept bounties
+Moderator
 
-Handles
+Can:
 
-tips
-bounties
-creator subscriptions
-payments
-ads
-notifications
+Review reports
+Hide content
+Warn users
+Suspend accounts
+Administrator
 
-Handles
+Can:
 
-mentions
-answers
-comments
-tips
-followers
-moderation
-
-Handles
-
-reports
-content moderation
-banned users
-content flags
-search
-
-Handles
-
-problem search
-tag search
-user search
-autocomplete
-analytics
-
-Handles
-
-problem views
-engagement metrics
-growth analytics
-
-
-Service Layer (Important):
-
-services/
-services/
+Manage platform
+Manage subscriptions
+Analytics
+Advertisements
+User management
+3. Django Project Structure
+fancylearn/
 │
-├── problem_service.py
-├── answer_service.py
-├── vote_service.py
-├── monetization_service.py
-└── notification_service.py
+├── config/
+│
+├── apps/
+│
+│   ├── users/
+│   ├── problems/
+│   ├── answers/
+│   ├── comments/
+│   ├── voting/
+│   ├── monetization/
+│   ├── notifications/
+│   ├── moderation/
+│   ├── search/
+│   └── analytics/
+│
+├── services/
+│
+│   ├── problem_service.py
+│   ├── answer_service.py
+│   ├── vote_service.py
+│   ├── monetization_service.py
+│   └── notification_service.py
+│
+├── templates/
+├── static/
+├── media/
+└── requirements.txt
+4. Application Architecture
+Users App
 
+Handles:
 
-Critical protections:
+Authentication
+Profiles
+Followers
+Reputation
+Subscriptions
+Badges
+Achievements
 
-CSRF protection
-rate limiting
-spam filtering
-input validation
-XSS protection
-file upload scanning
+Models:
 
-Libraries:
+User
+Profile
+Follow
+Subscription
+Badge
+Achievement
+5. Problems App
+
+Handles:
+
+Problem posting
+Categories
+Tags
+Media uploads
+SEO pages
+View counts
+
+Models:
+
+Problem
+ProblemImage
+ProblemFile
+Category
+Tag
+ProblemView
+
+Features:
+
+Rich Editor
+
+Supports:
+
+Markdown
+LaTeX
+Code snippets
+Image upload
+SEO URLs
+/problems/how-to-solve-quadratic-equation
+6. Answers App
+
+Handles:
+
+Answers
+Accepted answers
+Answer ranking
+Statistics
+
+Models:
+
+Answer
+AcceptedAnswer
+AnswerStats
+
+Features:
+
+AI Ranking Score
+
+Factors:
+
+Votes
+Views
+Bookmarks
+Answer length
+Accepted status
+7. Comments App
+
+Handles:
+
+Comments on problems
+Comments on answers
+Threaded replies
+
+Models:
+
+Comment
+
+Structure:
+
+Problem
+ └── Comment
+       └── Reply
+             └── Reply
+
+Unlimited nesting.
+
+8. Voting App
+
+Handles:
+
+Upvotes
+Downvotes
+Score calculations
+
+Models:
+
+Vote
+
+Reputation System:
+
+Action	Points
+Upvote received	+10
+Accepted answer	+15
+Downvote received	-2
+Spam flag	-20
+9. Monetization App
+
+Handles:
+
+Tips
+Bounties
+Creator subscriptions
+Ads
+Payments
+
+Models:
+
+Tip
+Bounty
+CreatorPlan
+CreatorSubscription
+Payment
+Advertisement
+
+Revenue Streams:
+
+Creator Tips
+$1
+$5
+$10
+Custom
+Creator Memberships
+
+Example:
+
+Bronze   $3/month
+Silver   $10/month
+Gold     $25/month
+
+Benefits:
+
+Exclusive answers
+Live sessions
+Downloadable notes
+Problem Bounties
+
+Users can attach money:
+
+$10
+$20
+$50
+$100
+
+Best answer receives reward.
+
+10. Notifications App
+
+Handles:
+
+Mentions
+Followers
+Comments
+Answers
+Tips
+Subscriptions
+
+Models:
+
+Notification
+NotificationPreference
+
+Types:
+
+ANSWER_POSTED
+COMMENT_POSTED
+TIP_RECEIVED
+FOLLOW_RECEIVED
+MENTION
+BOUNTY_WON
+
+Real-time:
+
+Django Channels
+WebSockets
+11. Moderation App
+
+Handles:
+
+Reports
+Flags
+Warnings
+Banned users
+Content moderation
+
+Models:
+
+Report
+ContentFlag
+Ban
+Warning
+
+AI-assisted moderation:
+
+Detect:
+
+Spam
+Toxicity
+Hate speech
+Scam links
+12. Search App
+
+Handles:
+
+Problem search
+Tag search
+User search
+Autocomplete
+
+Technology:
+
+PostgreSQL Full Text Search
+
+Later:
+
+ElasticSearch
+OpenSearch
+
+Search Filters:
+
+Newest
+Most Viewed
+Most Answered
+Most Upvoted
+Unanswered
+13. Analytics App
+
+Handles:
+
+Views
+Growth
+Engagement
+Revenue
+
+Models:
+
+Event
+DailyAnalytics
+
+Metrics:
+
+DAU
+MAU
+Retention
+Answer rate
+Revenue
+14. Service Layer
+problem_service.py
+create_problem()
+update_problem()
+delete_problem()
+add_tags()
+track_view()
+answer_service.py
+create_answer()
+accept_answer()
+rank_answers()
+vote_service.py
+vote_problem()
+vote_answer()
+calculate_score()
+update_reputation()
+monetization_service.py
+create_tip()
+pay_bounty()
+process_subscription()
+notification_service.py
+notify_answer()
+notify_comment()
+notify_follow()
+notify_tip()
+15. Database Design
+User Relationships
+User
+ ├── Problems
+ ├── Answers
+ ├── Followers
+ ├── Subscriptions
+ ├── Tips
+ └── Reputation
+Problem Relationships
+Problem
+ ├── Tags
+ ├── Answers
+ ├── Comments
+ ├── Votes
+ └── Views
+16. Main Screens
+Landing Page
+
+Sections:
+
+Hero Banner
+Popular Problems
+Top Experts
+Trending Tags
+Testimonials
+Pricing
+Footer
+Explore Problems
+
+Features:
+
+Search
+Filters
+Categories
+Trending
+Bookmarks
+Problem Detail
+
+Layout:
+
+Problem
+Images
+Tags
+Votes
+Answers
+Comments
+Related Problems
+Ask Question
+
+Editor:
+
+Title
+Description
+Category
+Tags
+Attachments
+Preview
+Publish
+User Profile
+
+Sections:
+
+Overview
+Problems
+Answers
+Followers
+Achievements
+Subscriptions
+Analytics
+Creator Dashboard
+
+Sections:
+
+Revenue
+Subscribers
+Tips
+Bounties
+Content Analytics
+Moderator Dashboard
+
+Sections:
+
+Reports
+Flags
+Banned Users
+Review Queue
+Admin Dashboard
+
+Sections:
+
+Users
+Revenue
+Subscriptions
+Reports
+Ads
+Analytics
+17. Premium Features
+FancyLearn Pro
+
+Subscription:
+
+$7.99/month
+
+Benefits:
+
+Ad-free
+Advanced analytics
+Unlimited bookmarks
+AI answer summaries
+AI search
+18. Security Architecture
+CSRF Protection
+CsrfViewMiddleware
+Rate Limiting
+
+Using:
 
 django-ratelimit
+
+Examples:
+
+@ratelimit(key='user', rate='5/m')
+Spam Filtering
+
+Checks:
+
+Repeated content
+Too many links
+Blacklisted words
+XSS Protection
+Bleach Sanitization
+Content escaping
+Input Validation
+Django Forms
+DRF Serializers
+Model Validators
+File Upload Scanning
+
+Checks:
+
+Virus scanning
+Extension validation
+Size limits
+Mime validation
+
+Suggested:
+
+ClamAV
 django-cleanup
+CORS Protection
+
+Library:
+
 django-cors-headers
+19. Recommended Tech Stack
+
+Backend:
+
+Django
+Django REST Framework
+PostgreSQL
+Redis
+Celery
+Django Channels
+
+Frontend:
+
+Django Templates (MVP)
+HTMX
+Alpine.js
+Bootstrap 5
+
+Mobile App:
+
+Flutter
+BLoC Architecture
+
+Deployment:
+
+Docker
+Nginx
+Gunicorn
+
+Cloud:
+
+AWS
+DigitalOcean
+Hetzner
+20. FancyLearn Growth Features
+Gamification
+Daily streaks
+XP points
+Levels
+Leaderboards
+Achievements
+AI Features
+AI problem suggestions
+AI answer summaries
+AI duplicate detection
+AI tag recommendation
+AI moderation assistant
+Community Features
+Study groups
+Topic communities
+Live discussions
+Events
+Expert AMAs

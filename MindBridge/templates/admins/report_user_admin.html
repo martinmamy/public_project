@@ -1,0 +1,98 @@
+<!-- templates/emails/report_user_admin.html -->
+
+<div style="font-family:Arial,sans-serif;background:#f8fafc;padding:30px;">
+
+    <div style="
+        max-width:650px;
+        margin:auto;
+        background:#ffffff;
+        border-radius:18px;
+        overflow:hidden;
+        border:1px solid #e5e7eb;
+    ">
+
+        <!-- HEADER -->
+        <div style="
+            background:linear-gradient(135deg,#dc2626,#ef4444);
+            padding:24px;
+            color:white;
+        ">
+
+            <h2 style="margin:0;">
+                🚨 User Report Submitted
+            </h2>
+
+            <div style="margin-top:8px;font-size:14px;opacity:0.9;">
+                A new user report requires review.
+            </div>
+
+        </div>
+
+        <!-- BODY -->
+        <div style="padding:24px;">
+
+            <div style="margin-bottom:20px;">
+                <strong>Reporter</strong>
+                <div>
+                    {{ report.reporter.username }}
+                </div>
+
+                <div style="color:#64748b;font-size:14px;">
+                    {{ report.reporter.email }}
+                </div>
+            </div>
+
+            <div style="margin-bottom:20px;">
+                <strong>Reported User</strong>
+
+                <div>
+                    {{ report.reported_user.username }}
+                </div>
+
+                <div style="color:#64748b;font-size:14px;">
+                    {{ report.reported_user.email }}
+                </div>
+            </div>
+
+            <div style="margin-bottom:20px;">
+                <strong>Reason</strong>
+
+                <div style="
+                    margin-top:8px;
+                    padding:16px;
+                    background:#f8fafc;
+                    border-radius:12px;
+                    border:1px solid #e5e7eb;
+                    white-space:pre-wrap;
+                ">
+                    {{ report.reason }}
+                </div>
+            </div>
+
+            {% if report.evidence_image %}
+            <div style="margin-bottom:20px;">
+
+                <strong>Evidence Attached</strong>
+
+                <div style="margin-top:8px;color:#16a34a;">
+                    ✅ An image was attached to this report.
+                </div>
+
+            </div>
+            {% endif %}
+
+            <div style="
+                margin-top:30px;
+                font-size:13px;
+                color:#64748b;
+                border-top:1px solid #e5e7eb;
+                padding-top:18px;
+            ">
+                Submitted on {{ report.created_at }}
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
