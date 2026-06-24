@@ -6,8 +6,14 @@ on:
 
 jobs:
   summary:
-    #runs-on: ubuntu-latest
     runs-on: self-hosted
+    # If this job runs on a Windows self-hosted runner, some Actions JS steps may try to use Node 20/24
+    # and trigger libuv/Node assertions. To provide a temporary, opt-in compatibility fallback we set
+    # ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true only on Windows runners. Remove this once the
+    # self-hosted runner software and Node are upgraded to a supported combination.
+    env:
+      ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: ${{ runner.os == 'Windows' && 'true' || 'false' }}
+
     permissions:
       issues: write
       models: read
@@ -16,6 +22,17 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: Runner diagnostics
+        run: |
+          echo "RUNNER OS: $RUNNER_OS"
+          echo "RUNNER NAME: $RUNNER_NAME"
+          echo "RUNNER VERSION: $RUNNER_VERSION"
+          if command -v node >/dev/null 2>&1; then
+            echo "NODE VERSION: $(node --version)"
+          else
+            echo "NODE not found on PATH"
+          fi
 
       - name: Run AI inference
         id: inference
@@ -34,4 +51,3 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           ISSUE_NUMBER: ${{ github.event.issue.number }}
           RESPONSE: ${{ steps.inference.outputs.response }}
-          FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
