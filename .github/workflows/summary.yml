@@ -15,6 +15,9 @@ jobs:
       ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: "true"
 
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
       - name: Setup Node 20
         uses: actions/setup-node@v4
         with:
@@ -32,7 +35,7 @@ jobs:
 
       - name: Comment with AI summary
         run: |
-          gh issue comment $ISSUE_NUMBER --body "$RESPONSE"
+          gh issue comment $ISSUE_NUMBER --repo "$GITHUB_REPOSITORY" --body "$RESPONSE"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           ISSUE_NUMBER: ${{ github.event.issue.number }}
