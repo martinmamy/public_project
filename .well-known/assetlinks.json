@@ -6,7 +6,7 @@
     ],
     "target": {
       "namespace": "android_app",
-      "package_name": "com.StudyBuddy.StudyBuddy",
+      "package_name": "com.FancyLearn.FancyLearn",
       "sha256_cert_fingerprints": [
         "BE:35:3D:9F:7E:20:6A:EF:E8:C3:67:60:EC:D0:7B:5B:B5:A9:EF:40:F8:59:A7:E1:E3:D7:8A:B6:E2:E0:95:69",
         "29:B1:A9:AF:A6:A7:71:E4:1F:62:87:C9:63:87:17:DC:75:2C:F9:7E:1B:99:D7:35:54:9F:67:84:96:19:33:F8"
