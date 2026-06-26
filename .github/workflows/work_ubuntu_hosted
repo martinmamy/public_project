@@ -27,7 +27,7 @@ env:
 jobs:
   # Original issue summarizer
   summary_issue:
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     if: github.event_name == 'issues' && github.event.action == 'opened'
     permissions:
       issues: write
@@ -76,7 +76,7 @@ jobs:
 
   # Pull Request summarizer (comments on the PR)
   summary_pr:
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     if: github.event_name == 'pull_request'
     permissions:
       pull-requests: write
@@ -139,7 +139,7 @@ jobs:
 
   # Push / Commit summarizer (adds a comment on the latest commit)
   summary_push:
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     if: github.event_name == 'push'
     permissions:
       contents: write
@@ -195,7 +195,7 @@ jobs:
 
   # Basic CI: install, lint, test, build when code is updated (push or PR)
   ci:
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     if: github.event_name == 'push' || github.event_name == 'pull_request'
     steps:
       - name: Checkout
@@ -240,7 +240,7 @@ jobs:
 
   # Release notifier: when a release is published
   release_notify:
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     if: github.event_name == 'release'
     steps:
       - name: Notify on release
