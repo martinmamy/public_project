@@ -220,7 +220,7 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               commit_sha: '${{ github.sha }}',
-              body: `${{ steps.push_inference.outputs.response }}`
+              body: process.env.RESPONSE
             })
 
       - name: Fallback - create an issue for push summary
