@@ -78,7 +78,7 @@ jobs:
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: "AI summary failed due to the provider's content policy; please review this issue manually."
+              body: "AI summary failed due to the provider''s content policy; please review this issue manually."
             })
 
   # Pull Request summarizer (comments on the PR)
@@ -136,28 +136,30 @@ jobs:
       - name: Comment with AI summary (PR)
         if: ${{ steps.pr_inference.outcome == 'success' }}
         uses: actions/github-script@v7
+        env:
+          AI_SUMMARY: ${{ steps.pr_inference.outputs.response }}
         with:
           script: |
-            github.rest.pulls.createReview({
-              pull_number: context.issue.number,
+            await github.rest.pulls.createReview({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: `${{ steps.pr_inference.outputs.response }}`,
-              event: 'COMMENT'
-            })
+              pull_number: context.payload.pull_request.number,
+              body: process.env.AI_SUMMARY,
+              event: "COMMENT"
+            });
 
       - name: Comment - AI fallback (PR)
         if: ${{ steps.pr_inference.outcome != 'success' }}
         uses: actions/github-script@v7
         with:
           script: |
-            github.rest.pulls.createReview({
-              pull_number: context.issue.number,
+            await github.rest.pulls.createReview({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: "AI summary failed due to the provider's content policy or an error; please review this PR manually.",
-              event: 'COMMENT'
-            })
+              pull_number: context.payload.pull_request.number,
+              body: "AI summary failed due to the provider's content policy or an unexpected error. Please review this PR manually.",
+              event: "COMMENT"
+            });
 
   # Push / Commit summarizer (adds a comment on the latest commit)
   summary_push:
