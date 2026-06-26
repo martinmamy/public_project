@@ -99,9 +99,9 @@ jobs:
           cat /tmp/commits.txt || true
           sed 's/^/ - /' /tmp/commits.txt > /tmp/commits.md || true
           {
-            echo "COMMIT_LIST<<EOF"
+            echo "COMMIT_LIST<<DELIMITER123"
             cat /tmp/commits.txt
-            echo "EOF"
+            echo "DELIMITER123"
           } >> $GITHUB_OUTPUT
 
       - name: Run AI inference (PR)
@@ -158,9 +158,9 @@ jobs:
         id: commit_list
         run: |
           git --no-pager log --pretty=format:"%h %s (by %an)" ${{ github.sha }} --max-count=10 > /tmp/commits.txt || true
-          echo "COMMITS<<EOF" >> $GITHUB_OUTPUT
+          echo "COMMITS<<DELIMITER123" >> $GITHUB_OUTPUT
           sed ':a;N;$!ba;s/\n/\\n/g' /tmp/commits.txt >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
+          echo "DELIMITER123" >> $GITHUB_OUTPUT
 
       - name: Run AI inference (push)
         id: push_inference
